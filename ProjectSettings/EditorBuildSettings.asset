@@ -6,7 +6,19 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/network/Bootstrap.unity
+    guid: 1dc659dea452b424992385a7aacb7508
+  - enabled: 1
+    path: Assets/Scenes/ui/MainMenu.unity
+    guid: 09f0ee89d6ea9dd4c8185a7facf98d08
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/Scenes/adrian/tests_network/test_0.unity
+    guid: 9726b31aa9751994394ff222fd1c907d
+  - enabled: 1
+    path: Assets/Scenes/HauntedHouse.unity
+    guid: 522b6e6e8a7b2504dba45ba890c716bb
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

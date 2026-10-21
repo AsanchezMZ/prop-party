@@ -1,97 +1,67 @@
-using System.Xml.Serialization;
-using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Prop : MonoBehaviour
 {
+    enum ColliderMode { Box, ConvexMesh, ExactMesh }
 
-    enum ColliderMode
+    public int id;
+    public int slotId;
+    public string propName = "prop";
+    public Transform visual;
+    [SerializeField, Range(0f, 1f)] float spawnProbability = 1.0f;
+    [SerializeField] Vector3 randomRotationThreshold; // grados máx. por eje (+/-)
+
+    Quaternion baseLocalRot;
+    bool cached;
+
+    static readonly List<Prop> active = new List<Prop>();
+    void OnEnable()  => active.Add(this);
+    void OnDisable() => active.Remove(this);
+
+    void OnValidate()
+{
+    if (visual == null)
     {
-        Box,            
-        ConvexMesh,     
-        ExactMesh 
+        var t = transform.Find("Visual");
+        if (t != null) visual = t;
+    }
+}
+
+    public static bool ExistsNear(int id, Vector3 pos, float maxDist)
+    {
+        foreach (Prop p in active)
+            if (p.id == id && (p.transform.position - pos).sqrMagnitude <= maxDist * maxDist)
+                return true;
+        return false;
     }
 
-    [SerializeField] string propName = "prop";
-    [SerializeField] bool canBeDisguise = true;
-    
-    [SerializeField] ColliderMode colliderMode = ColliderMode.ConvexMesh;
-
-    [SerializeField, UnityEngine.Range(0f, 1f)] float spawnProbability = 1.0f;
-
-    [SerializeField] Vector3 randomRotationThreshold;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public void ApplySeed(int seed)
     {
-        if(Random.value > spawnProbability)
-        {
-            Destroy(gameObject);
-        }
-        float m = Random.value < 0.5f ? -1.0f : 1.0f;
-        float x = m * (Random.value * randomRotationThreshold.x);
-        m = Random.value < 0.5f ? -1.0f : 1.0f;
-        float y = m * (Random.value * randomRotationThreshold.y);
-        m = Random.value < 0.5f ? -1.0f : 1.0f;
-        float z = m * (Random.value * randomRotationThreshold.z);
-        transform.Rotate(new Vector3(x, y, z), Space.Self);
+        if (!cached && visual != null) { baseLocalRot = visual.localRotation; cached = true; }
+
+        bool appears = Rand01(seed, slotId, 0) <= spawnProbability;
+        gameObject.SetActive(appears);
+        if (!appears || visual == null) return;
+
+        Vector3 offset = new Vector3(
+            (Rand01(seed, slotId, 1) * 2f - 1f) * randomRotationThreshold.x,
+            (Rand01(seed, slotId, 2) * 2f - 1f) * randomRotationThreshold.y,
+            (Rand01(seed, slotId, 3) * 2f - 1f) * randomRotationThreshold.z);
+        visual.localRotation = baseLocalRot * Quaternion.Euler(offset);
     }
 
-    // Update is called once per frame
-    void Update()
+    static float Rand01(int seed, int slot, int channel)
     {
-        
+        uint h = Hash((uint)seed ^ Hash((uint)slot * 31u + (uint)channel * 7919u + 17u));
+        return (h & 0xFFFFFFu) / (float)0x1000000;
     }
 
-    [ContextMenu("Generate collider")]
-    void GenerateCollider()
+    static uint Hash(uint x)
     {
-        var filters = GetComponentsInChildren<MeshFilter>();
-        if (filters.Length == 0)
-        {
-            Debug.LogWarning("No hay ningún mesh dentro de Visual.", this);
-            return;
-        }
-
-        ClearColliders();
-
-        switch (colliderMode)
-        {
-            case ColliderMode.Box:
-                FitBox();
-                break;
-
-            case ColliderMode.ConvexMesh:
-            case ColliderMode.ExactMesh:
-                foreach (var f in filters)
-                {
-                    var mc = f.gameObject.AddComponent<MeshCollider>();
-                    mc.sharedMesh = f.sharedMesh;
-                    mc.convex = colliderMode == ColliderMode.ConvexMesh;
-                }
-                break;
-        }
+        x ^= x >> 16; x *= 0x7feb352du;
+        x ^= x >> 15; x *= 0x846ca68bu;
+        x ^= x >> 16;
+        return x;
     }
-
-    void ClearColliders()
-    {
-        foreach (var c in GetComponentsInChildren<Collider>())
-            DestroyImmediate(c);
-    }
-
-    void FitBox()
-    {
-        var renderers = GetComponentsInChildren<Renderer>();
-        Bounds b = renderers[0].bounds;
-        foreach (var r in renderers) b.Encapsulate(r.bounds);
-
-        var box = gameObject.AddComponent<BoxCollider>();
-        box.center = transform.InverseTransformPoint(b.center);
-        box.size = new Vector3(
-            b.size.x / transform.lossyScale.x,
-            b.size.y / transform.lossyScale.y,
-            b.size.z / transform.lossyScale.z);
-    }
-
-    
 }

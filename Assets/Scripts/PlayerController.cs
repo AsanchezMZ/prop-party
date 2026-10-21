@@ -1,126 +1,81 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using Unity.Netcode;
+using Unity.Netcode.Components;
+using Unity.Cinemachine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
-    [Header("Referencias")]
-    [SerializeField] Transform cameraPivot;
+    [Header("Ajustes de Movimiento")]
+    public float velocidadCaminar = 5f;
+    public float velocidadRotacion = 10f;
+    
+    private CharacterController controller;
+    private Animator animator;
+    private Transform camaraPrincipal;
 
-    [Header("Movimiento")]
-    [SerializeField] float walkSpeed = 5f;
-    [SerializeField] float sprintSpeed = 8f;
-    [SerializeField] float jumpHeight = 1.2f;
-    [SerializeField] float gravity = -20f;
-
-    [Header("Cámara")]
-    [SerializeField] float mouseSensitivity = 0.1f;     // ratón (grados por píxel)
-    [SerializeField] float gamepadSensitivity = 150f;   // mando (grados por segundo)
-    [SerializeField] float maxPitch = 85f;
-
-    InputAction moveAction, lookAction, jumpAction, sprintAction;
-    CharacterController controller;
-    float pitch;
-    float verticalVelocity;
-
-    void Awake()
+    public override void OnNetworkSpawn()
     {
-        controller = GetComponent<CharacterController>();
+        // Si este clon no es el nuestro, ignoramos la configuración de cámara
+        if (!IsOwner) return;
 
-        moveAction = new InputAction("Move", InputActionType.Value);
-        moveAction.AddCompositeBinding("2DVector")
-            .With("Up", "<Keyboard>/w")
-            .With("Down", "<Keyboard>/s")
-            .With("Left", "<Keyboard>/a")
-            .With("Right", "<Keyboard>/d");
-        moveAction.AddBinding("<Gamepad>/leftStick");
-
-        lookAction = new InputAction("Look", InputActionType.Value, "<Mouse>/delta");
-        lookAction.AddBinding("<Gamepad>/rightStick");
-
-        jumpAction = new InputAction("Jump", InputActionType.Button, "<Keyboard>/space");
-        jumpAction.AddBinding("<Gamepad>/buttonSouth");
-
-        sprintAction = new InputAction("Sprint", InputActionType.Button, "<Keyboard>/leftShift");
-        sprintAction.AddBinding("<Gamepad>/leftStickPress");
-    }
-
-    void OnEnable()
-    {
-        moveAction.Enable();
-        lookAction.Enable();
-        jumpAction.Enable();
-        sprintAction.Enable();
-    }
-
-    void OnDisable()
-    {
-        moveAction.Disable();
-        lookAction.Disable();
-        jumpAction.Disable();
-        sprintAction.Disable();
+        // Solo el jugador local busca y se adueña de la cámara en la escena
+        CinemachineFreeLook camara = FindObjectOfType<CinemachineFreeLook>();
+        if (camara != null)
+        {
+            camara.Follow = this.transform;
+            camara.LookAt = this.transform;
+        }
     }
 
     void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        controller = GetComponent<CharacterController>();
+        // Busca el Animator en el FBX que pusiste como hijo
+        animator = GetComponentInChildren<Animator>();
+        
+        if (Camera.main != null)
+        {
+            camaraPrincipal = Camera.main.transform;
+        }
     }
 
     void Update()
     {
-        // Escape libera el ratón (útil en el editor); click lo vuelve a capturar
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-        if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame
-            && Cursor.lockState != CursorLockMode.Locked)
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
+        // Bloqueo de red: Solo el dueño de este objeto puede controlarlo
+        if (!IsOwner) return;
 
-        if (Cursor.lockState == CursorLockMode.Locked)
-            HandleLook();
-
-        HandleMovement();
+        MoverJugador();
     }
 
-    void HandleLook()
+    void MoverJugador()
     {
-        Vector2 look = lookAction.ReadValue<Vector2>();
+        // 1. Capturar los inputs (W, A, S, D o Joysticks)
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
+        Vector3 direccion = new Vector3(horizontal, 0f, vertical).normalized;
 
-        // El delta del ratón ya es por frame; el stick del mando hay que multiplicarlo por el tiempo
-        bool usingGamepad = lookAction.activeControl?.device is Gamepad;
-        Vector2 delta = usingGamepad
-            ? look * gamepadSensitivity * Time.deltaTime
-            : look * mouseSensitivity;
+        if (direccion.magnitude >= 0.1f)
+        {
+            // 2. Calcular el ángulo hacia donde mirar basado en la cámara
+            float anguloObjetivo = Mathf.Atan2(direccion.x, direccion.z) * Mathf.Rad2Deg + camaraPrincipal.eulerAngles.y;
+            
+            // 3. Suavizar la rotación
+            float angulo = Mathf.LerpAngle(transform.eulerAngles.y, anguloObjetivo, Time.deltaTime * velocidadRotacion);
+            transform.rotation = Quaternion.Euler(0f, angulo, 0f);
 
-        transform.Rotate(Vector3.up * delta.x);
+            // 4. Mover al personaje
+            Vector3 direccionMovimiento = Quaternion.Euler(0f, anguloObjetivo, 0f) * Vector3.forward;
+            controller.Move(direccionMovimiento.normalized * velocidadCaminar * Time.deltaTime);
+        }
 
-        pitch = Mathf.Clamp(pitch - delta.y, -maxPitch, maxPitch);
-        cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
-    }
+        // 5. Aplicar gravedad básica para que no flote en pendientes
+        controller.Move(Physics.gravity * Time.deltaTime);
 
-    void HandleMovement()
-    {
-        Vector2 move = moveAction.ReadValue<Vector2>();
-        Vector3 dir = transform.right * move.x + transform.forward * move.y;
-        dir = Vector3.ClampMagnitude(dir, 1f);
-
-        float speed = sprintAction.IsPressed() ? sprintSpeed : walkSpeed;
-
-        if (controller.isGrounded && verticalVelocity < 0f)
-            verticalVelocity = -2f;   // pegado al suelo
-
-        if (jumpAction.WasPressedThisFrame() && controller.isGrounded)
-            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-        verticalVelocity += gravity * Time.deltaTime;
-
-        Vector3 velocity = dir * speed + Vector3.up * verticalVelocity;
-        controller.Move(velocity * Time.deltaTime);
+        // 6. Actualizar el parámetro de animación (Asegúrate de que tu parámetro en el Animator se llame exactamente "Velocidad")
+        if (animator != null)
+        {
+            animator.SetFloat("Velocidad", direccion.magnitude);
+        }
     }
 }
