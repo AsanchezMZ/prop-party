@@ -24,15 +24,10 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] float maxPitch = 60f;
 
     CharacterController cc;
-    float yaw;
     float pitch;
     float verticalVelocity;
 
-    void Awake()
-    {
-        cc = GetComponent<CharacterController>();
-        yaw = transform.eulerAngles.y;
-    }
+    void Awake() => cc = GetComponent<CharacterController>();
 
     public override void OnNetworkSpawn()
     {
@@ -42,20 +37,34 @@ public class PlayerController : NetworkBehaviour
         playerCamera.enabled = mine;
         playerCamera.GetComponent<ThirdPersonCamera>().enabled = mine;
         listener.enabled = mine;
+        if (mine) SetCursorLocked(true);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsOwner) SetCursorLocked(false);
     }
 
     void Update()
     {
-        if (Input.GetMouseButton(1))
+        if (Input.GetKeyDown(KeyCode.Escape)) SetCursorLocked(false);
+        if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked)
+            SetCursorLocked(true);
+
+        bool locked = Cursor.lockState == CursorLockMode.Locked;
+        if (locked)
         {
             float mx = Input.GetAxis("Mouse X") * mouseSensitivity;
             float my = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-            yaw += mx;
+            transform.Rotate(0f, mx, 0f);
             pitch = Mathf.Clamp(pitch - my, minPitch, maxPitch);
         }
+        cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
 
-        Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"));
+        Vector3 input = locked
+            ? new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"))
+            : Vector3.zero;
         input = Vector3.ClampMagnitude(input, 1f);
 
         bool slow = Input.GetKey(KeyCode.LeftControl);
@@ -80,16 +89,13 @@ public class PlayerController : NetworkBehaviour
             speed = runSpeed;
             animVal = 3;
         }
-        Vector3 direction = Quaternion.Euler(0f, yaw, 0f) * input;
-        if (direction.sqrMagnitude > 0f)
-            transform.rotation = Quaternion.LookRotation(direction);
-        cameraPivot.rotation = Quaternion.Euler(pitch, yaw, 0f);
+        Vector3 direction = transform.TransformDirection(input);
         Vector3 move = direction * speed;
 
         // Gravedad y salto
         bool grounded = cc.isGrounded;
         if (grounded && verticalVelocity < 0f) verticalVelocity = -2f;
-        if (grounded && Input.GetButtonDown("Jump"))
+        if (grounded && locked && Input.GetButtonDown("Jump"))
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
         verticalVelocity += gravity * Time.deltaTime;
 
@@ -99,5 +105,11 @@ public class PlayerController : NetworkBehaviour
         // Animator (NetworkAnimator replica estos parámetros al resto)
         if (animator != null)
             animator.SetFloat("Speed", animVal, 0.1f, Time.deltaTime);
+    }
+
+    static void SetCursorLocked(bool locked)
+    {
+        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !locked;
     }
 }

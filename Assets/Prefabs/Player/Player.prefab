@@ -47,7 +47,6 @@ GameObject:
   - component: {fileID: 3957663011914784340}
   - component: {fileID: 93064316341854844}
   - component: {fileID: 4232792332017608899}
-  - component: {fileID: 1112476300470292384}
   - component: {fileID: 2884862980824795606}
   m_Layer: 6
   m_Name: Player
@@ -186,7 +185,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkAnimatorExpanded: 0
   AuthorityMode: 1
-  m_Animator: {fileID: 6459636771928342047}
+  m_Animator: {fileID: 66054388110534408}
   TransitionStateInfoList: []
   AnimatorParameterEntries:
     ParameterEntries:
@@ -226,7 +225,7 @@ MonoBehaviour:
   cameraPivot: {fileID: 4853743148349232418}
   playerCamera: {fileID: 738823946750629862}
   listener: {fileID: 4045474031576364113}
-  animator: {fileID: 6459636771928342047}
+  animator: {fileID: 66054388110534408}
   slowWalkSpeed: 2
   walkSpeed: 4
   runSpeed: 7
@@ -235,21 +234,6 @@ MonoBehaviour:
   mouseSensitivity: 2
   minPitch: -30
   maxPitch: 60
---- !u!114 &1112476300470292384
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6316694197557295720}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8553704229da814448097e744e141d4f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimation
-  animator: {fileID: 66054388110534408}
-  root: {fileID: 9127668560140622804}
-  damp: 0.1
 --- !u!114 &2884862980824795606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -415,7 +399,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ThirdPersonCamera
   pivot: {fileID: 4853743148349232418}
   distance: 4
-  minDistance: 0.6
+  minDistance: 1.8
   radius: 0.35
   returnSpeed: 8
   obstacles:
@@ -430,7 +414,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1067019583545066576}
-  - component: {fileID: 6459636771928342047}
   m_Layer: 6
   m_Name: DefaultModel
   m_TagString: Untagged
@@ -454,28 +437,6 @@ Transform:
   - {fileID: 6199909438717099378}
   m_Father: {fileID: 9127668560140622804}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!95 &6459636771928342047
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8185472618994369106}
-  m_Enabled: 1
-  m_Avatar: {fileID: 9000000, guid: 8b998bd8e73d3594c9ee6ffa2148d2e6, type: 3}
-  m_Controller: {fileID: 9100000, guid: 05692238413767542a56eb821c379624, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &5872757360571685529
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -532,6 +493,10 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: 05692238413767542a56eb821c379624, type: 2}
+    - target: {fileID: 5866666021909216657, guid: 8b998bd8e73d3594c9ee6ffa2148d2e6, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
