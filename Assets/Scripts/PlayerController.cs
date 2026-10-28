@@ -1,81 +1,116 @@
-using UnityEngine;
+// PlayerController.cs
 using Unity.Netcode;
-using Unity.Netcode.Components;
-using Unity.Cinemachine;
+using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
 {
-    [Header("Ajustes de Movimiento")]
-    public float velocidadCaminar = 5f;
-    public float velocidadRotacion = 10f;
-    
-    private CharacterController controller;
-    private Animator animator;
-    private Transform camaraPrincipal;
+    [Header("Referencias")]
+    [SerializeField] Transform cameraPivot;
+    [SerializeField] Camera playerCamera;
+    [SerializeField] AudioListener listener;
+    [SerializeField] Animator animator;
+
+    [Header("Movimiento")]
+    [SerializeField] float slowWalkSpeed = 2f;
+    [SerializeField] float walkSpeed = 4f;
+    [SerializeField] float runSpeed = 7f;
+    [SerializeField] float jumpHeight = 1.2f;
+    [SerializeField] float gravity = -20f;
+
+    [Header("Cámara")]
+    [SerializeField] float mouseSensitivity = 2f;
+    [SerializeField] float minPitch = -30f;
+    [SerializeField] float maxPitch = 60f;
+
+    CharacterController cc;
+    float pitch;
+    float verticalVelocity;
+
+    void Awake() => cc = GetComponent<CharacterController>();
 
     public override void OnNetworkSpawn()
     {
-        // Si este clon no es el nuestro, ignoramos la configuración de cámara
-        if (!IsOwner) return;
+        bool mine = IsOwner;
+        enabled = mine;                 // Update solo en el jugador local
+        cc.enabled = mine;              // en los remotos mueve el NetworkTransform
+        playerCamera.enabled = mine;
+        listener.enabled = mine;
 
-        // Solo el jugador local busca y se adueña de la cámara en la escena
-        CinemachineFreeLook camara = FindObjectOfType<CinemachineFreeLook>();
-        if (camara != null)
-        {
-            camara.Follow = this.transform;
-            camara.LookAt = this.transform;
-        }
+        if (mine) SetCursorLocked(true);
     }
 
-    void Start()
+    public override void OnNetworkDespawn()
     {
-        controller = GetComponent<CharacterController>();
-        // Busca el Animator en el FBX que pusiste como hijo
-        animator = GetComponentInChildren<Animator>();
-        
-        if (Camera.main != null)
-        {
-            camaraPrincipal = Camera.main.transform;
-        }
+        if (IsOwner) SetCursorLocked(false);
     }
 
     void Update()
     {
-        // Bloqueo de red: Solo el dueño de este objeto puede controlarlo
-        if (!IsOwner) return;
+        if (Input.GetKeyDown(KeyCode.Escape))
+            SetCursorLocked(Cursor.lockState != CursorLockMode.Locked);
 
-        MoverJugador();
+        bool locked = Cursor.lockState == CursorLockMode.Locked;
+
+        // Ratón: giro horizontal en el cuerpo, vertical en el pivote
+        if (locked)
+        {
+            float mx = Input.GetAxis("Mouse X") * mouseSensitivity;
+            float my = Input.GetAxis("Mouse Y") * mouseSensitivity;
+
+            transform.Rotate(0f, mx, 0f);
+            pitch = Mathf.Clamp(pitch - my, minPitch, maxPitch);
+            cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        }
+
+        // Movimiento
+        Vector3 input = locked
+            ? new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical"))
+            : Vector3.zero;
+        input = Vector3.ClampMagnitude(input, 1f);
+
+        bool slow = Input.GetKey(KeyCode.LeftControl);
+        bool running = Input.GetKey(KeyCode.LeftShift);
+        float speed = walkSpeed;
+        float animVal = 0;
+        if(input == Vector3.zero)
+        {
+            
+        }
+        else if (slow)
+        {
+            speed = slowWalkSpeed;
+            animVal = 1;
+        }else if (!running)
+        {
+            speed = walkSpeed;
+            animVal = 2;
+        }
+        else
+        {
+            speed = runSpeed;
+            animVal = 3;
+        }
+        Vector3 move = transform.TransformDirection(input) * speed;
+
+        // Gravedad y salto
+        bool grounded = cc.isGrounded;
+        if (grounded && verticalVelocity < 0f) verticalVelocity = -2f;
+        if (grounded && locked && Input.GetButtonDown("Jump"))
+            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        verticalVelocity += gravity * Time.deltaTime;
+
+        move.y = verticalVelocity;
+        cc.Move(move * Time.deltaTime);
+
+        // Animator (NetworkAnimator replica estos parámetros al resto)
+        if (animator != null)
+            animator.SetFloat("Speed", animVal, 0.1f, Time.deltaTime);
     }
 
-    void MoverJugador()
+    static void SetCursorLocked(bool locked)
     {
-        // 1. Capturar los inputs (W, A, S, D o Joysticks)
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 direccion = new Vector3(horizontal, 0f, vertical).normalized;
-
-        if (direccion.magnitude >= 0.1f)
-        {
-            // 2. Calcular el ángulo hacia donde mirar basado en la cámara
-            float anguloObjetivo = Mathf.Atan2(direccion.x, direccion.z) * Mathf.Rad2Deg + camaraPrincipal.eulerAngles.y;
-            
-            // 3. Suavizar la rotación
-            float angulo = Mathf.LerpAngle(transform.eulerAngles.y, anguloObjetivo, Time.deltaTime * velocidadRotacion);
-            transform.rotation = Quaternion.Euler(0f, angulo, 0f);
-
-            // 4. Mover al personaje
-            Vector3 direccionMovimiento = Quaternion.Euler(0f, anguloObjetivo, 0f) * Vector3.forward;
-            controller.Move(direccionMovimiento.normalized * velocidadCaminar * Time.deltaTime);
-        }
-
-        // 5. Aplicar gravedad básica para que no flote en pendientes
-        controller.Move(Physics.gravity * Time.deltaTime);
-
-        // 6. Actualizar el parámetro de animación (Asegúrate de que tu parámetro en el Animator se llame exactamente "Velocidad")
-        if (animator != null)
-        {
-            animator.SetFloat("Velocidad", direccion.magnitude);
-        }
+        Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+        Cursor.visible = !locked;
     }
 }

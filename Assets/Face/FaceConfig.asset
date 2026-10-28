@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52bc9e5da59db664f908472de3f68f70, type: 3}
+  m_Name: FaceConfig
+  m_EditorClassIdentifier: Assembly-CSharp::FaceConfig
+  alphaMask: {fileID: 2800000, guid: 3e0cf82b29ad05749ac6e6d3351a83fd, type: 3}
+  baseTexture: {fileID: 2800000, guid: 4dabbcaf5b03f9b4bb0faacd4da7d7ca, type: 3}
+  fallbackColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  size: 512
