@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02425fc13b67cd243b95470e48eaeefd, type: 3}
+  m_Name: Throwable
+  m_EditorClassIdentifier: Assembly-CSharp::ThrowableDefinition
+  projectilePrefab: {fileID: 4473897285229185111, guid: 871f6bcea564d13448b33fdf12055cd1, type: 3}
+  speed: 18
+  gravity: 15
+  radius: 0.15
+  lifetime: 5
+  cooldown: 0.8
+  damage: 1
+  hitMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  throwSound: {fileID: 0}
+  impactSound: {fileID: 0}
+  impactEffect: {fileID: 0}

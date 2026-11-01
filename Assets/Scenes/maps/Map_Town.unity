@@ -415,6 +415,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+--- !u!114 &437509020 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7221424242593735034, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+  m_PrefabInstance: {fileID: 437509019}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7448939f22fd5d24889bc03aee5a7e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
 --- !u!1 &539227267
 GameObject:
   m_ObjectHideFlags: 0
@@ -696,6 +707,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+--- !u!114 &676663730 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7221424242593735034, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+  m_PrefabInstance: {fileID: 676663729}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7448939f22fd5d24889bc03aee5a7e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
 --- !u!1001 &1095452397
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -753,6 +775,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+--- !u!114 &1095452398 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7221424242593735034, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+  m_PrefabInstance: {fileID: 1095452397}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7448939f22fd5d24889bc03aee5a7e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
 --- !u!1001 &1100161015
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -810,6 +843,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+--- !u!114 &1100161016 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7221424242593735034, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+  m_PrefabInstance: {fileID: 1100161015}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7448939f22fd5d24889bc03aee5a7e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
 --- !u!1001 &1157665372
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -867,6 +911,154 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+--- !u!114 &1157665373 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7221424242593735034, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+  m_PrefabInstance: {fileID: 1157665372}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7448939f22fd5d24889bc03aee5a7e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
+--- !u!1 &1319866578
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1319866580}
+  - component: {fileID: 1319866579}
+  - component: {fileID: 1319866581}
+  - component: {fileID: 1319866584}
+  - component: {fileID: 1319866583}
+  - component: {fileID: 1319866582}
+  m_Layer: 0
+  m_Name: Prop Hunt Map
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1319866579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319866578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06e37d758e9c83140b19ca2eda0a904e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapSetup
+  definition: {fileID: 11400000, guid: 0b3cf49f49075e54683272cb690171e1, type: 2}
+  spawns:
+  - {fileID: 1157665373}
+  - {fileID: 1095452398}
+  - {fileID: 1100161016}
+  - {fileID: 1389284104}
+  - {fileID: 437509020}
+  - {fileID: 676663730}
+--- !u!4 &1319866580
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319866578}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1319866581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319866578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3995382758
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &1319866582
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319866578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 812fdeb1bb3c77e4bb1283d0bcb01384, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MatchHUD
+  match: {fileID: 1319866584}
+  theme: {fileID: 7433441132597879392, guid: 6b4ac884563daa44e9fe4a22b02380d1, type: 3}
+  lobbyScene: MainMenu
+--- !u!114 &1319866583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319866578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: 4c68656115ec9ec4a86f1fb6dba93cb9, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!114 &1319866584
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1319866578}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c27c935d7e7a9fa4785dddf063502024, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PropHuntMatch
+  ShowTopMostFoldoutHeaderGroup: 1
+  rules: {fileID: 11400000, guid: 43d03d8a07ae9de4cad5f400dba289f3, type: 2}
+  map: {fileID: 1319866579}
+  lobbyScene: MainMenu
 --- !u!1001 &1389284103
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -924,6 +1116,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+--- !u!114 &1389284104 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7221424242593735034, guid: 9a5ca00a4024cf84194e76fc3cc6f3f8, type: 3}
+  m_PrefabInstance: {fileID: 1389284103}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7448939f22fd5d24889bc03aee5a7e56, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnPoint
 --- !u!1 &1492643961
 GameObject:
   m_ObjectHideFlags: 0
@@ -1036,6 +1239,80 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1740352228
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1740352230}
+  - component: {fileID: 1740352229}
+  - component: {fileID: 1740352231}
+  m_Layer: 0
+  m_Name: Map Props
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1740352229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740352228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2461405035
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!4 &1740352230
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740352228}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1740352231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740352228}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8516f5382ba48148a8d146f326d9e0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapPropSpawner
+  ShowTopMostFoldoutHeaderGroup: 1
+  props: []
 --- !u!1001 &1942300816
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1234,3 +1511,5 @@ SceneRoots:
   - {fileID: 1389284103}
   - {fileID: 437509019}
   - {fileID: 676663729}
+  - {fileID: 1319866580}
+  - {fileID: 1740352230}

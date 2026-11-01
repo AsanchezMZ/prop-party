@@ -3,13 +3,15 @@ using UnityEngine;
 
 public class Prop : MonoBehaviour
 {
-    enum ColliderMode { Box, ConvexMesh, ExactMesh }
-
     public int id;
     public int slotId;
     public string propName = "prop";
     public Transform visual;
+    [Min(0.1f)] public float disguiseRadius = 0.4f;
+    [Min(0.2f)] public float disguiseHeight = 1;
     [SerializeField, Range(0f, 1f)] float spawnProbability = 1.0f;
+    [Tooltip("Disable to keep this prop present in every round.")]
+    [SerializeField] bool canDisappear = true;
     [SerializeField] Vector3 randomRotationThreshold; // grados máx. por eje (+/-)
 
     Quaternion baseLocalRot;
@@ -40,7 +42,7 @@ public class Prop : MonoBehaviour
     {
         if (!cached && visual != null) { baseLocalRot = visual.localRotation; cached = true; }
 
-        bool appears = Rand01(seed, slotId, 0) <= spawnProbability;
+        bool appears = !canDisappear || Rand01(seed, slotId, 0) < spawnProbability;
         gameObject.SetActive(appears);
         if (!appears || visual == null) return;
 

@@ -53,6 +53,10 @@ PrefabInstance:
       value: SmallTable
       objectReference: {fileID: 0}
     - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
+      propertyPath: id
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
       propertyPath: propName
       value: Small table
       objectReference: {fileID: 0}

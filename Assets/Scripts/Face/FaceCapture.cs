@@ -1,150 +1,204 @@
-// FaceCapture.cs
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 public class FaceCapture : MonoBehaviour
 {
     [SerializeField] FaceConfig config;
-    [SerializeField] RawImage preview;          // cuadrado (ej. 400x400)
-    [SerializeField] GameObject guideOverlay;   // Image con MaskReference, mismo rect que preview
-    [SerializeField] Button captureBtn;         // "Capture your face"
-    [SerializeField] Button snapBtn;            // "Snap"
-
+    [Tooltip("Optional transparent framing guide. Falls back to FaceConfig.alphaMask.")]
+    [SerializeField] Texture2D guideTexture;
+    public event Action Closed;
+    public bool IsOpen { get; private set; }
+    VisualElement overlay, placeholder;
+    Image preview, guide;
+    Label status;
+    DropdownField devices;
+    Button enableCamera, snap;
     WebCamTexture cam;
     Texture2D result;
-    bool starting;
+    Coroutine starting;
 
-    void Start()
+    public void Bind(VisualElement root)
     {
-        captureBtn.onClick.AddListener(() => StartCoroutine(StartCam()));
-        snapBtn.onClick.AddListener(Snap);
+        overlay = root.Q("face-overlay"); placeholder = root.Q("face-placeholder");
+        preview = root.Q<Image>("face-preview"); guide = root.Q<Image>("face-guide");
+        status = root.Q<Label>("face-status"); devices = root.Q<DropdownField>("face-device");
+        enableCamera = root.Q<Button>("face-enable"); snap = root.Q<Button>("face-snap");
+        enableCamera.clicked += StartCamera;
+        snap.clicked += Snap;
+        root.Q<Button>("face-back").clicked += Close;
+        devices.RegisterValueChangedCallback(_ =>
+        {
+            StopCamera(); ShowSaved();
+            status.text = "Pulsa «Activar cámara» para usar la webcam seleccionada.";
+        });
+        guide.image = guideTexture != null ? guideTexture : config != null ? config.alphaMask : null;
+    }
 
-        snapBtn.interactable = false;
-        guideOverlay.SetActive(false);
+    public void Open()
+    {
+        IsOpen = true;
+        overlay.style.display = DisplayStyle.Flex;
+        status.text = config != null ? "Tu foto anterior se conserva hasta hacer una nueva." : "Falta asignar FaceConfig en el Inspector.";
+        var names = new List<string>();
+        foreach (var device in WebCamTexture.devices) names.Add(device.name);
+        devices.choices = names;
+        devices.SetValueWithoutNotify(names.Count > 0 ? names[0] : "Sin cámara");
+        devices.SetEnabled(names.Count > 0);
+        enableCamera.SetEnabled(config != null); // Permission may reveal devices not yet listed.
+        snap.SetEnabled(false);
         LocalProfile.LoadSavedFace();
-        ShowSavedFace();
+        ShowSaved();
+        enableCamera.Focus();
     }
 
-    void ShowSavedFace()
+    void ShowSaved()
     {
-        if (LocalProfile.FaceJpg == null) return;
-
-        result = config.Compose(LocalProfile.FaceJpg);
-        if (result == null)
-        {
-            Debug.LogWarning("La foto guardada no tiene un formato compatible y será reemplazada al tomar otra.");
-            return;
-        }
-
-        preview.uvRect = new Rect(0, 0, 1, 1);
-        preview.texture = result;
+        if (result != null) Destroy(result);
+        result = config != null && LocalProfile.FaceJpg != null ? config.Compose(LocalProfile.FaceJpg) : null;
+        preview.image = result;
+        preview.uv = new Rect(0, 0, 1, 1);
+        preview.style.rotate = new Rotate(0);
+        placeholder.style.display = result == null ? DisplayStyle.Flex : DisplayStyle.None;
+        guide.style.display = DisplayStyle.None;
     }
 
-    IEnumerator StartCam()
+    void StartCamera()
     {
-        if (starting) yield break;          // ignora clics repetidos
-        starting = true;
-        captureBtn.interactable = false;
-        snapBtn.interactable = false;
+        if (starting != null || config == null) return;
+        starting = StartCoroutine(StartCameraRoutine());
+    }
 
+    IEnumerator StartCameraRoutine()
+    {
+        enableCamera.SetEnabled(false); snap.SetEnabled(false); devices.SetEnabled(false);
+        status.text = "Esperando permiso y señal de la cámara…";
         yield return Application.RequestUserAuthorization(UserAuthorization.WebCam);
+        if (!IsOpen) yield break;
         if (!Application.HasUserAuthorization(UserAuthorization.WebCam))
+        { CameraFailed("Permiso denegado. Habilita la cámara en los ajustes del sistema."); yield break; }
+        var available = WebCamTexture.devices;
+        if (available.Length == 0) { CameraFailed("No se ha encontrado ninguna webcam."); yield break; }
+        string selected = available[0].name;
+        foreach (var device in available) if (device.name == devices.value) selected = device.name;
+        var names = new List<string>();
+        foreach (var device in available) names.Add(device.name);
+        devices.choices = names; devices.SetValueWithoutNotify(selected);
+        try
         {
-            Debug.LogWarning("Permiso de cámara denegado");
-            EndStart(false);
-            yield break;
+            if (cam != null) { cam.Stop(); Destroy(cam); }
+            cam = new WebCamTexture(selected);
+            cam.Play();
         }
-
-        if (cam == null)
-        {
-            var devices = WebCamTexture.devices;
-            if (devices.Length == 0)
-            {
-                Debug.LogWarning("No hay webcams");
-                EndStart(false);
-                yield break;
-            }
-
-            string name = devices[0].name;
-            foreach (var d in devices)
-                if (d.isFrontFacing) { name = d.name; break; }
-
-            cam = new WebCamTexture(name);   // sin forzar resolución ni fps
-        }
-
-        // Vuelve a la cámara en vivo sin descartar la foto guardada hasta tomar otra.
-        if (result != null) { Destroy(result); result = null; }
-
-        preview.texture = cam;
-        if (!cam.isPlaying) cam.Play();
-
-        // Esperar imagen real, con timeout de 5 s
-        float t = 0f;
-        while (cam.width <= 16 && t < 5f) { t += Time.unscaledDeltaTime; yield return null; }
-
-        if (cam.width <= 16)
-        {
-            Debug.LogWarning("La cámara no ha entregado imagen (¿la usa otra app?)");
-            cam.Stop();
-            EndStart(false);
-            yield break;
-        }
-
-        GetCrop(out var scale, out var offset);
-        preview.uvRect = new Rect(offset.x, offset.y, scale.x, scale.y);
-        guideOverlay.SetActive(true);
-        EndStart(true);
+        catch (Exception exception)
+        { Debug.LogWarning(exception.Message, this); CameraFailed("No se puede abrir la webcam. Comprueba si otra aplicación la está usando."); yield break; }
+        float elapsed = 0;
+        while (IsOpen && (cam.width <= 16 || !cam.didUpdateThisFrame) && elapsed < 5)
+        { elapsed += Time.unscaledDeltaTime; yield return null; }
+        if (!IsOpen) yield break;
+        if (cam.width <= 16 || !cam.didUpdateThisFrame)
+        { CameraFailed("La webcam no responde. Prueba otra cámara o cierra las aplicaciones que la usan."); yield break; }
+        starting = null;
+        preview.image = cam;
+        placeholder.style.display = DisplayStyle.None;
+        guide.style.display = guide.image != null ? DisplayStyle.Flex : DisplayStyle.None;
+        devices.SetEnabled(true); enableCamera.SetEnabled(true); snap.SetEnabled(true);
+        status.text = "Centra tu cara en la silueta. La foto no se guarda hasta pulsar el botón.";
     }
 
-    void EndStart(bool ok)
+    void Update()
     {
-        starting = false;
-        captureBtn.interactable = true;
-        snapBtn.interactable = ok;
+        if (!IsOpen || cam == null || !cam.isPlaying || preview.image != cam) return;
+        preview.uv = Crop(cam.width, cam.height, cam.videoVerticallyMirrored);
+        preview.style.rotate = new Rotate(-cam.videoRotationAngle);
     }
 
-    void GetCrop(out Vector2 scale, out Vector2 offset)
+    public static Rect Crop(int width, int height, bool verticallyMirrored)
     {
-        int w = cam.width, h = cam.height;
-        float a = (float)Mathf.Min(w, h) / Mathf.Max(w, h);
-        scale = w > h ? new Vector2(a, 1) : new Vector2(1, a);
-        offset = (Vector2.one - scale) * 0.5f;
+        float x = (float)Mathf.Min(width, height) / Mathf.Max(1, width);
+        float y = (float)Mathf.Min(width, height) / Mathf.Max(1, height);
+        return new Rect((1 - x) * 0.5f, verticallyMirrored ? (1 + y) * 0.5f : (1 - y) * 0.5f, x, verticallyMirrored ? -y : y);
     }
 
     void Snap()
     {
-        if (cam == null || !cam.isPlaying || cam.width <= 16) return;
-
-        GetCrop(out var scale, out var offset);
-        int size = config.size;
-
-        var rt = RenderTexture.GetTemporary(size, size, 0);
-        Graphics.Blit(cam, rt, scale, offset);
-
-        var prev = RenderTexture.active;
-        RenderTexture.active = rt;
-        var photo = new Texture2D(size, size, TextureFormat.RGB24, false);
-        photo.ReadPixels(new Rect(0, 0, size, size), 0, 0);
-        photo.Apply();
-        RenderTexture.active = prev;
-        RenderTexture.ReleaseTemporary(rt);
-
-        LocalProfile.SaveFace(photo.EncodeToJPG(85));
-        Destroy(photo);
-        cam.Stop();
-
-        // Muestra el resultado recortado, tal como lo verán los demás
-        result = config.Compose(LocalProfile.FaceJpg);
-        preview.uvRect = new Rect(0, 0, 1, 1);
-        preview.texture = result;
-        guideOverlay.SetActive(false);
-        snapBtn.interactable = false;       // se reactiva al pulsar "Capture your face"
+        if (cam == null || !cam.isPlaying || cam.width <= 16 || starting != null || config == null || config.size <= 0 || config.size > 1024) return;
+        Texture2D raw = null, cropped = null;
+        RenderTexture target = null;
+        var previous = RenderTexture.active;
+        try
+        {
+            raw = new Texture2D(cam.width, cam.height, TextureFormat.RGB24, false);
+            raw.SetPixels32(cam.GetPixels32()); raw.Apply();
+            var crop = Crop(cam.width, cam.height, cam.videoVerticallyMirrored);
+            target = RenderTexture.GetTemporary(config.size, config.size, 0);
+            Graphics.Blit(raw, target, crop.size, crop.position);
+            RenderTexture.active = target;
+            cropped = new Texture2D(config.size, config.size, TextureFormat.RGB24, false);
+            cropped.ReadPixels(new Rect(0, 0, config.size, config.size), 0, 0); cropped.Apply();
+            // Match the live preview, including webcams reporting portrait/rotated sensor frames.
+            int turns = ((cam.videoRotationAngle / 90) % 4 + 4) % 4;
+            if (turns != 0)
+            {
+                var input = cropped.GetPixels32(); var output = new Color32[input.Length]; int n = config.size;
+                for (int y = 0; y < n; y++)
+                    for (int x = 0; x < n; x++)
+                    {
+                        int rx = x, ry = y;
+                        for (int i = 0; i < turns; i++) { int oldX = rx; rx = ry; ry = n - 1 - oldX; }
+                        output[ry * n + rx] = input[y * n + x];
+                    }
+                cropped.SetPixels32(output); cropped.Apply();
+            }
+            byte[] jpg = cropped.EncodeToJPG(75);
+            if (jpg.Length > PlayerFace.MaxPhotoBytes) { status.text = "La foto es demasiado grande. Reduce el tamaño en FaceConfig."; return; }
+            var composed = config.Compose(jpg);
+            if (composed == null) { status.text = "No se pudo preparar la foto. Revisa FaceConfig."; return; }
+            Destroy(composed);
+            bool saved = LocalProfile.SaveFace(jpg);
+            StopCamera(); ShowSaved();
+            status.text = saved ? "¡Foto guardada! La llevará tu personaje en la próxima ronda." : "Foto disponible para esta sesión, pero no se pudo guardar en disco.";
+        }
+        catch (Exception exception) { Debug.LogWarning(exception.Message, this); status.text = "No se pudo capturar la foto. La anterior se conserva."; }
+        finally
+        {
+            RenderTexture.active = previous;
+            if (target != null) RenderTexture.ReleaseTemporary(target);
+            if (raw != null) Destroy(raw);
+            if (cropped != null) Destroy(cropped);
+        }
     }
 
+    void CameraFailed(string message)
+    {
+        starting = null;
+        StopCamera(); ShowSaved(); status.text = message;
+    }
+
+    void StopCamera()
+    {
+        if (starting != null) { StopCoroutine(starting); starting = null; }
+        if (cam != null) { cam.Stop(); Destroy(cam); cam = null; }
+        if (snap != null) snap.SetEnabled(false);
+        if (enableCamera != null) enableCamera.SetEnabled(config != null);
+        if (devices != null) devices.SetEnabled(devices.choices.Count > 0);
+        if (guide != null) guide.style.display = DisplayStyle.None;
+    }
+
+    public void Close()
+    {
+        if (!IsOpen) return;
+        IsOpen = false; StopCamera();
+        overlay.style.display = DisplayStyle.None;
+        Closed?.Invoke();
+    }
+
+    void OnDisable() => Close();
     void OnDestroy()
     {
-        if (cam != null) cam.Stop();
+        StopCamera();
         if (result != null) Destroy(result);
     }
 }

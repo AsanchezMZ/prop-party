@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class PlayerFace : NetworkBehaviour
 {
+    public const int MaxPhotoBytes = 200_000;
+    [SerializeField] FaceConfig config;
     [SerializeField] Renderer maskRenderer;
     [SerializeField] int materialIndex = 0;
 
@@ -27,15 +29,19 @@ public class PlayerFace : NetworkBehaviour
     [ServerRpc]   // solo el dueño puede llamarlo
     void SubmitFaceServerRpc(byte[] jpg)
     {
-        if (jpg == null || jpg.Length == 0 || jpg.Length > 200_000) return; // validación básica
+        if (jpg == null || jpg.Length == 0 || jpg.Length > MaxPhotoBytes) return;
         ApplyFaceClientRpc(jpg);
     }
 
     [ClientRpc]
     void ApplyFaceClientRpc(byte[] jpg)
     {
-        if (tex == null) tex = new Texture2D(2, 2, TextureFormat.RGB24, false);
-        tex.LoadImage(jpg);
+        if (config == null || maskRenderer == null || jpg == null || jpg.Length > MaxPhotoBytes ||
+            materialIndex < 0 || materialIndex >= maskRenderer.sharedMaterials.Length) return;
+        var composed = config.Compose(jpg);
+        if (composed == null) return;
+        if (tex != null) Destroy(tex);
+        tex = composed;
 
         var mpb = new MaterialPropertyBlock();
         maskRenderer.GetPropertyBlock(mpb, materialIndex);

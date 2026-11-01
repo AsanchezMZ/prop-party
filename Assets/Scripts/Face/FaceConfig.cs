@@ -12,6 +12,13 @@ public class FaceConfig : ScriptableObject
     // Devuelve la textura final: foto recortada sobre la textura base
     public Texture2D Compose(byte[] jpg)
     {
+        if (jpg == null || jpg.Length == 0 || size <= 0 || size > 1024 ||
+            (alphaMask != null && (!alphaMask.isReadable || alphaMask.width != size || alphaMask.height != size)) ||
+            (baseTexture != null && (!baseTexture.isReadable || baseTexture.width != size || baseTexture.height != size)))
+        {
+            Debug.LogWarning("FaceConfig: use readable mask/base textures matching the configured size (maximum 1024).", this);
+            return null;
+        }
         var photo = new Texture2D(2, 2, TextureFormat.RGB24, false);
         if (!photo.LoadImage(jpg) || photo.width != size || photo.height != size)
         {
@@ -20,13 +27,13 @@ public class FaceConfig : ScriptableObject
         }
 
         var p = photo.GetPixels32();
-        var m = alphaMask.GetPixels32();
+        var m = alphaMask != null ? alphaMask.GetPixels32() : null;
         var b = baseTexture != null ? baseTexture.GetPixels32() : null;
 
         for (int i = 0; i < p.Length; i++)
         {
             Color32 under = b != null ? b[i] : fallbackColor;
-            float a = m[i].r / 255f;
+            float a = m != null ? m[i].r / 255f : 1;
             p[i] = Color32.Lerp(under, p[i], a);
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "PropHunt/Prop Catalog")]
 public class PropCatalog : ScriptableObject
 {
-    [SerializeField] private Prop[] props;
+    [SerializeField] private Prop[] props = System.Array.Empty<Prop>();
     private Dictionary<int, Prop> lookup;
 
     public bool TryGet(int id, out Prop prop)

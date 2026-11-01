@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 public class GameBootstrap : MonoBehaviour
 {
     [SerializeField] NetworkObject playerPrefab;
-    [SerializeField] string lobbyScene = "Lobby";
+    [SerializeField] string lobbyScene;
     [SerializeField] int maxPlayers = 4;
 
     NetworkManager nm;
@@ -17,6 +17,7 @@ public class GameBootstrap : MonoBehaviour
     {
         nm = NetworkManager.Singleton;
         nm.ConnectionApprovalCallback = Approve;
+        nm.NetworkConfig.ConnectionApproval = true;
         nm.OnServerStarted += OnServerStarted;
     }
 
@@ -24,6 +25,7 @@ public class GameBootstrap : MonoBehaviour
     {
         if (nm == null) return;
         nm.OnServerStarted -= OnServerStarted;
+        nm.ConnectionApprovalCallback -= Approve;
         if (nm.SceneManager != null)
             nm.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
     }
@@ -56,6 +58,9 @@ public class GameBootstrap : MonoBehaviour
                        List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!nm.IsServer || scene == lobbyScene) return;
+        var match = FindFirstObjectByType<PropHuntMatch>();
+        if (match == null || match.Map == null || playerPrefab == null)
+        { Debug.LogError("Map requires a configured PropHuntMatch and player prefab."); return; }
 
         foreach (var id in clientsTimedOut)
             Debug.LogWarning($"El cliente {id} no terminó de cargar {scene}");
@@ -71,6 +76,7 @@ public class GameBootstrap : MonoBehaviour
         int i = 0;
         foreach (var clientId in clientsCompleted)
         {
+            if (!nm.ConnectedClients.ContainsKey(clientId)) continue;
             // Evita duplicar el jugador si ya existe
             if (nm.ConnectedClients.TryGetValue(clientId, out var c) && c.PlayerObject != null)
                 continue;
@@ -95,6 +101,7 @@ public class GameBootstrap : MonoBehaviour
             var obj = Instantiate(playerPrefab, pos, rot);
             obj.SpawnAsPlayerObject(clientId, true);   // true = se destruye con el dueño
         }
+        if (!match.BeginRound()) Debug.LogWarning("Round waiting: check player count, rules and team spawn points.");
     }
 
     static Vector3 GetGroundedSpawnPosition(SpawnPoint spawnPoint)

@@ -27,7 +27,7 @@ public static class LocalProfile
         }
     }
 
-    public static void SaveFace(byte[] jpg)
+    public static bool SaveFace(byte[] jpg)
     {
         string path = GetFacePath();
 
@@ -36,11 +36,14 @@ public static class LocalProfile
             File.WriteAllBytes(path, jpg);
             FaceJpg = jpg;
             faceLoaded = true;
+            return true;
         }
         catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException)
         {
             Debug.LogError($"No se pudo guardar la foto: {exception.Message}");
             FaceJpg = jpg;
+            faceLoaded = true;
+            return false;
         }
     }
 

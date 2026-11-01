@@ -45,10 +45,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ac2f20840392474f8fdf250b3d69f55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  id: 1
+  slotId: 0
   propName: Big vase
-  canBeDisguise: 1
-  colliderMode: 1
+  visual: {fileID: 926575894667565289}
+  disguiseRadius: 0.4
+  disguiseHeight: 1
   spawnProbability: 1
+  canDisappear: 1
+  randomRotationThreshold: {x: 0, y: 0, z: 0}
 --- !u!1 &5998050529998735025
 GameObject:
   m_ObjectHideFlags: 0

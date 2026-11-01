@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b418258c1533ae47b441aa58685b310, type: 3}
+  m_Name: Map_HauntedHouse
+  m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
+  displayName: Map HauntedHouse
+  sceneName: Assets/Scenes/maps/Map_HauntedHouse.unity
+  description: 
+  preview: {fileID: 0}
+  catalog: {fileID: 11400000, guid: a261c5697f8ca1e409d162c054d1242c, type: 2}

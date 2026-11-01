@@ -1,0 +1,114 @@
+/* Shared HUD primitives. Menu rules below are scoped to .party. */
+.card { padding: 24px; background-color: rgb(25, 43, 48); border-radius: 16px; margin: 16px; }
+.card-title { font-size: 27px; -unity-font-style: bold; color: white; }
+.description { font-size: 14px; color: rgb(207, 222, 221); white-space: normal; margin: 8px 0 16px; }
+Button { min-height: 48px; margin: 8px 0 0; border-radius: 10px; border-width: 0; font-size: 15px; -unity-font-style: bold; }
+.primary { background-color: rgb(255, 207, 59); color: rgb(25, 43, 48); }
+.secondary { background-color: rgb(65, 196, 179); color: rgb(25, 43, 48); }
+.quiet { background-color: rgb(226, 231, 222); color: rgb(25, 43, 48); }
+Button:disabled { opacity: 0.45; }
+
+.party { flex-grow: 1; width: 100%; height: 100%; overflow: hidden; background-color: rgb(244, 240, 228); color: rgb(25, 43, 48); }
+.party Label { margin: 0; padding: 0; }
+.party .menu-stage { position: absolute; width: 1280px; height: 720px; transform-origin: 0% 0%; }
+.party .menu-header { position: absolute; left: 64px; right: 64px; top: 24px; height: 54px; flex-direction: row; align-items: center; border-bottom-width: 2px; border-bottom-color: rgb(211, 215, 202); padding-bottom: 12px; }
+.party .wordmark { font-size: 30px; -unity-font-style: bold; letter-spacing: -2px; }
+.party .edition { flex-grow: 1; margin-left: 22px; font-size: 10px; letter-spacing: 2px; -unity-font-style: bold; }
+.party .profile { width: 256px; flex-direction: row; align-items: center; margin: 0; }
+.party .profile > .unity-base-field__label { min-width: 28px; margin: 0 10px 0 0; }
+.party .profile > .unity-base-field__input { min-height: 36px; font-size: 15px; }
+.party .home-screen, .party .room-screen { position: absolute; top: 100px; left: 0; right: 0; bottom: 68px; }
+.party .hero { position: absolute; left: 64px; top: 4px; width: 500px; }
+.party .kicker { font-size: 12px; letter-spacing: 2px; -unity-font-style: bold; margin-bottom: 12px; }
+.party .title-prop, .party .title-party { font-size: 118px; -unity-font-style: bold; letter-spacing: -7px; height: 114px; -unity-text-align: middle-left; }
+.party .title-prop { color: rgb(25, 43, 48); }
+.party .title-party { color: rgb(20, 128, 119); margin-top: -10px; }
+.party .tagline { font-size: 22px; margin-top: 16px; margin-bottom: 24px; }
+.party .home-actions { width: 382px; }
+.party Button { border-width: 2px 2px 5px; border-color: rgb(25, 43, 48); border-radius: 10px; margin: 0 0 12px; padding: 0 20px; height: 58px; min-height: 0; font-size: 17px; letter-spacing: 1px; -unity-text-align: middle-center; transition-property: translate, background-color; transition-duration: 0.12s; }
+.party Button.primary { background-color: rgb(255, 207, 59); }
+.party Button.secondary { background-color: rgb(244, 240, 228); }
+.party Button:hover { background-color: rgb(255, 224, 114); translate: 0 -3px; }
+.party Button:active { translate: 0 2px; border-bottom-width: 2px; }
+.party Button:focus { border-color: rgb(0, 130, 122); }
+.party Button.quiet { background-color: transparent; border-width: 0; font-size: 13px; }
+.party Button.quiet:hover { color: rgb(0, 130, 122); background-color: rgb(230, 230, 213); }
+.party .small-print { font-size: 10px; letter-spacing: 2px; margin-top: 3px; color: rgb(91, 106, 105); }
+
+/* Asset-free, editable prop mascots; the background field can supply authored art later. */
+.party .prop-art { position: absolute; right: 24px; top: 0; width: 620px; height: 550px; }
+.party .art-orbit { position: absolute; left: 52px; top: 28px; width: 510px; height: 510px; border-radius: 255px; background-color: rgb(219, 230, 211); }
+.party .suspect-box { position: absolute; left: 378px; top: 84px; width: 154px; height: 154px; rotate: 16deg; background-color: rgb(245, 126, 94); border-width: 6px; border-color: rgb(25, 43, 48); border-radius: 12px; }
+.party .box-tape { position: absolute; top: 0; left: 56px; width: 32px; height: 46px; background-color: rgb(255, 207, 59); border-left-width: 4px; border-right-width: 4px; border-color: rgb(25, 43, 48); }
+.party .suspect-mug { position: absolute; left: 128px; top: 176px; width: 330px; height: 260px; rotate: -12deg; }
+.party .mug-handle { position: absolute; left: 181px; top: 35px; width: 133px; height: 142px; border-width: 24px; border-color: rgb(25, 43, 48); border-radius: 57px; background-color: rgb(219, 230, 211); }
+.party .mug-body { position: absolute; width: 226px; height: 237px; background-color: rgb(65, 196, 179); border-width: 7px; border-color: rgb(25, 43, 48); border-radius: 12px 12px 64px 64px; }
+.party .mug-rim { position: absolute; top: 12px; left: 16px; right: 16px; height: 24px; border-radius: 14px; background-color: rgb(25, 43, 48); }
+.party .eyes { position: absolute; left: 54px; top: 91px; flex-direction: row; }
+.party .eye { width: 16px; height: 28px; margin-right: 24px; border-radius: 10px; background-color: rgb(25, 43, 48); }
+.party .suspect-box .eyes { left: 33px; top: 76px; }
+.party .suspect-box .eye { width: 12px; height: 20px; margin-right: 22px; }
+.party .suspect-egg { position: absolute; left: 416px; top: 345px; width: 94px; height: 126px; border-radius: 53px 53px 43px 43px; border-width: 6px; border-color: rgb(25, 43, 48); background-color: rgb(255, 207, 59); rotate: 18deg; }
+.party .suspect-egg .eyes { left: 18px; top: 62px; }
+.party .suspect-egg .eye { width: 9px; height: 16px; margin-right: 13px; }
+.party .alibi { position: absolute; top: 94px; left: 85px; padding: 13px 19px; background-color: rgb(255, 253, 244); border-width: 2px; border-color: rgb(25, 43, 48); rotate: -7deg; font-size: 15px; -unity-font-style: bold; }
+.party .spark { position: absolute; font-size: 62px; -unity-font-style: bold; color: rgb(20, 128, 119); }
+.party .spark-one { top: 0; left: 290px; rotate: 12deg; }
+.party .spark-two { top: 330px; left: 55px; rotate: 22deg; font-size: 44px; }
+.party .art-caption { position: absolute; top: 493px; left: 152px; font-size: 11px; letter-spacing: 2px; -unity-text-align: middle-center; -unity-font-style: bold; }
+
+.party .room-screen { left: 64px; right: 64px; }
+.party .room-title { font-size: 46px; letter-spacing: -2px; -unity-font-style: bold; height: 64px; }
+.party .room-columns { flex-direction: row; margin-top: 10px; height: 355px; }
+.party .team-panel { width: 528px; margin-right: 64px; }
+.party .section-label { font-size: 12px; letter-spacing: 2px; -unity-font-style: bold; margin-bottom: 16px; }
+.party .roster { flex-grow: 1; }
+.party .player-row { height: 64px; margin-bottom: 8px; flex-direction: row; align-items: center; border-radius: 8px; background-color: rgb(255, 253, 244); border-width: 1px; border-color: rgb(211, 215, 202); padding: 8px 16px; }
+.party .player-number { font-size: 25px; -unity-font-style: bold; margin-right: 18px; color: rgb(20, 128, 119); }
+.party .player-identity { flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.party .player-name { font-size: 19px; -unity-font-style: bold; overflow: hidden; text-overflow: ellipsis; }
+.party .player-role { font-size: 9px; letter-spacing: 2px; color: rgb(91, 106, 105); margin-top: 3px; }
+.party .player-state { font-size: 10px; -unity-font-style: bold; margin-left: 12px; }
+.party .is-ready { border-left-width: 5px; border-left-color: rgb(20, 128, 119); }
+.party .is-ready .player-state { color: rgb(20, 128, 119); }
+.party .is-waiting .player-state { color: rgb(116, 100, 77); }
+.party .room-hint { font-size: 12px; color: rgb(91, 106, 105); margin-top: 10px; }
+.party .map-panel { width: 560px; }
+.party .map-preview { height: 218px; margin-top: 12px; background-color: rgb(25, 64, 67); border-radius: 12px; overflow: hidden; -unity-background-scale-mode: scale-and-crop; justify-content: flex-end; }
+.party .map-tag { font-size: 10px; letter-spacing: 2px; background-color: rgb(255, 207, 59); color: rgb(25, 43, 48); padding: 8px 14px; align-self: flex-start; margin-left: 20px; }
+.party .map-title { font-size: 30px; -unity-font-style: bold; color: white; padding: 12px 20px 18px; background-color: rgba(25, 43, 48, 0.85); white-space: normal; max-height: 110px; overflow: hidden; }
+.party .map-description { font-size: 14px; white-space: normal; margin-top: 12px; max-height: 40px; overflow: hidden; color: rgb(91, 106, 105); }
+.party .room-actions { position: absolute; left: 0; right: 0; bottom: 0; flex-direction: row; justify-content: flex-end; }
+.party .room-actions Button { width: 260px; margin-left: 16px; }
+.party .room-actions Button.quiet { margin-right: auto; margin-left: 0; width: 140px; -unity-text-align: middle-left; }
+.party .menu-footer { position: absolute; left: 64px; right: 64px; bottom: 20px; height: 32px; flex-direction: row; align-items: center; border-top-width: 2px; border-top-color: rgb(211, 215, 202); padding-top: 10px; }
+.party .status { flex-grow: 1; font-size: 13px; color: rgb(25, 64, 67); }
+.party .footer-motto { font-size: 10px; letter-spacing: 2px; color: rgb(91, 106, 105); }
+
+.party .unity-base-field { margin: 0; flex-direction: column; }
+.party .unity-base-field__label { font-size: 11px; -unity-font-style: bold; letter-spacing: 1px; margin: 0 0 8px; min-width: 0; color: rgb(25, 43, 48); }
+.party .unity-base-field__input { background-color: rgb(255, 253, 244); color: rgb(25, 43, 48); border-width: 2px; border-color: rgb(25, 43, 48); border-radius: 6px; min-height: 40px; padding: 6px 12px; font-size: 17px; }
+.party .unity-text-field__input { color: rgb(25, 43, 48); }
+.party .unity-base-field__input:focus { border-color: rgb(0, 130, 122); }
+.party .unity-popup-field__text { color: rgb(25, 43, 48); font-size: 17px; }
+.party .unity-popup-field__arrow { -unity-background-image-tint-color: rgb(25, 43, 48); }
+.party .profile.unity-base-field { flex-direction: row; }
+.party .join-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(25, 43, 48, 0.82); align-items: center; justify-content: center; }
+.party .join-dialog { width: 470px; padding: 34px; background-color: rgb(244, 240, 228); border-width: 3px 3px 8px; border-color: rgb(25, 43, 48); border-radius: 18px; }
+.party .dialog-title { font-size: 43px; -unity-font-style: bold; letter-spacing: -2px; }
+.party .dialog-description { font-size: 15px; white-space: normal; margin: 16px 0 24px; }
+.party .join-dialog .unity-base-field { margin-bottom: 24px; }
+.party .join-dialog Button.quiet { margin-bottom: 0; height: 34px; }
+.party Button.face-button { width: 116px; height: 36px; margin: 0 20px 0 0; padding: 0 8px; font-size: 11px; border-bottom-width: 3px; }
+.party .face-dialog { width: 1040px; padding: 30px; flex-direction: row; background-color: rgb(244, 240, 228); border-width: 3px 3px 8px; border-color: rgb(25, 43, 48); border-radius: 18px; }
+.party .face-view { width: 456px; height: 456px; margin-right: 32px; background-color: rgb(25, 64, 67); border-radius: 12px; overflow: hidden; }
+.party .face-preview, .party .face-guide { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.party .face-guide { display: none; opacity: 0.45; }
+.party .face-placeholder { position: absolute; left: 32px; right: 32px; top: 150px; font-size: 42px; -unity-font-style: bold; color: rgb(255, 207, 59); -unity-text-align: middle-center; }
+.party .face-controls { flex-grow: 1; flex-basis: 0; }
+.party .face-controls .dialog-title { font-size: 34px; }
+.party .face-controls .dialog-description { margin: 12px 0 16px; }
+.party .face-controls Button { height: 46px; font-size: 14px; margin-bottom: 8px; }
+.party .face-controls Button.quiet { height: 30px; }
+.party .face-status { height: 42px; margin-top: 10px; font-size: 13px; white-space: normal; color: rgb(20, 100, 94); }
+.party .face-privacy { font-size: 11px; white-space: normal; color: rgb(91, 106, 105); }

@@ -53,6 +53,10 @@ PrefabInstance:
       value: Toilet
       objectReference: {fileID: 0}
     - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: id
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
       propertyPath: colliderMode
       value: 1
       objectReference: {fileID: 0}

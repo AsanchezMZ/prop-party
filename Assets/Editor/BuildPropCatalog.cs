@@ -11,13 +11,11 @@ public static class PropCatalogBuilder
     [MenuItem("PropHunt/Rebuild Prop Catalog")]
     static void Rebuild()
     {
-        var catalog = AssetDatabase.FindAssets("t:PropCatalog")
-            .Select(g => AssetDatabase.LoadAssetAtPath<PropCatalog>(AssetDatabase.GUIDToAssetPath(g)))
-            .FirstOrDefault();
+        var catalog = Selection.activeObject as PropCatalog;
 
         if (catalog == null)
         {
-            Debug.LogError("No hay ningún PropCatalog. Créalo con Create → PropHunt → Prop Catalog");
+            Debug.LogError("Selecciona el PropCatalog que quieres reconstruir.");
             return;
         }
 
@@ -28,9 +26,30 @@ public static class PropCatalogBuilder
             .Where(p => p != null)
             .ToList();
 
+        AssignMissingIds(props);
+
+        // Rellenar el catálogo seleccionado; no modifica los catálogos de otros mapas.
+        var catSo = new SerializedObject(catalog);
+        var arr = catSo.FindProperty("props");
+        arr.arraySize = props.Count;
+        for (int i = 0; i < props.Count; i++)
+            arr.GetArrayElementAtIndex(i).objectReferenceValue = props[i];
+        catSo.ApplyModifiedProperties();
+
+        EditorUtility.SetDirty(catalog);
+        AssetDatabase.SaveAssets();
+        Debug.Log($"Catálogo actualizado: {props.Count} tipos de prop");
+    }
+
+    public static void AssignMissingIds(System.Collections.Generic.List<Prop> props)
+    {
         // Asignar ID a los que no tienen (máximo existente + 1, nunca reutiliza)
         int next = props.Count > 0 ? Mathf.Max(props.Max(p => p.id), 0) + 1 : 1;
-        foreach (var p in props.Where(p => p.id == 0))
+        // Snapshot first: changing a base prefab also changes inherited IDs in its variants.
+        var missing = props.Where(p => p.id == 0 ||
+            (PrefabUtility.GetPrefabAssetType(p) == PrefabAssetType.Variant &&
+             !new SerializedObject(p).FindProperty("id").prefabOverride)).ToArray();
+        foreach (var p in missing)
         {
             var so = new SerializedObject(p);
             so.FindProperty("id").intValue = next++;
@@ -42,17 +61,6 @@ public static class PropCatalogBuilder
         foreach (var g in props.GroupBy(p => p.id).Where(g => g.Count() > 1))
             Debug.LogError($"ID {g.Key} duplicado en: {string.Join(", ", g.Select(p => p.name))}");
 
-        // Rellenar el catálogo
-        var catSo = new SerializedObject(catalog);
-        var arr = catSo.FindProperty("props");
-        arr.arraySize = props.Count;
-        for (int i = 0; i < props.Count; i++)
-            arr.GetArrayElementAtIndex(i).objectReferenceValue = props[i];
-        catSo.ApplyModifiedProperties();
-
-        EditorUtility.SetDirty(catalog);
-        AssetDatabase.SaveAssets();
-        Debug.Log($"Catálogo actualizado: {props.Count} tipos de prop");
     }
 }
 #endif

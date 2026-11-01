@@ -1,0 +1,104 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/PartyMenu.uss?fileID=7433441132597879392&amp;guid=6b4ac884563daa44e9fe4a22b02380d1&amp;type=3#PartyMenu"/>
+    <ui:VisualElement name="menu-root" class="party">
+        <PartyMenuStage class="menu-stage">
+            <ui:VisualElement class="menu-header">
+                <ui:Label text="PropParty" class="wordmark"/>
+                <ui:Label text="&#10;" class="edition"/>
+                <ui:Button name="face-button" text="TU CARA" tooltip="Captura tu cara para el personaje" class="face-button secondary"/>
+                <ui:TextField name="player-name" label="TÚ" value="Player" max-length="24" class="profile"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="home" enabled="true" class="home-screen" style="display: flex;">
+                <ui:VisualElement class="hero">
+                    <ui:Label text="PROP" class="title-prop"/>
+                    <ui:Label text="PARTY" class="title-party"/>
+                    <ui:Label text="Escóndete a plena vista.&#10;Mantente discreto.&#10;Desconfía hasta de las tazas." class="tagline"/>
+                    <ui:VisualElement class="home-actions">
+                        <ui:Button name="host" text="CREAR PARTIDA     →" class="primary"/>
+                        <ui:Button name="join" text="UNIRME A AMIGOS" class="secondary"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement picking-mode="Ignore" class="prop-art">
+                    <ui:VisualElement class="art-orbit"/>
+                    <ui:VisualElement class="suspect-box">
+                        <ui:VisualElement class="box-tape"/>
+                        <ui:VisualElement class="eyes">
+                            <ui:VisualElement class="eye"/>
+                            <ui:VisualElement class="eye"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="suspect-mug">
+                        <ui:VisualElement class="mug-handle"/>
+                        <ui:VisualElement class="mug-body">
+                            <ui:VisualElement class="mug-rim"/>
+                            <ui:VisualElement class="eyes">
+                                <ui:VisualElement class="eye"/>
+                                <ui:VisualElement class="eye"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="suspect-egg">
+                        <ui:VisualElement class="eyes">
+                            <ui:VisualElement class="eye"/>
+                            <ui:VisualElement class="eye"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="SOY UNA TAZA QUE HABLA!!" class="alibi"/>
+                    <ui:Label text="CONFÍA EN NADIE.&#10;ESPECIALMENTE DE LOS MUEBLES." class="art-caption" style="height: 39px; width: 226px; font-size: 20px;"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="room" class="room-screen" style="display: none;">
+                <ui:Label text="¡EMPIEZA LA FIESTA!" class="room-title"/>
+                <ui:VisualElement class="room-columns">
+                    <ui:VisualElement class="team-panel">
+                        <ui:Label name="player-count" text="EL EQUIPO / 00" class="section-label"/>
+                        <ui:VisualElement name="roster" class="roster"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="map-panel">
+                        <ui:DropdownField name="maps" label="EL ESCENARIO"/>
+                        <ui:VisualElement name="map-preview" class="map-preview">
+                            <ui:Label text="EL PRÓXIMO ESCONDITE" class="map-tag"/>
+                            <ui:Label name="map-title" text="EL PRÓXIMO MAPA" class="map-title"/>
+                        </ui:VisualElement>
+                        <ui:Label name="map-description" class="map-description"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="room-actions">
+                    <ui:Button name="leave" text="←  SALIR" class="quiet"/>
+                    <ui:Button name="ready" text="ESTOY LISTO" class="secondary"/>
+                    <ui:Button name="start" text="¡A JUGAR!    →" class="primary"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="menu-footer">
+                <ui:Label name="status" class="status"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="join-overlay" class="join-overlay" style="display: none;">
+                <ui:VisualElement class="join-dialog">
+                    <ui:Label text="¿DÓNDE ES&#10;LA FIESTA?" class="dialog-title"/>
+                    <ui:Label text="Introduce la IP de quien ha creado la partida." class="dialog-description"/>
+                    <ui:TextField name="address" label="DIRECCIÓN IP" value="127.0.0.1"/>
+                    <ui:Button name="connect" text="ENTRAR    →" class="primary"/>
+                    <ui:Button name="join-back" text="←  VOLVER" class="quiet"/>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="face-overlay" class="join-overlay" style="display: none;">
+                <ui:VisualElement class="face-dialog">
+                    <ui:VisualElement class="face-view">
+                        <ui:Image name="face-preview" scale-mode="ScaleToFit" class="face-preview"/>
+                        <ui:Image name="face-guide" scale-mode="ScaleToFit" picking-mode="Ignore" class="face-guide"/>
+                        <ui:Label name="face-placeholder" text="TU CARA&#10;DE PÓQUER." picking-mode="Ignore" class="face-placeholder"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="face-controls">
+                        <ui:Label text="PONLE CARA&#10;AL SOSPECHOSO." class="dialog-title"/>
+                        <ui:Label text="Centra tu cara en la silueta y haz la foto. Se guardará para tu personaje." class="dialog-description"/>
+                        <ui:DropdownField name="face-device" label="TU WEBCAM"/>
+                        <ui:Label name="face-status" class="face-status"/>
+                        <ui:Button name="face-enable" text="ACTIVAR CÁMARA" class="secondary"/>
+                        <ui:Button name="face-snap" text="¡ESA ES MI CARA!    →" enabled="false" class="primary"/>
+                        <ui:Button name="face-back" text="←  VOLVER" class="quiet"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </PartyMenuStage>
+    </ui:VisualElement>
+</ui:UXML>

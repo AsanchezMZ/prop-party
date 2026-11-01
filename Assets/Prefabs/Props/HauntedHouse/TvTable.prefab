@@ -53,6 +53,10 @@ PrefabInstance:
       value: TvTable
       objectReference: {fileID: 0}
     - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: id
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
       propertyPath: propName
       value: Table
       objectReference: {fileID: 0}

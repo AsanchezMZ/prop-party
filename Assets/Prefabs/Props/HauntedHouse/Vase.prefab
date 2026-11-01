@@ -53,6 +53,10 @@ PrefabInstance:
       value: Vase
       objectReference: {fileID: 0}
     - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
+      propertyPath: id
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
       propertyPath: propName
       value: Vase
       objectReference: {fileID: 0}
