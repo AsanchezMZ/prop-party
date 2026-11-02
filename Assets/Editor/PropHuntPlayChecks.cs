@@ -26,7 +26,7 @@ public static class PropHuntPlayChecks
 
     public static void RunApartment()
     {
-        RunMap("Assets/Brick Project Studio/Apartment Kit/Scenes/Scene_01.unity");
+        RunMap("Assets/Scenes/maps/Map_Apartment.unity");
     }
 
     static void RunMap(string scenePath)

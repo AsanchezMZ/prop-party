@@ -8,7 +8,7 @@ using UnityEngine.UIElements;
 public static class ApartmentPropChecks
 {
     const string Folder = "Assets/Brick Project Studio/Apartment Kit/_Prefabs";
-    const string ScenePath = "Assets/Brick Project Studio/Apartment Kit/Scenes/Scene_01.unity";
+    const string ScenePath = "Assets/Scenes/maps/Map_Apartment.unity";
 
     [MenuItem("PropHunt/Validate apartment props and map")]
     public static void Run()

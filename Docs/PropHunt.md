@@ -33,6 +33,8 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 - El servidor publica una semilla por ronda. Cada cliente calcula presencia y orientación con la misma semilla y slots. Son sorteos independientes Bernoulli: no garantizan una cantidad fija de objetos ni de tipos presentes.
 - **Rebuild Prop Catalog** actúa sobre el catálogo seleccionado y recoge los prefabs `Prop` del proyecto; para un catálogo exclusivo de un mapa, asigna su lista manualmente. El montaje inicial recoge los tipos presentes en cada escena.
 
+**PropHunt → Repair project prop IDs and map catalogs** revisa todos los tipos e instancias, conserva los IDs positivos no repetidos y asigna IDs libres a duplicados, valores no positivos y variantes sin ID propio. Reconstruye los catálogos existentes ordenados por ID, conservando sus tipos permitidos y añadiendo los presentes en su mapa; no crea un catálogo global ni modifica los `slotId`. Guarda los cambios y deja una copia previa fuera de `Assets` (ruta en la consola). **Validate project prop IDs and map catalogs** comprueba unicidad global, coherencia de instancias y referencias de catálogos y escenas.
+
 ## Arma, audio y presentación
 
 **Audio central:** asigna las pistas y efectos opcionales en `Assets/PropHuntConfig/Audio.asset`. Ya está conectado al NetworkManager mediante `PartyAudio`. Catálogo completo, eventos, recomendaciones de duración y propuestas adicionales: **`Docs/Audio.md`**. Los campos de audio existentes del jugador/arma conservan prioridad sobre los equivalentes centrales. Los slots vacíos se quedan en silencio.

@@ -27,6 +27,7 @@ public static class PropCatalogBuilder
             .ToList();
 
         AssignMissingIds(props);
+        props = props.OrderBy(p => p.id).ToList();
 
         // Rellenar el catálogo seleccionado; no modifica los catálogos de otros mapas.
         var catSo = new SerializedObject(catalog);
@@ -43,24 +44,24 @@ public static class PropCatalogBuilder
 
     public static void AssignMissingIds(System.Collections.Generic.List<Prop> props)
     {
-        // Asignar ID a los que no tienen (máximo existente + 1, nunca reutiliza)
-        int next = props.Count > 0 ? Mathf.Max(props.Max(p => p.id), 0) + 1 : 1;
+        var ordered = props.Distinct().OrderBy(p => PrefabUtility.GetPrefabAssetType(p) == PrefabAssetType.Variant)
+            .ThenBy(AssetDatabase.GetAssetPath, System.StringComparer.Ordinal).ThenBy(p => p.name, System.StringComparer.Ordinal).ToArray();
+        var reserved = new System.Collections.Generic.HashSet<int>(ordered.Where(p => p.id > 0).Select(p => p.id));
+        var seen = new System.Collections.Generic.HashSet<int>();
         // Snapshot first: changing a base prefab also changes inherited IDs in its variants.
-        var missing = props.Where(p => p.id == 0 ||
+        var missing = ordered.Where(p => p.id <= 0 || !seen.Add(p.id) ||
             (PrefabUtility.GetPrefabAssetType(p) == PrefabAssetType.Variant &&
              !new SerializedObject(p).FindProperty("id").prefabOverride)).ToArray();
+        int next = 1;
         foreach (var p in missing)
         {
+            while (reserved.Contains(next)) next = checked(next + 1);
             var so = new SerializedObject(p);
-            so.FindProperty("id").intValue = next++;
+            so.FindProperty("id").intValue = next;
             so.ApplyModifiedProperties();
+            reserved.Add(next);
             EditorUtility.SetDirty(p);
         }
-
-        // Avisar de duplicados
-        foreach (var g in props.GroupBy(p => p.id).Where(g => g.Count() > 1))
-            Debug.LogError($"ID {g.Key} duplicado en: {string.Join(", ", g.Select(p => p.name))}");
-
     }
 }
 #endif

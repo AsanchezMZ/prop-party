@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Catalog_City
   m_EditorClassIdentifier: Assembly-CSharp::PropCatalog
   props:
+  - {fileID: 4166674435865115188, guid: 60bcf45266d5a394e83c67d19af06bd3, type: 3}
+  - {fileID: 8208077740244703906, guid: 803388f961dae114d99e9592de097e71, type: 3}
   - {fileID: 5610491241028618, guid: 43052188279b70e40ac63c6489c06b5a, type: 3}
   - {fileID: 8251605728814373677, guid: 2fb8a6f5c21f2b34ea81be4e73538d23, type: 3}
   - {fileID: 8092024264121907704, guid: e3e812169085e57478770e549c5dfd5d, type: 3}
   - {fileID: 6879039058096909408, guid: 91e75d2a543adaf4db159641e45b23a6, type: 3}
-  - {fileID: 4166674435865115188, guid: 60bcf45266d5a394e83c67d19af06bd3, type: 3}
-  - {fileID: 8208077740244703906, guid: 803388f961dae114d99e9592de097e71, type: 3}
   - {fileID: 1669681574647234477, guid: 347580f867cdb6e41aa63c3d50f13b63, type: 3}
   - {fileID: 1860291264925750970, guid: 6df2eafa1a408444093962dc9f307869, type: 3}
   - {fileID: 2370899340221667411, guid: 5f6f774b4194e9c418fb25a3e47aabd6, type: 3}
@@ -28,8 +28,8 @@ MonoBehaviour:
   - {fileID: 6663644191868748082, guid: d70a0c90c1049e84cbcd6a80ada181a7, type: 3}
   - {fileID: 3406298518325270031, guid: 7307eced67130b04082e179e7411cd06, type: 3}
   - {fileID: 3803469128325680104, guid: 84eb1c77c94ce264b89e07aea1fb642b, type: 3}
-  - {fileID: 271782739284029428, guid: e4fc74cde6b48364bbf10640e5a17734, type: 3}
   - {fileID: 8461459815205338216, guid: de2f81194a012ae4c846d77d7ff0a020, type: 3}
+  - {fileID: 271782739284029428, guid: e4fc74cde6b48364bbf10640e5a17734, type: 3}
   - {fileID: 6145959148483439892, guid: b199e78b493fcc848a928567e03970cc, type: 3}
   - {fileID: 8131918269299248827, guid: ee0a5b9f25e7e5b4583ef52768ed0e7c, type: 3}
   - {fileID: 2477137641877891755, guid: 23dcdface495f1f45961fdb82ad4a2d5, type: 3}

@@ -77,7 +77,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ac2f20840392474f8fdf250b3d69f55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Prop
-  id: 29
+  id: 77
   slotId: 0
   propName: Shitty Car
   visual: {fileID: 7147708869038647007}

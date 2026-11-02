@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Map_Apartment
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   displayName: Apartamento
-  sceneName: Assets/Brick Project Studio/Apartment Kit/Scenes/Scene_01.unity
+  sceneName: Assets/Scenes/maps/Map_Apartment.unity
   description: "Un apartamento lleno de objetos cotidianos. \xA1Hasta el cepillo de dientes puede esconder a alguien!"
   preview: {fileID: 0}
   catalog: {fileID: 11400000, guid: 796672c58f17f3849aeaab79802ce914, type: 2}
