@@ -2,33 +2,57 @@ using UnityEngine;
 
 public class ThirdPersonCamera : MonoBehaviour
 {
-    [SerializeField] private Transform pivot;          // CameraPivot
-    [SerializeField] private float distance = 4f;
-    [SerializeField] private float minDistance = 1.8f;
-    [SerializeField] private float radius = 0.25f;
-    [SerializeField] private float returnSpeed = 8f;
-    [SerializeField] private LayerMask obstacles;      // solo geometría del mapa
-
-    private float current;
+    [SerializeField] Transform pivot;
+    [SerializeField] float distance = 4;
+    [SerializeField] float minDistance = 1.8f;
+    [SerializeField] float radius = 0.2f;
+    [SerializeField] float returnSpeed = 8;
+    [SerializeField] LayerMask obstacles = ~0;
     Transform spectatorTarget;
-    public void SetTarget(Transform target) => spectatorTarget = target;
+    Transform playerRoot;
+    bool firstPerson;
+    float current;
 
-    void Start() => current = distance;
+    void Awake() { playerRoot = GetComponentInParent<PlayerController>()?.transform; current = distance; }
+
+    public void SetTarget(Transform target)
+    {
+        if (spectatorTarget == target) return;
+        spectatorTarget = target;
+        current = distance;
+    }
+
+    public void SetFirstPerson(bool value)
+    {
+        if (firstPerson == value) return;
+        firstPerson = value;
+        current = distance;
+    }
+
+    public void ResetPosition() => current = distance;
 
     void LateUpdate()
     {
-        distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel") * 10f, minDistance, 8f);
-        Vector3 origin = spectatorTarget != null ? spectatorTarget.position + Vector3.up * 1.5f : pivot.position;
-        Vector3 dir = spectatorTarget != null ? -spectatorTarget.forward : -pivot.forward;
-
+        if (pivot == null) return;
+        bool spectating = spectatorTarget != null;
+        Vector3 origin = spectating ? spectatorTarget.position + Vector3.up * 1.5f : pivot.position;
+        Vector3 forward = spectating ? spectatorTarget.forward : pivot.forward;
+        if (firstPerson && !spectating)
+        {
+            transform.SetPositionAndRotation(origin, pivot.rotation);
+            return;
+        }
+        if (Cursor.lockState == CursorLockMode.Locked)
+            distance = Mathf.Clamp(distance - Input.GetAxis("Mouse ScrollWheel") * 10, minDistance, 8);
         float target = distance;
-        if (Physics.SphereCast(origin, radius, dir, out var hit, distance,
-                               obstacles, QueryTriggerInteraction.Ignore))
-            target = Mathf.Max(0.35f, hit.distance - 0.1f);
-
-        current = target < current ? target : Mathf.Lerp(current, target, returnSpeed * Time.deltaTime);
-
-        transform.position = origin + dir * current;
-        transform.rotation = Quaternion.LookRotation(-dir);
+        var hits = Physics.SphereCastAll(origin, radius, -forward, distance, obstacles, QueryTriggerInteraction.Ignore);
+        foreach (var hit in hits)
+        {
+            if (playerRoot != null && hit.transform.IsChildOf(playerRoot)) continue;
+            if (spectating && hit.transform.IsChildOf(spectatorTarget)) continue;
+            target = Mathf.Min(target, Mathf.Max(0.05f, hit.distance - 0.05f));
+        }
+        current = target < current ? target : Mathf.Lerp(current, target, 1 - Mathf.Exp(-returnSpeed * Time.deltaTime));
+        transform.SetPositionAndRotation(origin - forward * current, Quaternion.LookRotation(forward));
     }
 }

@@ -110,7 +110,8 @@ public static class PropHuntSetup
                 var hud = setup.GetComponent<MatchHUD>();
                 if (hud == null) hud = setup.gameObject.AddComponent<MatchHUD>();
                 ConfigurePanel(hud.GetComponent<UIDocument>());
-                Set(hud, "match", match); Set(hud, "theme", theme); SetString(hud, "lobbyScene", lobbyName);
+                hud.GetComponent<UIDocument>().visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>("Assets/UI/MatchHUD.uxml");
+                Set(hud, "match", match); SetString(hud, "lobbyScene", lobbyName);
                 EditorUtility.SetDirty(definition);
                 AssetDatabase.SaveAssets();
                 EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene);

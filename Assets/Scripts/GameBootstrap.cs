@@ -12,6 +12,7 @@ public class GameBootstrap : MonoBehaviour
     [SerializeField] int maxPlayers = 4;
 
     NetworkManager nm;
+    public MatchSettings? SessionSettings { get; set; }
 
     void Start()
     {
@@ -34,6 +35,7 @@ public class GameBootstrap : MonoBehaviour
     // así que hay que suscribirse cada vez que el servidor arranca.
     void OnServerStarted()
     {
+        SessionSettings = null;
         nm.SceneManager.OnLoadEventCompleted -= OnSceneLoaded;
         nm.SceneManager.OnLoadEventCompleted += OnSceneLoaded;
     }

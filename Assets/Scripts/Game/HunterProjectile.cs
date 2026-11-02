@@ -35,7 +35,7 @@ public class HunterProjectile : NetworkBehaviour
         {
             var target = hit.collider.GetComponentInParent<PropHuntPlayer>();
             if (target == shooter || (target != null && target.Role.Value == PlayerRole.Spectator)) continue;
-            if (target != null) target.Hit(definition.damage);
+            if (target != null) target.Hit(definition.damage, shooter);
             ImpactClientRpc(hit.point);
             NetworkObject.Despawn();
             return;
@@ -48,6 +48,7 @@ public class HunterProjectile : NetworkBehaviour
     void ImpactClientRpc(Vector3 position)
     {
         if (definition == null) return;
+        PartyVfx.Burst(position, new Color(1, 0.8f, 0.2f));
         if (definition.impactSound != null) AudioSource.PlayClipAtPoint(definition.impactSound, position);
         if (definition.impactEffect != null) Destroy(Instantiate(definition.impactEffect, position, Quaternion.identity), 3);
     }

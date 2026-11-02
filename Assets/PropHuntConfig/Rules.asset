@@ -20,3 +20,10 @@ MonoBehaviour:
   capturedBecomeHunters: 1
   disguiseDistance: 3
   propHealth: 2
+  proximityRadius: 8
+  visibilityDistance: 20
+  hunterFieldOfView: 75
+  proximityPoints: 10
+  visiblePoints: 20
+  manualWhistlePoints: 100
+  capturePoints: 150

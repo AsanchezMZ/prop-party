@@ -12,7 +12,7 @@ El montaje inicial se hace con **PropHunt → Configure enabled build scenes**. 
 2. Coloca `SpawnPoint` sobre el suelo. `Any` sirve a ambos equipos; también puedes separar `Props` y `Hunters`. Debe existir un punto compatible con cada equipo.
 3. Crea **Create → PropHunt → Map** y un **Prop Catalog**. Asigna nombre, escena (nombre o ruta de Build Profiles), descripción, miniatura y catálogo.
 4. Añade un objeto con `NetworkObject`, `MapSetup` y `PropHuntMatch`. Asigna definición, reglas y escena de menú. Ejecuta **Collect scene spawn points** en `MapSetup`.
-5. Añade `MatchHUD` al mismo objeto; asigna partida, escena de menú y `Assets/UI/PartyMenu.uss`. En su `UIDocument`, asigna `Assets/PropHuntConfig/PartyPanel.asset` (también lo usa el menú; incluye el tema base para dibujar los controles).
+5. Añade `MatchHUD` al mismo objeto; asigna partida y escena de menú. En su `UIDocument`, asigna `Assets/UI/MatchHUD.uxml` como Source Asset y `Assets/PropHuntConfig/PartyPanel.asset` como Panel Settings (también lo usa el menú).
 6. Añade un objeto con `NetworkObject` y `MapPropSpawner`; ejecuta **Collect and assign props IDs** después de distribuir los props.
 7. Añade la definición a `LobbyManager.mapDefinitions` en el menú. Usa las mismas reglas en lobby y mapa.
 
@@ -34,7 +34,7 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 El prefab necesita `NetworkObject`, `NetworkTransform` **server authority**, `HunterProjectile` y un hijo visual. Asigna el mismo `ThrowableDefinition` al proyectil y al jugador. Registra el prefab en la lista del `NetworkManager`. Sustituye el hijo visual por un huevo, piedra u otro modelo; no necesita Rigidbody ni collider, el servidor realiza barridos esféricos. El prefab generado inicialmente tiene un hijo visual vacío para asignar tu recurso.
 
-`PropHuntPlayer`: raíz del disfraz, modelo normal, arma, AudioSource 3D, silbido, transformación, captura, paso y salto. Pasos y salto pueden llamarse también desde eventos de animación; evita duplicarlos si decides usar esos eventos en lugar del controlador. Sin clips asignados no se reproduce sonido.
+`PropHuntPlayer`: raíz del disfraz, modelo normal, arma, AudioSource 3D, silbido, transformación, captura, clips de pasos y salto. Los pasos se disparan en servidor por desplazamiento; el salto mantiene su sonido local desde el controlador. Sin clips asignados no se reproduce sonido.
 
 `LobbyUI`: USS, fondo opcional, AudioSource, música y clic. `MapDefinition.preview` es la miniatura. El menú presenta una composición de 1280×720 que se escala completa y centrada a la ventana, sin scroll. Inicio, diálogo para unirse y sala tienen distribuciones propias. La ilustración de props está hecha con formas de UI, sin assets externos; colores y presentación se editan en el USS.
 
@@ -65,11 +65,39 @@ La foto JPG se guarda en `Application.persistentDataPath/face.jpg`. `PlayerFace.
 | Copiar prop apuntado | E |
 | Girar disfraz | Q / R, pasos de 15° |
 | Suspender o soltar, también en el aire | F |
-| Lanzar | Clic izquierdo |
+| Alternar primera / tercera persona (solo escondedores) | V |
+| Silbido manual (solo caza, 5 s de recarga) | G o botón 🎵 del HUD con cursor libre |
+| Lanzar (buscador, siempre primera persona) | Clic izquierdo |
 | Mostrar menú / recuperar control | Esc / Tab |
 | Siguiente jugador como espectador | Flecha derecha |
 
-## Comprobaciones
+## HUD, ajustes y puntuación
+
+`Assets/UI/MatchHUD.uxml` y `MatchHUD.uss` definen la barra horizontal superior, la retícula de punto, toasts, indicadores de riesgo y panel de pausa/resultados. Los `UIDocument` de ambos mapas de prueba ya tienen este UXML asignado. El montaje de mapas también lo asigna. El HUD no cambia la activación de cámaras ni fuerza el cursor cada frame.
+
+En la sala, **⚙ Ajustes** abre el panel con buscadores, segundos de escondite/caza, silbido automático, vidas y conversión de capturados. Los invitados pueden consultarlo, pero solo el host puede aplicar cambios. Son valores de sesión replicados, validados y copiados al mapa, no cambios al ScriptableObject. Se conservan al volver al lobby mientras continúe el host y se reinician al crear una sesión nueva. El número efectivo de buscadores siempre deja al menos un escondedor.
+
+Puntuación de ronda, siempre calculada en servidor y reiniciada con cada nueva ronda:
+
+- Dentro de `proximityRadius` de cualquier buscador: `proximityPoints` (10 por defecto) cada **3 segundos continuos**.
+- Dentro de `visibilityDistance`, del cono de visión y sin un obstáculo delante: `visiblePoints` (20 por defecto) cada **1 segundo continuo**. El servidor comprueba desde los ojos del buscador al centro de la cápsula del escondedor. No equivale a que el jugador humano lo haya identificado.
+- Los bonos anteriores se suman, pero varios buscadores no multiplican un mismo bono. Perder proximidad/visibilidad reinicia su reloj correspondiente.
+- Silbido manual: `manualWhistlePoints` (100 por defecto), una vez cada **5 segundos**, solo durante caza. El RPC valida ownership, rol, fase y recarga. El silbido automático jamás suma puntos.
+- Captura: `capturePoints` (150 por defecto) para el buscador que impactó el último proyectil. Un impacto posterior a la captura no vuelve a puntuar.
+
+Los puntos/radios/FOV se editan en `MatchRules`; los sliders de sesión no modifican esos valores. La clasificación aparece en pausa/resultados. Una captura conserva los puntos previos del escondedor convertido.
+
+VFX geométricos sin texturas: anillos de silbido, confeti de captura, destellos de impacto/camuflaje y halo local pulsante cuando hay riesgo. `PropHuntPlayer.effectMaterial` permite sustituir el material de las piezas sin tocar código. El halo solo lo ve el escondedor, no revela su posición a buscadores; los anillos del silbido sí son visibles para todos.
+
+Los pasos solo se reproducen para buscadores activos, según distancia realmente recorrida y suelo detectado en servidor; saltar o teletransportarse no acumula pasos. Asigna `footstepClips` al jugador para variar muestras, o el campo anterior `footstepSound` como fallback. Sin clips no habrá audio. Un `AudioSource` 3D permite que los demás jugadores los oigan. Los escondedores no generan pasos.
+
+La cámara del propietario se habilita una vez al aparecer y se deshabilita al desaparecer; V solo cambia su posición/modo, no alterna GameObjects o AudioListeners. En FPV se ocultan únicamente los renderers del propio jugador a nivel local; los demás siguen viéndolos. Las colisiones de TPV ignoran al propio jugador y al objetivo observado. `obstacles` debe incluir la geometría del mapa.
+
+### Comprobaciones automatizadas
+
+`PropHuntChecks` comprueba límites de ajustes, FOV y recorte de webcam. `PropHuntPlayChecks` verifica en Play Mode: ajustes lobby→mapa→lobby, 100 alternancias de perspectiva sin alternar cámara/listener, FPV de buscadores, elementos del HUD, puntos de proximidad/visión, oclusión por paredes, ausencia de puntos del silbido automático, puntos y recarga manual, pasos solo en buscadores, captura y reset de puntuación. Estas pruebas han pasado en Unity 6000.6.4f1, tanto en modo sin gráficos como con el dispositivo gráfico activo.
+
+Las comprobaciones de proximidad y pasos usan un escenario de física aislado en el host; no sustituyen probar los colliders y capas de cada mapa final. Revisar manualmente el aspecto del HUD/VFX, la webcam y el audio con clips asignados. Los emojis dependen de los glifos/fallback de fuentes instalados en Unity: si faltan, asigna una fuente de símbolos compatible en Panel Text Settings.
 
 **PropHunt → Run deterministic prop checks** comprueba extremos 0/1, repetibilidad, distribución y props permanentes. Se puede ejecutar en batch con `-executeMethod PropHuntChecks.Run`.
 

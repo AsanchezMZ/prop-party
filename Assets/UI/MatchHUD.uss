@@ -1,0 +1,27 @@
+.hud { width: 100%; height: 100%; flex-grow: 1; color: rgb(25, 43, 48); }
+.hud Label { margin: 0; padding: 0; }
+.top-bar { position: absolute; top: 12px; left: 14px; right: 14px; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; }
+.hud .chip { height: 36px; min-height: 36px; padding: 7px 14px; margin: 0 4px 6px; border-radius: 18px; font-size: 15px; -unity-font-style: bold; -unity-text-align: middle-center; border-width: 2px; border-color: rgb(25, 43, 48); }
+.role-chip, .mint, .whistle-button { background-color: rgb(85, 213, 185); }
+.timer-chip, .score-chip, .yellow { background-color: rgb(255, 213, 78); }
+.health-chip, .coral { background-color: rgb(255, 151, 139); }
+.risk-chip { background-color: rgb(244, 240, 228); }
+.hud .whistle-button { min-width: 155px; color: rgb(25, 43, 48); }
+.crosshair { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin-left: -3px; margin-top: -3px; border-radius: 3px; background-color: white; border-width: 1px; border-color: rgba(0, 0, 0, 0.7); }
+.risk-halo { position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-width: 10px; border-radius: 20px; border-color: rgb(255, 183, 52); opacity: 0; }
+.hit-flash { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(255, 74, 93); opacity: 0; }
+.toasts { position: absolute; top: 64px; right: 18px; width: 330px; align-items: flex-end; }
+.hud .toast { background-color: rgb(25, 64, 67); color: rgb(255, 249, 226); padding: 11px 16px; margin-bottom: 7px; border-radius: 12px; font-size: 14px; white-space: normal; border-left-width: 5px; border-left-color: rgb(255, 213, 78); }
+.hud .hint { position: absolute; bottom: 14px; left: 12px; right: 12px; font-size: 12px; color: white; -unity-text-align: middle-center; -unity-text-outline-width: 0.7px; -unity-text-outline-color: rgb(25, 43, 48); }
+.blackout { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(25, 43, 48); align-items: center; justify-content: center; color: rgb(255, 238, 171); font-size: 18px; }
+.hud .blackout-title { font-size: 40px; -unity-font-style: bold; margin-bottom: 16px; }
+.pause-overlay { position: absolute; top: 92px; bottom: 48px; left: 0; right: 0; align-items: center; justify-content: center; }
+.pause-panel { width: 540px; max-width: 94%; padding: 22px; border-radius: 20px; background-color: rgb(244, 240, 228); border-width: 3px 3px 7px; border-color: rgb(25, 43, 48); }
+.hud .panel-title { font-size: 24px; -unity-font-style: bold; white-space: normal; }
+.hud .leaderboard-title { font-size: 11px; letter-spacing: 2px; margin: 15px 0 6px; }
+.hud .leaderboard Label { font-size: 14px; padding: 6px 10px; margin-bottom: 4px; background-color: rgb(222, 231, 217); border-radius: 6px; }
+.action-row { flex-direction: row; margin-top: 8px; }
+.hud Button { flex-grow: 1; flex-basis: 0; min-height: 40px; margin: 0 4px; padding: 6px 10px; border-width: 2px 2px 4px; border-color: rgb(25, 43, 48); border-radius: 9px; font-size: 12px; color: rgb(25, 43, 48); -unity-font-style: bold; }
+.hud Button:hover { background-color: rgb(255, 231, 142); }
+.hud Button:focus { border-color: rgb(0, 130, 122); }
+.hud Button:disabled { opacity: 0.45; }

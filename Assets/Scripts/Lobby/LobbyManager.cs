@@ -9,7 +9,9 @@ public class LobbyManager : NetworkBehaviour
     [SerializeField] MapDefinition[] mapDefinitions = Array.Empty<MapDefinition>();
     [SerializeField] MatchRules rules;
     public MapDefinition[] Maps => mapDefinitions;
+    public MatchRules Rules => rules;
     public readonly NetworkVariable<int> SelectedMap = new();
+    public readonly NetworkVariable<MatchSettings> Settings = new();
     public NetworkList<LobbyPlayer> Players;
     public event Action Changed;
     bool loading;
@@ -31,8 +33,14 @@ public class LobbyManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         loading = false;
+        if (IsServer && rules != null)
+        {
+            var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
+            Settings.Value = bootstrap != null && bootstrap.SessionSettings.HasValue ? bootstrap.SessionSettings.Value : MatchSettings.From(rules);
+        }
         Players.OnListChanged += ListChanged;
         SelectedMap.OnValueChanged += MapChanged;
+        Settings.OnValueChanged += SettingsChanged;
         if (IsServer) NetworkManager.OnClientDisconnectCallback += RemovePlayer;
         if (IsClient) RegisterPlayerServerRpc(new FixedString32Bytes(LocalProfile.PlayerName));
         Changed?.Invoke();
@@ -40,11 +48,13 @@ public class LobbyManager : NetworkBehaviour
 
     void ListChanged(NetworkListEvent<LobbyPlayer> change) => Changed?.Invoke();
     void MapChanged(int previous, int current) => Changed?.Invoke();
+    void SettingsChanged(MatchSettings previous, MatchSettings current) => Changed?.Invoke();
 
     public override void OnNetworkDespawn()
     {
         Players.OnListChanged -= ListChanged;
         SelectedMap.OnValueChanged -= MapChanged;
+        Settings.OnValueChanged -= SettingsChanged;
         if (NetworkManager != null) NetworkManager.OnClientDisconnectCallback -= RemovePlayer;
     }
 
@@ -84,7 +94,20 @@ public class LobbyManager : NetworkBehaviour
     public void StartGame()
     {
         if (!CanStart) return;
+        var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
+        if (bootstrap != null) bootstrap.SessionSettings = Settings.Value;
         loading = NetworkManager.SceneManager.LoadScene(Maps[SelectedMap.Value].sceneName, LoadSceneMode.Single) == SceneEventProgressStatus.Started;
         Changed?.Invoke();
+    }
+
+    public bool ApplySettings(MatchSettings settings)
+    {
+        if (!IsServer || !IsSpawned || loading) return false;
+        settings = settings.Validated();
+        if (settings.Equals(Settings.Value)) return true;
+        Settings.Value = settings;
+        for (int i = 0; i < Players.Count; i++)
+        { var player = Players[i]; player.Ready = false; Players[i] = player; }
+        return true;
     }
 }

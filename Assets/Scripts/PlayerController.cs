@@ -1,5 +1,6 @@
 // PlayerController.cs
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
@@ -30,28 +31,67 @@ public class PlayerController : NetworkBehaviour
     PropHuntPlayer gameplay;
     Transform spectated;
     int spectatorIndex;
-    float nextStep;
+    ThirdPersonCamera cameraRig;
+    bool ownsCamera, propFirstPerson;
+    PlayerRole lastRole = PlayerRole.Spectator;
+    MatchPhase lastPhase = MatchPhase.Waiting;
+    float nextAim;
+    public bool SpectatorMenu { get; private set; }
+    public bool FirstPerson => gameplay != null && (gameplay.Role.Value == PlayerRole.Hunter ||
+        (gameplay.Role.Value == PlayerRole.Prop && propFirstPerson));
+    public Vector3 EyePosition => transform.TransformPoint(cc.center + Vector3.up * cc.height * 0.4f);
 
-    void Awake() { cc = GetComponent<CharacterController>(); gameplay = GetComponent<PropHuntPlayer>(); }
+    void Awake()
+    {
+        cc = GetComponent<CharacterController>(); gameplay = GetComponent<PropHuntPlayer>();
+        cameraRig = playerCamera != null ? playerCamera.GetComponent<ThirdPersonCamera>() : null;
+        if (playerCamera != null) { playerCamera.enabled = false; playerCamera.nearClipPlane = 0.03f; }
+        if (cameraRig != null) cameraRig.enabled = false;
+        if (listener != null) listener.enabled = false;
+    }
 
     public override void OnNetworkSpawn()
     {
         bool mine = IsOwner;
+        ownsCamera = mine;
         enabled = mine;                 // Update solo en el jugador local
         cc.enabled = true; // Remote colliders are needed by server projectile queries.
         playerCamera.enabled = mine;
-        playerCamera.GetComponent<ThirdPersonCamera>().enabled = mine;
+        if (cameraRig != null) cameraRig.enabled = mine;
         listener.enabled = mine;
-        if (mine) SetCursorLocked(true);
+        if (mine) { cameraRig?.ResetPosition(); ApplyCamera(); }
     }
 
     public override void OnNetworkDespawn()
     {
-        if (IsOwner) SetCursorLocked(false);
+        if (playerCamera != null) playerCamera.enabled = false;
+        if (cameraRig != null) cameraRig.enabled = false;
+        if (listener != null) listener.enabled = false;
+        if (ownsCamera) SetCursorLocked(false);
+        ownsCamera = false;
     }
 
     void Update()
     {
+        if (!IsSpawned || !ownsCamera) return;
+        if (gameplay != null && gameplay.Match != null)
+        {
+            var role = gameplay.Role.Value; var phase = gameplay.Match.Phase.Value;
+            if (role != lastRole)
+            {
+                SpectatorMenu = false;
+                spectated = null; cameraRig?.SetTarget(null);
+                ApplyCamera();
+                SetCursorLocked(role != PlayerRole.Spectator && (phase == MatchPhase.Hiding || phase == MatchPhase.Hunting));
+            }
+            if (phase != lastPhase)
+            {
+                if (phase == MatchPhase.Waiting || phase == MatchPhase.Finished) SetCursorLocked(false);
+                else if (lastPhase == MatchPhase.Waiting || lastPhase == MatchPhase.Finished)
+                    SetCursorLocked(role != PlayerRole.Spectator);
+            }
+            lastRole = role; lastPhase = phase;
+        }
         if (gameplay != null && gameplay.Role.Value == PlayerRole.Spectator)
         {
             cc.enabled = false;
@@ -60,7 +100,8 @@ public class PlayerController : NetworkBehaviour
         }
         cc.enabled = true;
         if (Input.GetKeyDown(KeyCode.Escape)) SetCursorLocked(false);
-        if (Input.GetKeyDown(KeyCode.Tab) && Cursor.lockState != CursorLockMode.Locked)
+        if (Input.GetKeyDown(KeyCode.Tab) && Cursor.lockState != CursorLockMode.Locked && gameplay != null && gameplay.Match != null &&
+            (gameplay.Match.Phase.Value == MatchPhase.Hiding || gameplay.Match.Phase.Value == MatchPhase.Hunting))
             SetCursorLocked(true);
 
         bool locked = Cursor.lockState == CursorLockMode.Locked;
@@ -73,11 +114,14 @@ public class PlayerController : NetworkBehaviour
             pitch = Mathf.Clamp(pitch - my, minPitch, maxPitch);
         }
         cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+        cameraPivot.localPosition = cc.center + Vector3.up * cc.height * 0.4f;
 
         if (gameplay != null && locked)
         {
             if (gameplay.Role.Value == PlayerRole.Prop)
             {
+                if (Input.GetKeyDown(KeyCode.V)) TogglePerspective();
+                if (Input.GetKeyDown(KeyCode.G)) gameplay.ManualWhistleServerRpc();
                 if (Input.GetKeyDown(KeyCode.F)) gameplay.FreezeServerRpc();
                 if (Input.GetKeyDown(KeyCode.Q)) gameplay.RotateServerRpc(false);
                 if (Input.GetKeyDown(KeyCode.R)) gameplay.RotateServerRpc(true);
@@ -88,7 +132,12 @@ public class PlayerController : NetworkBehaviour
                     if (prop != null) gameplay.DisguiseServerRpc(prop.id);
                 }
             }
-            else if (Input.GetMouseButtonDown(0)) gameplay.ThrowServerRpc(playerCamera.transform.forward);
+            else
+            {
+                if (Input.GetMouseButtonDown(0)) gameplay.ThrowServerRpc(cameraPivot.forward);
+                if (gameplay.CanHunt && Time.unscaledTime >= nextAim)
+                { nextAim = Time.unscaledTime + 0.1f; gameplay.AimServerRpc(cameraPivot.forward); }
+            }
         }
 
         if (gameplay != null && !gameplay.CanMove)
@@ -140,11 +189,6 @@ public class PlayerController : NetworkBehaviour
 
         move.y = verticalVelocity;
         cc.Move(move * Time.deltaTime);
-        if (grounded && input.sqrMagnitude > 0 && Time.time >= nextStep)
-        {
-            nextStep = Time.time + (running ? 0.3f : 0.5f);
-            if (gameplay != null) gameplay.Footstep();
-        }
 
         // Animator (NetworkAnimator replica estos parámetros al resto)
         if (animator != null)
@@ -157,14 +201,30 @@ public class PlayerController : NetworkBehaviour
         transform.SetPositionAndRotation(position, rotation);
         cc.enabled = true;
         verticalVelocity = 0;
-        if (IsOwner) SetCursorLocked(true);
+        if (IsOwner && IsSpawned && TryGetComponent<NetworkTransform>(out var networkTransform))
+            networkTransform.Teleport(position, rotation, transform.localScale);
         spectated = null;
-        if (playerCamera != null) playerCamera.GetComponent<ThirdPersonCamera>().SetTarget(null);
+        if (ownsCamera) { cameraRig?.SetTarget(null); cameraRig?.ResetPosition(); ApplyCamera(); }
+    }
+
+    void ApplyCamera()
+    {
+        cameraRig?.SetFirstPerson(FirstPerson);
+        if (gameplay != null) gameplay.SetFirstPersonVisual(FirstPerson);
+    }
+
+    public void TogglePerspective()
+    {
+        if (!ownsCamera || gameplay == null || gameplay.Role.Value != PlayerRole.Prop) return;
+        propFirstPerson = !propFirstPerson;
+        ApplyCamera();
     }
 
     void Spectate()
     {
-        SetCursorLocked(false);
+        if (Cursor.lockState != CursorLockMode.None) SetCursorLocked(false);
+        if (Input.GetKeyDown(KeyCode.Escape)) SpectatorMenu = !SpectatorMenu;
+        if (Input.GetKeyDown(KeyCode.Tab)) SpectatorMenu = false;
         if (gameplay.Match == null) return;
         var players = gameplay.Match.Players;
         if (Input.GetKeyDown(KeyCode.RightArrow)) { spectatorIndex++; spectated = null; }
@@ -182,7 +242,7 @@ public class PlayerController : NetworkBehaviour
                 spectatorIndex = (spectatorIndex + i) % players.Count;
                 break;
             }
-        playerCamera.GetComponent<ThirdPersonCamera>().SetTarget(spectated);
+        cameraRig?.SetTarget(spectated);
     }
 
     static void SetCursorLocked(bool locked)

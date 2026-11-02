@@ -16,6 +16,13 @@ public class PropHuntMatch : NetworkBehaviour
     public readonly NetworkVariable<MatchPhase> Phase = new(MatchPhase.Waiting);
     public readonly NetworkVariable<double> Deadline = new();
     public readonly NetworkVariable<PlayerRole> Winner = new(PlayerRole.Spectator);
+    public readonly NetworkVariable<MatchSettings> Settings = new();
+    public override void OnNetworkSpawn()
+    {
+        if (!IsServer || rules == null) return;
+        var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
+        Settings.Value = (bootstrap != null && bootstrap.SessionSettings.HasValue ? bootstrap.SessionSettings.Value : MatchSettings.From(rules)).Validated();
+    }
     readonly List<PropHuntPlayer> players = new();
     public IReadOnlyList<PropHuntPlayer> Players => players;
     public double SecondsLeft => System.Math.Max(0, Deadline.Value - NetworkManager.ServerTime.Time);
@@ -35,7 +42,7 @@ public class PropHuntMatch : NetworkBehaviour
         }
         foreach (var spawner in FindObjectsByType<MapPropSpawner>(FindObjectsSortMode.None))
             if (spawner.gameObject.scene == gameObject.scene) spawner.Roll();
-        int hunters = Mathf.Clamp(rules.hunters, 1, players.Count - 1);
+        int hunters = Mathf.Clamp(Settings.Value.Hunters, 1, players.Count - 1);
         for (int i = 0; i < players.Count; i++)
         {
             var role = i < hunters ? PlayerRole.Hunter : PlayerRole.Prop;
@@ -44,7 +51,7 @@ public class PropHuntMatch : NetworkBehaviour
         }
         Winner.Value = PlayerRole.Spectator;
         Phase.Value = MatchPhase.Hiding;
-        Deadline.Value = NetworkManager.ServerTime.Time + Mathf.Max(0, rules.hidingSeconds);
+        Deadline.Value = NetworkManager.ServerTime.Time + Settings.Value.HidingSeconds;
         return true;
     }
 
@@ -62,7 +69,7 @@ public class PropHuntMatch : NetworkBehaviour
         if (Phase.Value == MatchPhase.Hiding)
         {
             Phase.Value = MatchPhase.Hunting;
-            Deadline.Value = NetworkManager.ServerTime.Time + Mathf.Max(10, rules.huntingSeconds);
+            Deadline.Value = NetworkManager.ServerTime.Time + Settings.Value.HuntingSeconds;
         }
         else Finish(PlayerRole.Prop);
     }

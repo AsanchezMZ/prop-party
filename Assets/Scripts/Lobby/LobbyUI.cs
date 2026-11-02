@@ -22,6 +22,14 @@ public class LobbyUI : MonoBehaviour
     Button host, join, start, ready, connect;
     Button faceButton;
     VisualElement content;
+    VisualElement settingsPanel;
+    Button settingsButton, settingsApply;
+    SliderInt settingHunters, settingHide, settingHunt, settingWhistle, settingHealth;
+    Toggle settingConvert;
+    MatchSettings shownSettings;
+    Label settingsNote;
+    bool settingsOpen;
+    IVisualElementScheduledItem toastTimer;
     NetworkManager network;
     bool connecting;
     float connectionStarted;
@@ -55,6 +63,20 @@ public class LobbyUI : MonoBehaviour
         start = Bind(root, "start", () => lobby.StartGame());
         Bind(root, "leave", Leave);
         Bind(root, "join-back", () => ShowJoin(false));
+        settingsPanel = root.Q("settings-overlay");
+        settingsNote = root.Q<Label>("settings-note");
+        settingHunters = root.Q<SliderInt>("setting-hunters"); settingHide = root.Q<SliderInt>("setting-hide");
+        settingHunt = root.Q<SliderInt>("setting-hunt"); settingWhistle = root.Q<SliderInt>("setting-whistle");
+        settingHealth = root.Q<SliderInt>("setting-health"); settingConvert = root.Q<Toggle>("setting-convert");
+        settingsButton = Bind(root, "settings", () => ShowSettings(true));
+        Bind(root, "settings-back", () => ShowSettings(false));
+        settingsApply = Bind(root, "settings-apply", () =>
+        {
+            var settings = new MatchSettings { Hunters = settingHunters.value, HidingSeconds = settingHide.value,
+                HuntingSeconds = settingHunt.value, WhistleSeconds = settingWhistle.value,
+                Health = settingHealth.value, ConvertCaptured = settingConvert.value };
+            if (lobby.ApplySettings(settings)) { ShowSettings(false); Notify("⚙ Reglas guardadas. ¡Preparaos otra vez!"); }
+        });
         faceButton = Bind(root, "face-button", () =>
         {
             home.SetEnabled(false); room.SetEnabled(false); playerName.SetEnabled(false); faceButton.SetEnabled(false);
@@ -69,7 +91,8 @@ public class LobbyUI : MonoBehaviour
         root.RegisterCallback<KeyDownEvent>(evt =>
         {
             if (evt.keyCode != KeyCode.Escape) return;
-            if (faceCapture != null && faceCapture.IsOpen) faceCapture.Close();
+            if (settingsOpen) ShowSettings(false);
+            else if (faceCapture != null && faceCapture.IsOpen) faceCapture.Close();
             else if (joinPanel.style.display == DisplayStyle.Flex) ShowJoin(false);
             else return;
             evt.StopPropagation();
@@ -104,6 +127,34 @@ public class LobbyUI : MonoBehaviour
         faceButton.Focus();
     }
 
+    void Notify(string message)
+    {
+        toastTimer?.Pause();
+        status.text = message; status.style.display = DisplayStyle.Flex;
+        toastTimer = status.schedule.Execute(() => status.style.display = DisplayStyle.None).StartingIn(4500);
+    }
+
+    void ShowSettings(bool visible)
+    {
+        settingsOpen = visible;
+        settingsPanel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        room.SetEnabled(!visible); faceButton.SetEnabled(!visible && faceCapture != null);
+        if (visible) { PopulateSettings(); settingsApply.Focus(); } else settingsButton.Focus();
+    }
+
+    void PopulateSettings()
+    {
+        shownSettings = lobby.Settings.Value;
+        settingHunters.SetValueWithoutNotify(shownSettings.Hunters); settingHide.SetValueWithoutNotify(shownSettings.HidingSeconds);
+        settingHunt.SetValueWithoutNotify(shownSettings.HuntingSeconds); settingWhistle.SetValueWithoutNotify(shownSettings.WhistleSeconds);
+        settingHealth.SetValueWithoutNotify(shownSettings.Health); settingConvert.SetValueWithoutNotify(shownSettings.ConvertCaptured);
+        settingHunters.SetEnabled(network.IsServer); settingHide.SetEnabled(network.IsServer); settingHunt.SetEnabled(network.IsServer);
+        settingWhistle.SetEnabled(network.IsServer); settingHealth.SetEnabled(network.IsServer); settingConvert.SetEnabled(network.IsServer);
+        settingsApply.SetEnabled(network.IsServer);
+        if (lobby.Rules != null)
+            settingsNote.text = $"🎯 Cerca +{lobby.Rules.proximityPoints} / 3 s · A la vista +{lobby.Rules.visiblePoints} / s · Silbido manual +{lobby.Rules.manualWhistlePoints} (5 s de recarga). Los bonos de riesgo se acumulan.";
+    }
+
     void ShowJoin(bool visible)
     {
         joinPanel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
@@ -123,7 +174,7 @@ public class LobbyUI : MonoBehaviour
     {
         if (network.IsListening || connecting) return;
         string ip = address.value.Trim();
-        if (!asHost && !IPAddress.TryParse(ip, out _)) { status.text = "Introduce una dirección IP válida."; return; }
+        if (!asHost && !IPAddress.TryParse(ip, out _)) { Notify("Introduce una dirección IP válida."); return; }
         string name = playerName.value.Trim();
         if (string.IsNullOrEmpty(name)) name = "Player";
         // FixedString32Bytes has 29 UTF-8 payload bytes, not 29 characters.
@@ -133,7 +184,7 @@ public class LobbyUI : MonoBehaviour
         connecting = true; connectionStarted = Time.unscaledTime;
         host.SetEnabled(false); join.SetEnabled(false);
         connect.SetEnabled(false);
-        status.text = asHost ? "Creando sala…" : "Conectando…";
+        Notify(asHost ? "🎉 Creando sala…" : "🔌 Conectando…");
         var transport = network.GetComponent<UnityTransport>();
         transport.SetConnectionData(asHost ? "127.0.0.1" : ip, port, asHost ? "0.0.0.0" : null);
         try
@@ -151,7 +202,7 @@ public class LobbyUI : MonoBehaviour
     void Connected(ulong id)
     {
         if (id != network.LocalClientId) return;
-        connecting = false; status.text = "¡Dentro! Todos deben marcarse como listos."; Refresh();
+        connecting = false; Notify("🎉 ¡Dentro! Todos deben marcarse como listos."); Refresh();
     }
 
     void Disconnected(ulong id)
@@ -160,8 +211,8 @@ public class LobbyUI : MonoBehaviour
             Fail(string.IsNullOrEmpty(network.DisconnectReason) ? "Se ha cerrado la sala." : network.DisconnectReason);
     }
     void TransportFailed() => Fail("Error de transporte. Revisa la conexión.");
-    void Fail(string message) { connecting = false; network.Shutdown(); status.text = message; Refresh(false); }
-    void Leave() { network.Shutdown(); connecting = false; status.text = "Has salido de la sala."; Refresh(false); }
+    void Fail(string message) { connecting = false; network.Shutdown(); Notify(message); Refresh(false); }
+    void Leave() { network.Shutdown(); connecting = false; Notify("👋 Has salido de la sala."); Refresh(false); }
     void Refresh() => Refresh(network.IsConnectedClient);
 
     void Refresh(bool inRoom)
@@ -171,7 +222,9 @@ public class LobbyUI : MonoBehaviour
         host.SetEnabled(!connecting); join.SetEnabled(!connecting); connect.SetEnabled(!connecting);
         bool faceOpen = faceCapture != null && faceCapture.IsOpen;
         playerName.SetEnabled(!inRoom && !connecting && !faceOpen);
-        faceButton.SetEnabled(!connecting && faceCapture != null && !faceOpen);
+        faceButton.SetEnabled(!connecting && faceCapture != null && !faceOpen && !settingsOpen);
+        if (!inRoom && settingsOpen) { ShowSettings(false); room.SetEnabled(true); }
+        if (settingsOpen && !shownSettings.Equals(lobby.Settings.Value)) PopulateSettings();
         if (inRoom) joinPanel.style.display = DisplayStyle.None;
         if (!inRoom || !lobby.IsSpawned) return;
         roster.Clear();

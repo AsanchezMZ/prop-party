@@ -112,3 +112,15 @@ Button:disabled { opacity: 0.45; }
 .party .face-controls Button.quiet { height: 30px; }
 .party .face-status { height: 42px; margin-top: 10px; font-size: 13px; white-space: normal; color: rgb(20, 100, 94); }
 .party .face-privacy { font-size: 11px; white-space: normal; color: rgb(91, 106, 105); }
+.party .room-actions Button { width: 218px; }
+.party .settings-dialog { width: 700px; padding: 24px 32px; background-color: rgb(244, 240, 228); border-radius: 18px; border-width: 3px 3px 7px; border-color: rgb(25, 43, 48); }
+.party .settings-dialog .dialog-title { font-size: 32px; }
+.party .settings-dialog .dialog-description { margin: 8px 0 12px; }
+.party .settings-dialog .unity-base-field { margin-bottom: 9px; }
+.party .settings-dialog .unity-base-field__input { min-height: 26px; padding: 2px 8px; }
+.party .settings-dialog .unity-base-slider__input { min-width: 60px; }
+.party .settings-dialog .unity-toggle { flex-direction: row; align-items: center; }
+.party .settings-note { font-size: 12px; white-space: normal; margin: 6px 0 14px; color: rgb(20, 100, 94); }
+.party .settings-actions { flex-direction: row; justify-content: space-between; }
+.party .settings-actions Button { width: 240px; height: 46px; margin-bottom: 0; }
+.party .status { display: none; position: absolute; bottom: 20px; left: 230px; right: 230px; padding: 12px 18px; border-radius: 12px; background-color: rgb(25, 64, 67); color: rgb(255, 245, 209); white-space: normal; -unity-text-align: middle-center; }

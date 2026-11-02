@@ -10,6 +10,12 @@ public static class PropHuntChecks
         Require(FaceCapture.Crop(1920, 1080, false) == new Rect(0.21875f, 0, 0.5625f, 1), "Landscape webcam must crop centrally.");
         Require(FaceCapture.Crop(1080, 1920, false) == new Rect(0, 0.21875f, 1, 0.5625f), "Portrait webcam must crop centrally.");
         Require(FaceCapture.Crop(512, 512, true) == new Rect(0, 1, 1, -1), "Mirrored camera must flip vertically.");
+        var settings = new MatchSettings { Hunters = -4, HidingSeconds = 999, HuntingSeconds = 0, WhistleSeconds = -1, Health = 90 }.Validated();
+        Require(settings.Hunters == 1 && settings.HidingSeconds == 120 && settings.HuntingSeconds == 30 && settings.WhistleSeconds == 5 && settings.Health == 10,
+            "Session settings must respect server bounds.");
+        Require(PropHuntPlayer.InView(Vector3.forward, Vector3.forward * 5, 75), "A hunter sees the center of their view.");
+        Require(!PropHuntPlayer.InView(Vector3.forward, Vector3.back, 75), "A hunter cannot see behind them.");
+        Require(!PropHuntPlayer.InView(Vector3.forward, Vector3.right, 75), "Outside-FOV props do not earn visibility points.");
         var go = new GameObject("Prop probability check");
         try
         {
