@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b418258c1533ae47b441aa58685b310, type: 3}
   m_Name: Map_HauntedHouse
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
-  displayName: Map HauntedHouse
+  displayName: HauntedHouse
   sceneName: Assets/Scenes/maps/Map_HauntedHouse.unity
   description: 
   preview: {fileID: 0}
