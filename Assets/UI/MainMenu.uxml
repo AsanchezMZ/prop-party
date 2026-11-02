@@ -84,15 +84,41 @@
             </ui:VisualElement>
             <ui:VisualElement name="settings-overlay" class="join-overlay" style="display: none;">
                 <ui:VisualElement class="settings-dialog">
-                    <ui:Label text="⚙ A TU MANERA" class="dialog-title"/>
-                    <ui:Label text="El anfitrión ajusta la ronda. Cambiar reglas desmarca los preparados." class="dialog-description"/>
-                    <ui:SliderInt name="setting-hunters" label="🔎 Buscadores" low-value="1" high-value="16" show-input-field="true"/>
-                    <ui:SliderInt name="setting-hide" label="🙈 Escondite · segundos" low-value="0" high-value="120" show-input-field="true"/>
-                    <ui:SliderInt name="setting-hunt" label="⏱ Caza · segundos" low-value="30" high-value="900" show-input-field="true"/>
-                    <ui:SliderInt name="setting-whistle" label="🎵 Silbido automático · segundos" low-value="5" high-value="120" show-input-field="true"/>
-                    <ui:SliderInt name="setting-health" label="❤ Vidas" low-value="1" high-value="10" show-input-field="true"/>
-                    <ui:Toggle name="setting-convert" label="🔄 Capturados pasan a buscadores"/>
-                    <ui:Label name="settings-note" text="🎯 Bonos por riesgo y silbidos manuales. Recarga de silbido: 5 s." class="settings-note"/>
+                    <ui:Label text="A TU MANERA" class="dialog-title"/>
+                    <ui:Label text="Configura la próxima ronda. Todos volverán a confirmar que están listos." class="dialog-description"/>
+                    <ui:VisualElement class="settings-grid">
+                        <ui:VisualElement class="settings-column settings-column-left">
+                            <ui:Label text="EL EQUIPO" class="settings-section"/>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Buscadores" class="setting-title"/>
+                                <ui:SliderInt name="setting-hunters" tooltip="Número inicial de buscadores; siempre quedará un escondedor." low-value="1" high-value="16" show-input-field="true" class="setting-slider"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Vidas por escondedor" class="setting-title"/>
+                                <ui:SliderInt name="setting-health" low-value="1" high-value="10" show-input-field="true" class="setting-slider"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row setting-switch-row">
+                                <ui:Label text="Al ser capturado" class="setting-title"/>
+                                <ui:Toggle name="setting-convert" text="Pasar a buscador" class="setting-toggle"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-column">
+                            <ui:Label text="EL RELOJ · SEGUNDOS" class="settings-section"/>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Tiempo para esconderse" class="setting-title"/>
+                                <ui:SliderInt name="setting-hide" low-value="0" high-value="120" show-input-field="true" class="setting-slider"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Duración de la caza" class="setting-title"/>
+                                <ui:SliderInt name="setting-hunt" low-value="30" high-value="900" show-input-field="true" class="setting-slider"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Silbido automático cada…" class="setting-title"/>
+                                <ui:SliderInt name="setting-whistle" low-value="5" high-value="120" show-input-field="true" class="setting-slider"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label name="settings-note" text="Bonos por riesgo y silbidos manuales. Recarga de silbido: 5 s." class="settings-note"/>
                     <ui:VisualElement class="settings-actions">
                         <ui:Button name="settings-back" text="← VOLVER" class="quiet"/>
                         <ui:Button name="settings-apply" text="✓ APLICAR" class="primary"/>

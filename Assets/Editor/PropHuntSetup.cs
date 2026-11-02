@@ -141,6 +141,11 @@ public static class PropHuntSetup
                 audio.playOnAwake = false; Set(ui, "audioSource", audio);
             }
             var network = UnityEngine.Object.FindFirstObjectByType<NetworkManager>();
+            var partyAudio = network.GetComponent<PartyAudio>();
+            if (partyAudio == null) partyAudio = network.gameObject.AddComponent<PartyAudio>();
+            var audioData = new SerializedObject(partyAudio);
+            if (audioData.FindProperty("config").objectReferenceValue == null)
+                Set(partyAudio, "config", AssetDatabase.LoadAssetAtPath<GameAudioConfig>("Assets/PropHuntConfig/Audio.asset"));
             network.NetworkConfig.ConnectionApproval = true;
             // Append to existing lists, preserving any manually registered prefabs.
             var list = network.NetworkConfig.Prefabs.NetworkPrefabsLists.FirstOrDefault();

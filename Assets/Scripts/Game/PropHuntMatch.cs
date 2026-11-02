@@ -24,6 +24,7 @@ public class PropHuntMatch : NetworkBehaviour
         Settings.Value = (bootstrap != null && bootstrap.SessionSettings.HasValue ? bootstrap.SessionSettings.Value : MatchSettings.From(rules)).Validated();
     }
     readonly List<PropHuntPlayer> players = new();
+    bool lastHiderAnnounced;
     public IReadOnlyList<PropHuntPlayer> Players => players;
     public double SecondsLeft => System.Math.Max(0, Deadline.Value - NetworkManager.ServerTime.Time);
 
@@ -43,6 +44,7 @@ public class PropHuntMatch : NetworkBehaviour
         foreach (var spawner in FindObjectsByType<MapPropSpawner>(FindObjectsSortMode.None))
             if (spawner.gameObject.scene == gameObject.scene) spawner.Roll();
         int hunters = Mathf.Clamp(Settings.Value.Hunters, 1, players.Count - 1);
+        lastHiderAnnounced = players.Count - hunters <= 1;
         for (int i = 0; i < players.Count; i++)
         {
             var role = i < hunters ? PlayerRole.Hunter : PlayerRole.Prop;
@@ -65,6 +67,8 @@ public class PropHuntMatch : NetworkBehaviour
             if (player.Role.Value == PlayerRole.Hunter) hunters++;
         }
         if (props == 0 || hunters == 0) { Finish(props == 0 ? PlayerRole.Hunter : PlayerRole.Prop); return; }
+        if (props == 1 && !lastHiderAnnounced)
+        { lastHiderAnnounced = true; LastHiderClientRpc(); }
         if (SecondsLeft > 0) return;
         if (Phase.Value == MatchPhase.Hiding)
         {
@@ -75,6 +79,9 @@ public class PropHuntMatch : NetworkBehaviour
     }
 
     void Finish(PlayerRole winner) { Winner.Value = winner; Phase.Value = MatchPhase.Finished; }
+
+    [ClientRpc]
+    void LastHiderClientRpc() => PartyAudio.Instance?.Play(PartyAudio.Settings?.lastHider);
 
     public void ReturnToLobby()
     {

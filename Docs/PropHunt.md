@@ -30,6 +30,8 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 ## Arma, audio y presentación
 
+**Audio central:** asigna las pistas y efectos opcionales en `Assets/PropHuntConfig/Audio.asset`. Ya está conectado al NetworkManager mediante `PartyAudio`. Catálogo completo, eventos, recomendaciones de duración y propuestas adicionales: **`Docs/Audio.md`**. Los campos de audio existentes del jugador/arma conservan prioridad sobre los equivalentes centrales. Los slots vacíos se quedan en silencio.
+
 `ThrowableDefinition`: prefab de proyectil, velocidad, gravedad, radio de impacto, vida, daño, cadencia, máscara, sonido de lanzamiento/impacto y efecto de impacto.
 
 El prefab necesita `NetworkObject`, `NetworkTransform` **server authority**, `HunterProjectile` y un hijo visual. Asigna el mismo `ThrowableDefinition` al proyectil y al jugador. Registra el prefab en la lista del `NetworkManager`. Sustituye el hijo visual por un huevo, piedra u otro modelo; no necesita Rigidbody ni collider, el servidor realiza barridos esféricos. El prefab generado inicialmente tiene un hijo visual vacío para asignar tu recurso.

@@ -32,6 +32,7 @@ public class LobbyUI : MonoBehaviour
     IVisualElementScheduledItem toastTimer;
     NetworkManager network;
     bool connecting;
+    bool disconnectSoundPlayed;
     float connectionStarted;
 
     void Start()
@@ -55,27 +56,39 @@ public class LobbyUI : MonoBehaviour
         status = root.Q<Label>("status"); count = root.Q<Label>("player-count");
         previewTitle = root.Q<Label>("map-title"); mapDescription = root.Q<Label>("map-description");
         maps = root.Q<DropdownField>("maps");
-        maps.RegisterValueChangedCallback(_ => { if (network.IsServer) lobby.SelectMap(maps.index); });
+        maps.RegisterValueChangedCallback(_ =>
+        {
+            if (!network.IsServer || !lobby.IsSpawned || maps.index < 0 || maps.index >= lobby.Maps.Length || maps.index == lobby.SelectedMap.Value) return;
+            PartyAudio.Instance?.Play(PartyAudio.Settings?.mapSelectWhoosh);
+            lobby.SelectMap(maps.index);
+        });
         host = Bind(root, "host", () => Connect(true));
         join = Bind(root, "join", () => ShowJoin(true));
         connect = Bind(root, "connect", () => { ShowJoin(false); Connect(false); });
-        ready = Bind(root, "ready", () => lobby.ToggleReadyServerRpc());
+        ready = Bind(root, "ready", () =>
+        {
+            foreach (var player in lobby.Players)
+                if (player.ClientId == network.LocalClientId)
+                { PartyAudio.Instance?.Play(player.Ready ? PartyAudio.Settings?.unready : PartyAudio.Settings?.ready); break; }
+            lobby.ToggleReadyServerRpc();
+        });
         start = Bind(root, "start", () => lobby.StartGame());
         Bind(root, "leave", Leave);
-        Bind(root, "join-back", () => ShowJoin(false));
+        Bind(root, "join-back", () => { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiBack); ShowJoin(false); });
         settingsPanel = root.Q("settings-overlay");
         settingsNote = root.Q<Label>("settings-note");
         settingHunters = root.Q<SliderInt>("setting-hunters"); settingHide = root.Q<SliderInt>("setting-hide");
         settingHunt = root.Q<SliderInt>("setting-hunt"); settingWhistle = root.Q<SliderInt>("setting-whistle");
         settingHealth = root.Q<SliderInt>("setting-health"); settingConvert = root.Q<Toggle>("setting-convert");
         settingsButton = Bind(root, "settings", () => ShowSettings(true));
-        Bind(root, "settings-back", () => ShowSettings(false));
+        Bind(root, "settings-back", () => { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiBack); ShowSettings(false); });
         settingsApply = Bind(root, "settings-apply", () =>
         {
             var settings = new MatchSettings { Hunters = settingHunters.value, HidingSeconds = settingHide.value,
                 HuntingSeconds = settingHunt.value, WhistleSeconds = settingWhistle.value,
                 Health = settingHealth.value, ConvertCaptured = settingConvert.value };
-            if (lobby.ApplySettings(settings)) { ShowSettings(false); Notify("⚙ Reglas guardadas. ¡Preparaos otra vez!"); }
+            if (lobby.ApplySettings(settings))
+            { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiConfirm); ShowSettings(false); Notify("Reglas guardadas. ¡Preparaos otra vez!"); }
         });
         faceButton = Bind(root, "face-button", () =>
         {
@@ -101,7 +114,7 @@ public class LobbyUI : MonoBehaviour
         network.OnClientConnectedCallback += Connected;
         network.OnClientDisconnectCallback += Disconnected;
         network.OnTransportFailure += TransportFailed;
-        if (audioSource != null && menuMusic != null)
+        if (PartyAudio.Instance == null && audioSource != null && menuMusic != null)
         { audioSource.clip = menuMusic; audioSource.loop = true; audioSource.Play(); }
         Refresh();
     }
@@ -152,7 +165,7 @@ public class LobbyUI : MonoBehaviour
         settingWhistle.SetEnabled(network.IsServer); settingHealth.SetEnabled(network.IsServer); settingConvert.SetEnabled(network.IsServer);
         settingsApply.SetEnabled(network.IsServer);
         if (lobby.Rules != null)
-            settingsNote.text = $"🎯 Cerca +{lobby.Rules.proximityPoints} / 3 s · A la vista +{lobby.Rules.visiblePoints} / s · Silbido manual +{lobby.Rules.manualWhistlePoints} (5 s de recarga). Los bonos de riesgo se acumulan.";
+            settingsNote.text = $"Cerca: +{lobby.Rules.proximityPoints} cada 3 s. A la vista: +{lobby.Rules.visiblePoints} por segundo.\nSilbar: +{lobby.Rules.manualWhistlePoints}, con 5 s de recarga. Los bonos de riesgo se suman.";
     }
 
     void ShowJoin(bool visible)
@@ -166,13 +179,19 @@ public class LobbyUI : MonoBehaviour
     Button Bind(VisualElement root, string name, System.Action action)
     {
         var button = root.Q<Button>(name);
-        button.clicked += () => { if (audioSource != null && clickSound != null) audioSource.PlayOneShot(clickSound); action(); };
+        button.clicked += () =>
+        {
+            if (audioSource != null && clickSound != null) audioSource.PlayOneShot(clickSound);
+            else PartyAudio.Instance?.Play(PartyAudio.Settings?.uiClick);
+            action();
+        };
         return button;
     }
 
     void Connect(bool asHost)
     {
         if (network.IsListening || connecting) return;
+        disconnectSoundPlayed = false;
         string ip = address.value.Trim();
         if (!asHost && !IPAddress.TryParse(ip, out _)) { Notify("Introduce una dirección IP válida."); return; }
         string name = playerName.value.Trim();
@@ -202,17 +221,31 @@ public class LobbyUI : MonoBehaviour
     void Connected(ulong id)
     {
         if (id != network.LocalClientId) return;
+        PartyAudio.Instance?.Play(PartyAudio.Settings?.connected);
         connecting = false; Notify("🎉 ¡Dentro! Todos deben marcarse como listos."); Refresh();
     }
 
     void Disconnected(ulong id)
     {
         if (id == network.LocalClientId || !network.IsClient)
-            Fail(string.IsNullOrEmpty(network.DisconnectReason) ? "Se ha cerrado la sala." : network.DisconnectReason);
+        {
+            PlayDisconnect();
+            connecting = false;
+            string reason = network.DisconnectReason;
+            network.Shutdown();
+            Notify(string.IsNullOrEmpty(reason) ? "Se ha cerrado la sala." : reason);
+            Refresh(false);
+        }
+    }
+    void PlayDisconnect()
+    {
+        if (disconnectSoundPlayed) return;
+        disconnectSoundPlayed = true;
+        PartyAudio.Instance?.Play(PartyAudio.Settings?.disconnected);
     }
     void TransportFailed() => Fail("Error de transporte. Revisa la conexión.");
-    void Fail(string message) { connecting = false; network.Shutdown(); Notify(message); Refresh(false); }
-    void Leave() { network.Shutdown(); connecting = false; Notify("👋 Has salido de la sala."); Refresh(false); }
+    void Fail(string message) { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiError); connecting = false; network.Shutdown(); Notify(message); Refresh(false); }
+    void Leave() { PlayDisconnect(); network.Shutdown(); connecting = false; Notify("👋 Has salido de la sala."); Refresh(false); }
     void Refresh() => Refresh(network.IsConnectedClient);
 
     void Refresh(bool inRoom)

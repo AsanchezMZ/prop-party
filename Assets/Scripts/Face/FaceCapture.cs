@@ -28,7 +28,7 @@ public class FaceCapture : MonoBehaviour
         enableCamera = root.Q<Button>("face-enable"); snap = root.Q<Button>("face-snap");
         enableCamera.clicked += StartCamera;
         snap.clicked += Snap;
-        root.Q<Button>("face-back").clicked += Close;
+        root.Q<Button>("face-back").clicked += () => { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiBack); Close(); };
         devices.RegisterValueChangedCallback(_ =>
         {
             StopCamera(); ShowSaved();
@@ -106,6 +106,7 @@ public class FaceCapture : MonoBehaviour
         guide.style.display = guide.image != null ? DisplayStyle.Flex : DisplayStyle.None;
         devices.SetEnabled(true); enableCamera.SetEnabled(true); snap.SetEnabled(true);
         status.text = "Centra tu cara en la silueta. La foto no se guarda hasta pulsar el botón.";
+        PartyAudio.Instance?.Play(PartyAudio.Settings?.cameraOn);
     }
 
     void Update()
@@ -158,6 +159,7 @@ public class FaceCapture : MonoBehaviour
             if (composed == null) { status.text = "No se pudo preparar la foto. Revisa FaceConfig."; return; }
             Destroy(composed);
             bool saved = LocalProfile.SaveFace(jpg);
+            PartyAudio.Instance?.Play(PartyAudio.Settings?.photoCaptured);
             StopCamera(); ShowSaved();
             status.text = saved ? "¡Foto guardada! La llevará tu personaje en la próxima ronda." : "Foto disponible para esta sesión, pero no se pudo guardar en disco.";
         }

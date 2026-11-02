@@ -13,5 +13,6 @@ public class ThrowableDefinition : ScriptableObject
     public LayerMask hitMask = ~0;
     public AudioClip throwSound;
     public AudioClip impactSound;
+    public AudioClip missSound;
     public GameObject impactEffect;
 }

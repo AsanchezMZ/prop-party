@@ -24,7 +24,12 @@ public class HunterProjectile : NetworkBehaviour
     {
         if (!IsServer || definition == null) return;
         remaining -= Time.fixedDeltaTime;
-        if (remaining <= 0 || shooter == null || !shooter.CanHunt) { NetworkObject.Despawn(); return; }
+        if (shooter == null || !shooter.CanHunt) { NetworkObject.Despawn(); return; }
+        if (remaining <= 0)
+        {
+            ImpactClientRpc(transform.position, true, false);
+            NetworkObject.Despawn(); return;
+        }
         velocity += Vector3.down * definition.gravity * Time.fixedDeltaTime;
         Vector3 delta = velocity * Time.fixedDeltaTime;
         // Ignore the shooter without allowing a nearer wall to be skipped.
@@ -35,8 +40,9 @@ public class HunterProjectile : NetworkBehaviour
         {
             var target = hit.collider.GetComponentInParent<PropHuntPlayer>();
             if (target == shooter || (target != null && target.Role.Value == PlayerRole.Spectator)) continue;
-            if (target != null) target.Hit(definition.damage, shooter);
-            ImpactClientRpc(hit.point);
+            bool hitProp = target != null && target.Role.Value == PlayerRole.Prop;
+            if (hitProp) target.Hit(definition.damage, shooter);
+            ImpactClientRpc(hit.point, !hitProp, true);
             NetworkObject.Despawn();
             return;
         }
@@ -45,11 +51,14 @@ public class HunterProjectile : NetworkBehaviour
     }
 
     [ClientRpc]
-    void ImpactClientRpc(Vector3 position)
+    void ImpactClientRpc(Vector3 position, bool missed, bool collided)
     {
         if (definition == null) return;
-        PartyVfx.Burst(position, new Color(1, 0.8f, 0.2f));
-        if (definition.impactSound != null) AudioSource.PlayClipAtPoint(definition.impactSound, position);
-        if (definition.impactEffect != null) Destroy(Instantiate(definition.impactEffect, position, Quaternion.identity), 3);
+        if (collided) PartyVfx.Burst(position, new Color(1, 0.8f, 0.2f));
+        var miss = definition.missSound != null ? definition.missSound : PartyAudio.Settings?.shotMiss;
+        var impact = definition.impactSound != null ? definition.impactSound : PartyAudio.Settings?.impactSound;
+        var clip = missed && miss != null ? miss : collided ? impact : null;
+        if (clip != null) AudioSource.PlayClipAtPoint(clip, position, PartyAudio.Settings != null ? PartyAudio.Settings.effectsVolume : 1);
+        if (collided && definition.impactEffect != null) Destroy(Instantiate(definition.impactEffect, position, Quaternion.identity), 3);
     }
 }

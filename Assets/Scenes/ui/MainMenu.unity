@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 250669791}
   - component: {fileID: 250669790}
   - component: {fileID: 250669792}
+  - component: {fileID: 250669793}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -241,6 +242,19 @@ MonoBehaviour:
   playerPrefab: {fileID: 8512945934692308143, guid: dd3662664be7bbf418e8588763ca80bf, type: 3}
   lobbyScene: MainMenu
   maxPlayers: 4
+--- !u!114 &250669793
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 250669787}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d8aa90bdfe44022be350ce100a4c2bc, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PartyAudio
+  config: {fileID: 11400000, guid: 55af9600160c4d4696637905804cebbd, type: 2}
 --- !u!1 &264815509
 GameObject:
   m_ObjectHideFlags: 0
