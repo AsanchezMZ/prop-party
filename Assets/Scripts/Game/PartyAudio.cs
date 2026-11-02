@@ -12,9 +12,6 @@ public class PartyAudio : MonoBehaviour
     public static GameAudioConfig Settings => Instance != null ? Instance.config : null;
     AudioSource music, effects, danger, ambience;
     AudioClip wantedMusic;
-    readonly AudioSource[] countdown = new AudioSource[3];
-    double countdownDeadline = double.NaN;
-    MatchPhase countdownPhase = (MatchPhase)255;
     PropHuntMatch match;
     PropHuntPlayer player;
     MatchPhase previousPhase = (MatchPhase)255;
@@ -28,7 +25,6 @@ public class PartyAudio : MonoBehaviour
         Instance = this;
         music = Source("Music", true); effects = Source("UI and round effects", false);
         danger = Source("Local danger", true); ambience = Source("Ambience", true);
-        for (int i = 0; i < countdown.Length; i++) countdown[i] = Source("Countdown " + (3 - i), false);
         music.volume = 0;
     }
 
@@ -53,7 +49,6 @@ public class PartyAudio : MonoBehaviour
         match = FindAnyObjectByType<PropHuntMatch>(); player = null;
         previousPhase = (MatchPhase)255; previousRole = PlayerRole.Spectator;
         wasNearby = wasSpotted = warned = false; previousScore = 0;
-        StopCountdown();
     }
 
     public void Play(AudioClip clip)
@@ -68,13 +63,6 @@ public class PartyAudio : MonoBehaviour
         bool inMatch = match != null && match.IsSpawned;
         var phase = inMatch ? match.Phase.Value : MatchPhase.Waiting;
         double seconds = inMatch ? match.SecondsLeft : 0;
-        double deadline = inMatch ? match.Deadline.Value : 0;
-        if (phase != countdownPhase || !deadline.Equals(countdownDeadline))
-        {
-            StopCountdown(); countdownPhase = phase; countdownDeadline = deadline;
-            if (inMatch && (phase == MatchPhase.Hiding || phase == MatchPhase.Hunting))
-                ScheduleCountdown(deadline, network.ServerTime.Time);
-        }
         var local = network != null && network.IsClient && network.LocalClient != null ? network.LocalClient.PlayerObject : null;
         var currentPlayer = local != null ? local.GetComponent<PropHuntPlayer>() : null;
         if (currentPlayer != player)
@@ -95,7 +83,6 @@ public class PartyAudio : MonoBehaviour
             }
             else if (phase == MatchPhase.Finished)
             {
-                Play(config.roundEnd);
                 if (player != null && player.Role.Value != PlayerRole.Spectator)
                     Play(player.Role.Value == match.Winner.Value ? config.victory : config.defeat);
             }
@@ -141,35 +128,12 @@ public class PartyAudio : MonoBehaviour
         if (clip != null) source.Play();
     }
 
-    public static double CountdownDelay(double deadline, double serverNow, int number) => deadline - serverNow - number;
-
-    void ScheduleCountdown(double deadline, double serverNow)
-    {
-        double dspNow = AudioSettings.dspTime;
-        for (int i = 0; i < countdown.Length; i++)
-        {
-            var clip = i == 0 ? config.countdown3 : i == 1 ? config.countdown2 : config.countdown1;
-            double delay = CountdownDelay(deadline, serverNow, 3 - i);
-            // Never replay past beats or squeeze a backlog into one frame after a late scene load.
-            if (clip == null || delay < 0) continue;
-            countdown[i].clip = clip; countdown[i].volume = config.effectsVolume;
-            countdown[i].PlayScheduled(dspNow + delay);
-        }
-    }
-
-    void StopCountdown()
-    {
-        foreach (var source in countdown) if (source != null) source.Stop();
-        countdownDeadline = double.NaN; countdownPhase = (MatchPhase)255;
-    }
-
     void OnDisable()
     {
         SceneManager.sceneLoaded -= SceneLoaded;
         if (music != null) music.Stop();
         if (danger != null) danger.Stop();
         if (ambience != null) ambience.Stop();
-        StopCountdown();
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }

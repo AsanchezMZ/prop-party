@@ -59,7 +59,6 @@ public class LobbyUI : MonoBehaviour
         maps.RegisterValueChangedCallback(_ =>
         {
             if (!network.IsServer || !lobby.IsSpawned || maps.index < 0 || maps.index >= lobby.Maps.Length || maps.index == lobby.SelectedMap.Value) return;
-            PartyAudio.Instance?.Play(PartyAudio.Settings?.mapSelectWhoosh);
             lobby.SelectMap(maps.index);
         });
         host = Bind(root, "host", () => Connect(true));

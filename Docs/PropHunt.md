@@ -36,7 +36,7 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 El prefab necesita `NetworkObject`, `NetworkTransform` **server authority**, `HunterProjectile` y un hijo visual. Asigna el mismo `ThrowableDefinition` al proyectil y al jugador. Registra el prefab en la lista del `NetworkManager`. Sustituye el hijo visual por un huevo, piedra u otro modelo; no necesita Rigidbody ni collider, el servidor realiza barridos esféricos. El prefab generado inicialmente tiene un hijo visual vacío para asignar tu recurso.
 
-`PropHuntPlayer`: raíz del disfraz, modelo normal, arma, AudioSource 3D, silbido, transformación, captura, clips de pasos y salto. Los pasos se disparan en servidor por desplazamiento; el salto mantiene su sonido local desde el controlador. Sin clips asignados no se reproduce sonido.
+`PropHuntPlayer`: raíz del disfraz, modelo normal, arma, AudioSource 3D, transformación, captura, clips de pasos y salto. Los silbidos usan la colección central `Audio.asset.whistles` para ambos tipos, recogible por prefijo `whistle_{nombre}` desde el menú contextual del asset. El servidor elige el mismo clip para todos. Los pasos se disparan en servidor por desplazamiento; el salto mantiene su sonido local desde el controlador. Sin clips asignados no se reproduce sonido.
 
 `LobbyUI`: USS, fondo opcional, AudioSource, música y clic. `MapDefinition.preview` es la miniatura. El menú presenta una composición de 1280×720 que se escala completa y centrada a la ventana, sin scroll. Inicio, diálogo para unirse y sala tienen distribuciones propias. La ilustración de props está hecha con formas de UI, sin assets externos; colores y presentación se editan en el USS.
 

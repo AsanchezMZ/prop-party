@@ -48,27 +48,41 @@ public static class PropHuntChecks
 
     static void CheckMusicSelection()
     {
-        Require(PartyAudio.CountdownDelay(100, 90, 3) == 7, "Countdown 3 schedules against the server deadline.");
-        Require(PartyAudio.CountdownDelay(100, 98, 3) < 0, "Late clients must skip a past countdown beat.");
-        Require(PartyAudio.CountdownDelay(100, 98, 1) == 1, "Late clients still schedule future countdown beats.");
         var config = ScriptableObject.CreateInstance<GameAudioConfig>();
         var music = AudioClip.Create("Audio selection check", 32, 1, 8000, false);
         var finale = AudioClip.Create("Final stretch check", 32, 1, 8000, false);
         try
         {
+            Require(config.PickWhistleIndex() == -1 && config.WhistleAt(0) == null, "An empty whistle collection stays silent.");
+            var randomState = UnityEngine.Random.state;
+            try
+            {
+                config.whistles = new[] { null, music, null, finale };
+                for (int i = 0; i < 100; i++)
+                {
+                    int index = config.PickWhistleIndex();
+                    Require(index == 1 || index == 3, "Only assigned whistle clips can be selected.");
+                    Require(config.WhistleAt(index) != null, "A selected whistle index resolves to the shared clip.");
+                }
+                config.whistles = new AudioClip[] { null };
+                Require(config.PickWhistleIndex() == -1, "A collection containing only empty slots stays silent.");
+                Require(config.WhistleAt(-1) == null && config.WhistleAt(99) == null, "Invalid whistle indices stay silent.");
+            }
+            finally { UnityEngine.Random.state = randomState; }
             Require(config.SelectMusic(false, false, MatchPhase.Waiting, 0) == null, "Empty audio slots stay silent.");
             config.menuMusic = music; config.gameplayMusic = music;
             Require(config.SelectMusic(false, false, MatchPhase.Waiting, 0) == music, "Menu selects its track.");
             Require(config.SelectMusic(true, true, MatchPhase.Hunting, 20) == music, "Missing final track keeps gameplay music.");
             config.finalStretchMusic = finale;
             Require(config.SelectMusic(true, true, MatchPhase.Hunting, 20) == finale, "Final stretch selects its optional track.");
-            Require(config.SelectMusic(true, true, MatchPhase.Finished, 0) == null, "Empty results track stays silent.");
+            config.victory = music; config.defeat = finale;
+            Require(config.SelectMusic(true, true, MatchPhase.Finished, 0) == null, "Results clips are not treated as looping music.");
+            Require(config.victory != null && config.defeat != null, "Victory and defeat own the result audio slots.");
             var door = new GameObject("Unspawned door audio check").AddComponent<DoorAudio>();
             try
             {
                 var data = new SerializedObject(door);
-                foreach (var field in new[] { "openSound", "closeSound", "handleSound", "knockSound" })
-                    data.FindProperty(field).objectReferenceValue = music;
+                data.FindProperty("sound").objectReferenceValue = music;
                 data.ApplyModifiedPropertiesWithoutUndo();
                 door.Opened(); door.Closed(); door.HandleUsed(); door.Knocked();
                 Require(!door.GetComponent<AudioSource>().isPlaying, "Unspawned doors must not emit audio or send gameplay events.");

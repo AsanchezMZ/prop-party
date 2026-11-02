@@ -9,7 +9,6 @@ public class PropHuntPlayer : NetworkBehaviour
     [SerializeField] GameObject normalVisual;
     [SerializeField] ThrowableDefinition weapon;
     [SerializeField] AudioSource audioSource;
-    [SerializeField] AudioClip whistleSound;
     [SerializeField] AudioClip disguiseSound;
     [SerializeField] AudioClip capturedSound;
     [SerializeField] AudioClip jumpSound;
@@ -113,7 +112,7 @@ public class PropHuntPlayer : NetworkBehaviour
         if (Role.Value == PlayerRole.Prop && Match.Phase.Value == MatchPhase.Hunting && now >= nextWhistle)
         {
             nextWhistle = now + Match.Settings.Value.WhistleSeconds;
-            CueClientRpc(0);
+            PlayWhistle(false);
         }
         if (now >= nextSense)
         {
@@ -188,7 +187,14 @@ public class PropHuntPlayer : NetworkBehaviour
         if (Role.Value != PlayerRole.Prop || Match == null || Match.Phase.Value != MatchPhase.Hunting || now < NextManualWhistle.Value) return;
         NextManualWhistle.Value = now + ManualWhistleCooldown;
         AddScore(Match.Rules.manualWhistlePoints);
-        CueClientRpc(5);
+        PlayWhistle(true);
+    }
+
+    void PlayWhistle(bool manual)
+    {
+        // The server picks once so every listener hears the same clip.
+        var settings = PartyAudio.Settings;
+        CueClientRpc(manual ? 5 : 0, settings != null ? settings.PickWhistleIndex() : -1);
     }
 
     public void SetFirstPersonVisual(bool value)
@@ -277,7 +283,7 @@ public class PropHuntPlayer : NetworkBehaviour
         if (!IsServer || Role.Value != PlayerRole.Prop || Match.Phase.Value != MatchPhase.Hunting) return;
         Health.Value = Mathf.Max(0, Health.Value - Mathf.Max(1, damage));
         CueClientRpc(6);
-        if (hunter != null && hunter != this && hunter.CanHunt) hunter.ConfirmHitClientRpc(Health.Value == 0);
+        if (hunter != null && hunter != this && hunter.CanHunt) hunter.ConfirmHitClientRpc();
         if (Health.Value != 0) return;
         if (hunter != null && hunter != this && hunter.CanHunt) hunter.AddScore(Match.Rules.capturePoints);
         Role.Value = Match.Settings.Value.ConvertCaptured ? PlayerRole.Hunter : PlayerRole.Spectator;
@@ -307,25 +313,25 @@ public class PropHuntPlayer : NetworkBehaviour
     }
 
     [ClientRpc]
-    void ConfirmHitClientRpc(bool captured)
+    void ConfirmHitClientRpc()
     {
-        if (IsOwner) PartyAudio.Instance?.Play(captured ? PartyAudio.Settings?.captureConfirmation : PartyAudio.Settings?.hitConfirmation);
+        if (IsOwner) PartyAudio.Instance?.Play(PartyAudio.Settings?.hitConfirmation);
     }
 
     [ClientRpc]
-    void CueClientRpc(int cue)
+    void CueClientRpc(int cue, int whistleIndex = -1)
     {
         var settings = PartyAudio.Settings;
         var steps = footstepClips != null && footstepClips.Length > 0 ? footstepClips : footstepSound != null ? null : settings?.footsteps;
-        var clip = cue == 0 || cue == 5 ? whistleSound : cue == 1 ? disguiseSound : cue == 2 ? capturedSound :
+        var clip = cue == 0 || cue == 5 ? settings?.WhistleAt(whistleIndex) : cue == 1 ? disguiseSound : cue == 2 ? capturedSound :
             cue == 4 ? (steps != null && steps.Length > 0 ? steps[Random.Range(0, steps.Length)] : footstepSound) :
             cue == 3 && weapon != null ? weapon.throwSound : null;
         if (clip == null && settings != null)
             clip = cue switch
             {
-                0 => settings.automaticWhistle, 1 => settings.disguise, 2 => settings.captured,
-                3 => settings.throwSound, 5 => settings.manualWhistle, 6 => settings.hurt,
-                7 => settings.freeze, 8 => settings.unfreeze, 9 => settings.rotate, _ => null
+                1 => settings.disguise, 2 => settings.captured,
+                3 => settings.throwSound, 6 => settings.hurt,
+                7 => settings.freeze, 8 => settings.freeze, 9 => settings.rotate, _ => null
             };
         if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.effectsVolume : 1);
         if (cue == 0 || cue == 1 || cue == 2 || cue == 5 || cue == 6)

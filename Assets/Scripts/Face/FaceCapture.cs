@@ -106,7 +106,6 @@ public class FaceCapture : MonoBehaviour
         guide.style.display = guide.image != null ? DisplayStyle.Flex : DisplayStyle.None;
         devices.SetEnabled(true); enableCamera.SetEnabled(true); snap.SetEnabled(true);
         status.text = "Centra tu cara en la silueta. La foto no se guarda hasta pulsar el botón.";
-        PartyAudio.Instance?.Play(PartyAudio.Settings?.cameraOn);
     }
 
     void Update()

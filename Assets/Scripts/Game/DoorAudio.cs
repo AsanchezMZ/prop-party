@@ -6,7 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(NetworkObject), typeof(AudioSource))]
 public class DoorAudio : NetworkBehaviour
 {
-    [SerializeField] AudioClip openSound, closeSound, handleSound, knockSound;
+    [SerializeField] AudioClip sound;
     AudioSource source;
     int lastCue = -1;
     double lastCueTime = double.NegativeInfinity;
@@ -17,27 +17,25 @@ public class DoorAudio : NetworkBehaviour
         source.playOnAwake = false; source.spatialBlend = 1;
     }
 
-    public void Opened() => Send(0);
-    public void Closed() => Send(1);
-    public void HandleUsed() => Send(2);
-    public void Knocked() => Send(3);
+    public void Opened() => Send();
+    public void Closed() => Send();
+    public void HandleUsed() => Send();
+    public void Knocked() => Send();
 
-    void Send(int cue)
+    void Send()
     {
         if (!IsSpawned || !IsServer) return;
         double now = NetworkManager.ServerTime.Time;
-        if (cue == lastCue && now - lastCueTime < 0.1) return;
-        lastCue = cue; lastCueTime = now;
-        PlayClientRpc(cue);
+        if (lastCue == 0 && now - lastCueTime < 0.1) return;
+        lastCue = 0; lastCueTime = now;
+        PlayClientRpc();
     }
 
     [ClientRpc]
-    void PlayClientRpc(int cue)
+    void PlayClientRpc()
     {
         var config = PartyAudio.Settings;
-        var clip = cue == 0 ? openSound : cue == 1 ? closeSound : cue == 2 ? handleSound : knockSound;
-        if (clip == null && config != null)
-            clip = cue == 0 ? config.doorOpen : cue == 1 ? config.doorClose : cue == 2 ? config.doorHandle : config.doorKnock;
+        var clip = sound != null ? sound : config != null ? config.doorKnock : null;
         if (clip != null) source.PlayOneShot(clip, config != null ? config.effectsVolume : 1);
     }
 }

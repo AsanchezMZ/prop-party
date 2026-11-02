@@ -64,7 +64,6 @@ public class LobbyManager : NetworkBehaviour
         ulong id = rpc.Receive.SenderClientId;
         foreach (var player in Players) if (player.ClientId == id) return;
         Players.Add(new LobbyPlayer { ClientId = id, Name = name });
-        PlayerPresenceClientRpc(id, true);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -82,7 +81,6 @@ public class LobbyManager : NetworkBehaviour
     {
         if (!IsServer || loading || index < 0 || index >= Maps.Length || index == SelectedMap.Value) return;
         SelectedMap.Value = index;
-        MapSelectedClientRpc();
         for (int i = 0; i < Players.Count; i++)
         { var player = Players[i]; player.Ready = false; Players[i] = player; }
     }
@@ -93,20 +91,10 @@ public class LobbyManager : NetworkBehaviour
             if (Players[i].ClientId == id)
             {
                 Players.RemoveAt(i);
-                if (IsSpawned && !NetworkManager.ShutdownInProgress) PlayerPresenceClientRpc(id, false);
                 break;
             }
     }
 
-    [ClientRpc]
-    void PlayerPresenceClientRpc(ulong clientId, bool joined)
-    {
-        if (clientId == NetworkManager.LocalClientId) return;
-        PartyAudio.Instance?.Play(joined ? PartyAudio.Settings?.otherPlayerJoined : PartyAudio.Settings?.otherPlayerLeft);
-    }
-
-    [ClientRpc]
-    void MapSelectedClientRpc() => PartyAudio.Instance?.Play(PartyAudio.Settings?.mapSelectConfirm);
 
     public void StartGame()
     {

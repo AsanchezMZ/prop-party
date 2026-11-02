@@ -4,6 +4,8 @@
 
 Selecciona **`Assets/PropHuntConfig/Audio.asset`** en Project. Todos los slots son opcionales: arrastra únicamente los clips que elijas. Vacío significa silencio, no un recurso perdido.
 
+Los WAV que tienen correspondencia por nombre en `Assets/Sound/` ya están asignados en ese asset; `footsteps_1`–`footsteps_5` van a la colección de pasos y todos los `whistle_{nombre}` a `whistles`. `victory.wav` y `defeat.wav` son las pistas largas de resultados. `explosion.wav` queda sin asignar porque no hay un slot de explosión y ya existe `impactSound.wav`; los slots sin un WAV correspondiente siguen vacíos.
+
 `PartyAudio`, ya enlazado en el NetworkManager del menú, mantiene música y avisos al cambiar de escena. Hay canales y volúmenes separados para música, efectos, peligro y ambiente. La música tiene una transición corta de volumen; los avisos no la interrumpen.
 
 Los clips que ya asignes directamente al jugador o a `ThrowableDefinition` tienen prioridad sobre el slot central equivalente. Así puedes tener distintos impactos por arma sin modificar el catálogo común. Los avisos locales no generan RPC nuevos; las acciones espaciales aprovechan los eventos de juego existentes.
@@ -17,7 +19,6 @@ Los clips que ya asignes directamente al jugador o a `ThrowableDefinition` tiene
 | `hidingMusic` | Tiempo para esconderse | Marimba/pizzicatos y prisa suave, no terror | Bucle de 20–40 s |
 | `gameplayMusic` | Caza | Ritmo travieso, con espacio para escuchar pistas | Bucle de 60–120 s |
 | `finalStretchMusic` | Últimos 30 s de caza | Variante más rápida e intensa | Bucle de 15–30 s |
-| `resultsMusic` | Resultados | Celebración ligera que no castigue a quien perdió | Bucle de 20–45 s |
 | `ambienceLoop` | Mapa durante espera/escondite/caza | Aire de habitación o exterior suave, sin pasos falsos | Bucle de 30–90 s |
 
 Si falta `finalStretchMusic`, sigue la música normal de caza. Los otros slots vacíos no reproducen música. Ambiente y música son independientes. Todas estas pistas se reproducen en 2D.
@@ -29,12 +30,11 @@ Si falta `finalStretchMusic`, sigue la música normal de caza. Los otros slots v
 | `roundStart` | Inicio de ronda | Mini fanfarria o pop de salida, 0.5–1.5 s |
 | `huntStart` | Se libera a los buscadores | Timbre, silbato de árbitro o golpe musical, 0.3–1 s |
 | `lastSecondsWarning` | Últimos 10 s, una sola vez | Alerta breve, no una cuenta atrás larga que se solape |
-| `roundEnd` | Termina cualquier ronda | Campana neutra, 0.5–1 s |
-| `victory` | Tu rol actual coincide con el ganador | Fanfarria alegre, 1–3 s |
-| `defeat` | Tu rol activo no coincide con el ganador | Caída musical cómica, 1–2 s |
+| `victory` | Ganó tu equipo | Pista completa de resultados de victoria, aproximadamente 30 s |
+| `defeat` | Perdió tu equipo | Pista completa de resultados de derrota, aproximadamente 30 s |
 | `spectatorEnter` | Pasas a espectador | Aire o plop suave, 0.2–0.6 s |
 
-`roundEnd` puede sonar junto a victoria/derrota: deja uno vacío si prefieres una sola señal. Un capturado convertido cuenta como buscador; el espectador solo recibe el aviso neutro de fin.
+No hay pista genérica de resultados ni efectos separados de fin, victoria o derrota: `victory` y `defeat` son las pistas de resultado, reproducidas una sola vez (no en bucle). Deja vacío el slot que no quieras usar. Un capturado convertido cuenta como buscador; el espectador no recibe una pista personalizada.
 
 ## Peligro — conectado, solo lo oye el escondedor
 
@@ -52,11 +52,10 @@ No revela al buscador dónde estás. «A la vista» es una comprobación geomét
 
 | Slot | Alcance | Propuesta |
 |---|---|---|
-| `automaticWhistle` | 3D | Silbido corto y reconocible, 0.5–1.5 s; sin puntos |
-| `manualWhistle` | 3D | Silbido descarado/distinto; mantiene recarga de 5 s |
+| `whistles` | 3D | Colección compartida de clips `whistle_{nombre}` para silbidos automáticos y manuales; selección aleatoria en servidor |
 | `disguise` | 3D | Poof o pop elástico de transformación, 0.2–0.6 s |
 | `rotate` | 3D | Tick de juguete muy discreto, 0.05–0.15 s |
-| `freeze` / `unfreeze` | 3D | Clic de bloqueo y variante inversa, 0.1–0.3 s |
+| `freeze` | 3D | Clic de bloqueo y desbloqueo, 0.1–0.3 s |
 | `jump` | Local desde el jugador | Resorte o esfuerzo leve; opcional para no dar ruido a escondedores |
 | `footsteps` | 3D, solo buscadores | 4–8 muestras neutras, 0.1–0.35 s, elegidas al azar |
 | `throwSound` | 3D | Whoosh de lanzamiento, 0.1–0.4 s |
@@ -64,10 +63,17 @@ No revela al buscador dónde estás. «A la vista» es una comprobación geomét
 | `hurt` | 3D | Golpe cartoon, 0.1–0.4 s |
 | `captured` | 3D | Estallido de confeti/revelación, 0.4–1 s |
 | `hitConfirmation` | Local del tirador | Tick limpio de acierto, 0.05–0.2 s |
-| `captureConfirmation` | Local del tirador | Confirmación más satisfactoria, 0.2–0.5 s |
 | `scoreTick` | Local | Moneda/estrella suave al aumentar puntos, 0.05–0.2 s |
 
 Los sonidos 3D nacen en el jugador/proyectil y se atenúan con la distancia. El salto conserva su ejecución local, sin nuevo RPC. Una captura puede disparar impacto, daño y revelación: usa clips complementarios o deja algunos vacíos.
+
+### Colección de silbidos
+
+Importa archivos como `whistle_corto.wav`, `whistle_pajaro.wav` o `whistle_burla.ogg`. En el Inspector de `Audio.asset`, abre el menú contextual del componente y ejecuta **Collect whistle_* audio clips**. Recoge todos los AudioClip del proyecto cuyo nombre empiece exactamente por `whistle_` y tenga un nombre detrás, ordenados por nombre/ruta. La acción reemplaza la colección y admite Undo; guarda el asset después. También puedes asignar la lista a mano.
+
+El juego usa referencias serializadas: no busca archivos ni carga por nombre durante la partida. El servidor elige al azar entre entradas no vacías y transmite el índice a todos los clientes; todos oyen el mismo clip. Usa el mismo catálogo/build en todos los participantes. Repite la recolección al importar nuevos silbidos.
+
+No hay diferencia sonora entre automático y manual, ni un override de silbido por jugador. La diferencia es únicamente de reglas: el manual suma puntos y tiene 5 segundos de recarga; el automático no suma. Una colección vacía o sin clips válidos se queda en silencio. No se altera la puntuación ni el VFX por no tener audio.
 
 ## Interfaz y webcam — conectados, 2D
 
@@ -77,21 +83,18 @@ Los sonidos 3D nacen en el jugador/proyectil y se atenúan con la distancia. El 
 | `uiBack` | Botón Volver en ajustes/conexión/webcam | Toque descendente, 0.05–0.2 s |
 | `uiConfirm` | Aplicar ajustes | Doble pop/acorde, 0.15–0.4 s |
 | `uiError` | Error de conexión/transporte | Alerta suave, 0.15–0.4 s |
-| `connected` / `disconnected` | Tu entrada/salida de la sala | Campanilla/despedida, 0.2–0.6 s |
-| `ready` / `unready` | Marcar/cancelar preparado | Afirmación y variante descendente, 0.1–0.3 s |
-| `cameraOn` | La webcam entrega imagen válida | Encendido discreto, 0.1–0.4 s |
+| `connected` | Tu conexión a la sala se completa | Sonido de entrada, por ejemplo una campanilla, 0.2–0.6 s |
+| `disconnected` | Sales o pierdes tu conexión a la sala | Sonido distinto de salida, por ejemplo un tono descendente, 0.2–0.6 s |
+| `ready` | Te marcas preparado | Sonido afirmativo, 0.1–0.3 s |
+| `unready` | Cancelas tu estado preparado | Sonido distinto, por ejemplo una nota descendente, 0.1–0.3 s |
 | `photoCaptured` | Foto capturada y preparada | Obturador simpático, 0.1–0.4 s |
 
-El clic genérico puede acompañar a una confirmación específica. No suena por cada paso de un slider. Esta conexión de clics cubre menú/lobby, no es un sonido universal en todos los botones del proyecto.
+Asigna clips diferentes a `connected` y `disconnected`, y también a `ready` y `unready`; los cuatro slots son independientes. Si un slot está vacío, ese evento queda en silencio (no reutiliza el clip opuesto). El clic genérico puede acompañar a una confirmación específica. No suena por cada paso de un slider. Esta conexión de clics cubre menú/lobby, no es un sonido universal en todos los botones del proyecto.
 
 ## Nuevos avisos conectados
 
 | Slots | Evento | Funcionamiento |
 |---|---|---|
-| `countdown3`, `countdown2`, `countdown1` | Últimos tres segundos del escondite y de la caza | Tres clips cortos programados con `PlayScheduled`, a partir del plazo y reloj de servidor. No usa la llegada de un RPC por segundo. |
-| `mapSelectWhoosh` | El host elige otro mapa | Lo oye el host al seleccionar, no al refrescar el dropdown. |
-| `mapSelectConfirm` | El servidor acepta el cambio de mapa | Confirmación para la sala, una vez por cambio real. Volver a seleccionar el mismo índice no desmarca preparados ni dispara audio. |
-| `otherPlayerJoined`, `otherPlayerLeft` | Entra/sale otra persona | Solo para los demás jugadores. Sin alertas por la lista inicial ni por cambios de preparado. Tu propia conexión sigue usando los slots anteriores. |
 | `lastHider` | El servidor detecta que queda un escondedor | Una vez por ronda, 2D y sin identidad/coordenadas. No suena si la ronda ya empezó con un único escondedor. También cuenta una desconexión que reduzca el equipo a uno. |
 | `shotMiss` | Proyectil que golpea mundo/buscador o agota su vida sin acertar | Sonido 3D en el punto de choque o última posición. No se dispara al limpiar proyectiles por final de ronda. |
 
@@ -103,12 +106,9 @@ Para la cuenta atrás, usa tres tonos de 0.1–0.3 s, progresivos y sin silencio
 
 | Slot central | Método de `DoorAudio` | Propuesta |
 |---|---|---|
-| `doorOpen` | `Opened()` | Bisagra suave/cartoon, 0.3–0.8 s |
-| `doorClose` | `Closed()` | Tope de madera/metal, 0.2–0.5 s |
-| `doorHandle` | `HandleUsed()` | Clic de manilla, 0.1–0.25 s |
-| `doorKnock` | `Knocked()` | Dos golpes reconocibles, 0.2–0.6 s |
+| `doorKnock` | `Opened()`, `Closed()`, `HandleUsed()` o `Knocked()` | Único sonido compartido para cualquier evento de puerta, 0.2–0.6 s |
 
-Añade **`DoorAudio`** al objeto de puerta que vaya a controlar la interacción. Requiere `NetworkObject` y `AudioSource` (se añaden automáticamente); configura distancia/rolloff del AudioSource y registra el prefab si la puerta se crea dinámicamente. Para puertas colocadas en escena se usa el flujo normal de objetos de escena de Netcode.
+Añade **`DoorAudio`** al objeto de puerta que vaya a controlar la interacción. Requiere `NetworkObject` y `AudioSource` (se añaden automáticamente); configura distancia/rolloff del AudioSource y registra el prefab si la puerta se crea dinámicamente. Usa siempre `doorKnock` (o el override local `sound`) para todos los eventos. Para puertas colocadas en escena se usa el flujo normal de objetos de escena de Netcode.
 
 El controlador definitivo debe validar la interacción **en servidor** y llamar al método correspondiente cuando la acción suceda. `DoorAudio` envía el sonido 3D a los clientes y admite clips por puerta con prioridad sobre los centrales. Ignora llamadas sin spawn, llamadas de cliente y duplicados del mismo evento en menos de 0.1 s.
 
@@ -130,4 +130,4 @@ No se añade una mecánica de abrir puertas ni se conectan estos métodos a puer
 - WAV limpios para efectos; mono para 3D, estéreo para música/ambiente 2D.
 - Bucles sin clics ni colas duplicadas. Evita silencios largos al principio de efectos.
 - La música debe dejar espacio para pistas de juego; un silbido no debería quedar enterrado en la mezcla.
-- **Para empezar elegiría**: música de menú/caza, inicio/fin de ronda, los dos silbidos, lanzamiento/impacto, pasos, cercanía y captura. Todo lo demás puede quedarse vacío.
+- **Para empezar elegiría**: música de menú/caza, inicio/fin de ronda, una colección de silbidos, lanzamiento/impacto, pasos, cercanía y captura. Todo lo demás puede quedarse vacío.

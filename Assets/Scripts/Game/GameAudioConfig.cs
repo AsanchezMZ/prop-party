@@ -5,30 +5,37 @@ public class GameAudioConfig : ScriptableObject
 {
     [Header("Música · bucles 2D")]
     public AudioClip menuMusic;
-    public AudioClip lobbyMusic, hidingMusic, gameplayMusic, finalStretchMusic, resultsMusic;
+    public AudioClip lobbyMusic, hidingMusic, gameplayMusic, finalStretchMusic;
     [Header("Ronda · efectos 2D")]
     public AudioClip roundStart;
-    public AudioClip huntStart, roundEnd, victory, defeat, lastSecondsWarning;
-    public AudioClip countdown3, countdown2, countdown1, lastHider;
+    public AudioClip huntStart, victory, defeat, lastSecondsWarning;
+    public AudioClip lastHider;
     [Header("Interfaz · efectos 2D")]
     public AudioClip uiClick;
-    public AudioClip uiBack, uiConfirm, uiError, connected, disconnected, ready, unready;
-    public AudioClip cameraOn, photoCaptured;
-    public AudioClip mapSelectWhoosh, mapSelectConfirm, otherPlayerJoined, otherPlayerLeft;
-    [Header("Puertas · eventos 3D del controlador de interacción")]
-    public AudioClip doorOpen;
-    public AudioClip doorClose, doorHandle, doorKnock;
+    public AudioClip uiBack, uiConfirm, uiError;
+    [Tooltip("Played only when this local client successfully joins a lobby.")]
+    public AudioClip connected;
+    [Tooltip("Played when this local client leaves or loses its lobby connection; assign a different clip from Connected.")]
+    public AudioClip disconnected;
+    [Tooltip("Played when the local player becomes ready.")]
+    public AudioClip ready;
+    [Tooltip("Played when the local player becomes unready; assign a different clip from Ready.")]
+    public AudioClip unready;
+    public AudioClip photoCaptured;
+    [Header("Puertas · sonido 3D compartido")]
+    public AudioClip doorKnock;
     [Header("Peligro · solo lo oye el escondedor")]
     public AudioClip nearbyEnter;
     public AudioClip nearbyExit, nearbyLoop, spottedEnter, spottedLoop;
     [Header("Jugador · efectos espaciales salvo confirmaciones")]
     public AudioClip disguise;
-    public AudioClip rotate, freeze, unfreeze, jump, hurt, captured;
+    public AudioClip rotate, freeze, jump, hurt, captured;
     public AudioClip[] footsteps;
-    public AudioClip automaticWhistle, manualWhistle;
+    [Tooltip("Shared pool for automatic and manual whistles. Use the context menu to collect whistle_{name} clips.")]
+    public AudioClip[] whistles = System.Array.Empty<AudioClip>();
     [Header("Arma")]
     public AudioClip throwSound;
-    public AudioClip impactSound, hitConfirmation, captureConfirmation;
+    public AudioClip impactSound, hitConfirmation;
     public AudioClip shotMiss;
     [Header("Otros")]
     public AudioClip scoreTick;
@@ -45,6 +52,40 @@ public class GameAudioConfig : ScriptableObject
         if (phase == MatchPhase.Hiding) return hidingMusic;
         if (phase == MatchPhase.Hunting)
             return secondsLeft <= 30 && finalStretchMusic != null ? finalStretchMusic : gameplayMusic;
-        return phase == MatchPhase.Finished ? resultsMusic : lobbyMusic;
+        return phase == MatchPhase.Finished ? null : lobbyMusic;
     }
+
+    public int PickWhistleIndex()
+    {
+        int selected = -1, count = 0;
+        if (whistles == null) return selected;
+        for (int i = 0; i < whistles.Length; i++)
+            if (whistles[i] != null && Random.Range(0, ++count) == 0) selected = i;
+        return selected;
+    }
+
+    public AudioClip WhistleAt(int index) => whistles != null && index >= 0 && index < whistles.Length ? whistles[index] : null;
+
+#if UNITY_EDITOR
+    [ContextMenu("Collect whistle_* audio clips")]
+    void CollectWhistles()
+    {
+        var clips = new System.Collections.Generic.List<AudioClip>();
+        foreach (var guid in UnityEditor.AssetDatabase.FindAssets("t:AudioClip"))
+        {
+            var clip = UnityEditor.AssetDatabase.LoadAssetAtPath<AudioClip>(UnityEditor.AssetDatabase.GUIDToAssetPath(guid));
+            if (clip != null && clip.name.StartsWith("whistle_", System.StringComparison.Ordinal) && clip.name.Length > 8)
+                clips.Add(clip);
+        }
+        clips.Sort((a, b) =>
+        {
+            int order = string.CompareOrdinal(a.name, b.name);
+            return order != 0 ? order : string.CompareOrdinal(UnityEditor.AssetDatabase.GetAssetPath(a), UnityEditor.AssetDatabase.GetAssetPath(b));
+        });
+        UnityEditor.Undo.RecordObject(this, "Collect whistle clips");
+        whistles = clips.ToArray();
+        UnityEditor.EditorUtility.SetDirty(this);
+        Debug.Log($"[{name}] {whistles.Length} whistle_* clips collected.", this);
+    }
+#endif
 }

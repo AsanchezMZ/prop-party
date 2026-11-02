@@ -299,7 +299,6 @@ MonoBehaviour:
   normalVisual: {fileID: 6719740516635944904}
   weapon: {fileID: 11400000, guid: e241b7146437b454eaa943be18974950, type: 2}
   audioSource: {fileID: 8767202461423440773}
-  whistleSound: {fileID: 0}
   disguiseSound: {fileID: 0}
   capturedSound: {fileID: 0}
   jumpSound: {fileID: 0}
