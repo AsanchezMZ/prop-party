@@ -252,7 +252,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d8aa90bdfe44022be350ce100a4c2bc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PartyAudio
   config: {fileID: 11400000, guid: 55af9600160c4d4696637905804cebbd, type: 2}
 --- !u!1 &264815509
@@ -569,6 +569,7 @@ MonoBehaviour:
   mapDefinitions:
   - {fileID: 11400000, guid: cb7da6033ab08ed45a12aa709962a71b, type: 2}
   - {fileID: 11400000, guid: 0b3cf49f49075e54683272cb690171e1, type: 2}
+  - {fileID: 11400000, guid: 335ea2c87538af9438ce990f8b819981, type: 2}
   rules: {fileID: 11400000, guid: 43d03d8a07ae9de4cad5f400dba289f3, type: 2}
   Players:
     UpdateTraits:
@@ -589,6 +590,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1191044219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 770308921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca2547f03c8e2db43af38813259d63e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FaceCapture
+  config: {fileID: 11400000, guid: d41f3f95003f33a408a6b2bdf667909b, type: 2}
+  guideTexture: {fileID: 2800000, guid: 5ab11f7bb4ee4a148b570a80e69a2115, type: 3}
 --- !u!1 &1365464215
 GameObject:
   m_ObjectHideFlags: 0
@@ -726,20 +741,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1191044219
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 770308921}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca2547f03c8e2db43af38813259d63e3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FaceCapture
-  config: {fileID: 11400000, guid: d41f3f95003f33a408a6b2bdf667909b, type: 2}
-  guideTexture: {fileID: 2800000, guid: 5ab11f7bb4ee4a148b570a80e69a2115, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
