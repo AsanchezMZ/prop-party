@@ -34,7 +34,7 @@ Si falta `finalStretchMusic`, sigue la música normal de caza. Los otros slots v
 | `defeat` | Perdió tu equipo | Pista completa de resultados de derrota, aproximadamente 30 s |
 | `spectatorEnter` | Pasas a espectador | Aire o plop suave, 0.2–0.6 s |
 
-No hay pista genérica de resultados ni efectos separados de fin, victoria o derrota: `victory` y `defeat` son las pistas de resultado, reproducidas una sola vez (no en bucle). Deja vacío el slot que no quieras usar. Un capturado convertido cuenta como buscador; el espectador no recibe una pista personalizada.
+No hay pista genérica de resultados ni efectos separados de fin, victoria o derrota: `victory` y `defeat` son las pistas de resultado, reproducidas una sola vez (no en bucle), en un canal propio que se detiene al salir de resultados, repetir ronda o cambiar de escena. Deja vacío el slot que no quieras usar. Un capturado convertido cuenta como buscador; el espectador no recibe una pista personalizada.
 
 ## Peligro — conectado, solo lo oye el escondedor
 
@@ -73,7 +73,7 @@ Importa archivos como `whistle_corto.wav`, `whistle_pajaro.wav` o `whistle_burla
 
 El juego usa referencias serializadas: no busca archivos ni carga por nombre durante la partida. El servidor elige al azar entre entradas no vacías y transmite el índice a todos los clientes; todos oyen el mismo clip. Usa el mismo catálogo/build en todos los participantes. Repite la recolección al importar nuevos silbidos.
 
-No hay diferencia sonora entre automático y manual, ni un override de silbido por jugador. La diferencia es únicamente de reglas: el manual suma puntos y tiene 5 segundos de recarga; el automático no suma. Una colección vacía o sin clips válidos se queda en silencio. No se altera la puntuación ni el VFX por no tener audio.
+No hay diferencia sonora entre automático y manual, ni un override de silbido por jugador. La diferencia es únicamente de reglas: el manual suma puntos y tiene 5 segundos de recarga; el automático no suma. Ambos son solo audio, sin anillos ni otros VFX que revelen su posición. Una colección vacía o sin clips válidos se queda en silencio. La colección incluye `whistle_scream`.
 
 ## Interfaz y webcam — conectados, 2D
 
@@ -83,13 +83,13 @@ No hay diferencia sonora entre automático y manual, ni un override de silbido p
 | `uiBack` | Botón Volver en ajustes/conexión/webcam | Toque descendente, 0.05–0.2 s |
 | `uiConfirm` | Aplicar ajustes | Doble pop/acorde, 0.15–0.4 s |
 | `uiError` | Error de conexión/transporte | Alerta suave, 0.15–0.4 s |
-| `connected` | Tu conexión a la sala se completa | Sonido de entrada, por ejemplo una campanilla, 0.2–0.6 s |
-| `disconnected` | Sales o pierdes tu conexión a la sala | Sonido distinto de salida, por ejemplo un tono descendente, 0.2–0.6 s |
+| `connected` | Tú u otra persona entra en la sala | Mismo sonido de entrada para todos, sin reproducirlo por la lista inicial de participantes |
+| `disconnected` | Tú u otra persona sale de la sala | Mismo sonido de salida para todos; sin duplicar tu propia desconexión |
 | `ready` | Te marcas preparado | Sonido afirmativo, 0.1–0.3 s |
 | `unready` | Cancelas tu estado preparado | Sonido distinto, por ejemplo una nota descendente, 0.1–0.3 s |
 | `photoCaptured` | Foto capturada y preparada | Obturador simpático, 0.1–0.4 s |
 
-Asigna clips diferentes a `connected` y `disconnected`, y también a `ready` y `unready`; los cuatro slots son independientes. Si un slot está vacío, ese evento queda en silencio (no reutiliza el clip opuesto). El clic genérico puede acompañar a una confirmación específica. No suena por cada paso de un slider. Esta conexión de clics cubre menú/lobby, no es un sonido universal en todos los botones del proyecto.
+Asigna clips diferentes a `connected` y `disconnected`, y también a `ready` y `unready`; los cuatro slots son independientes. Si un slot está vacío, ese evento queda en silencio (no reutiliza el clip opuesto). El botón Listo reproduce únicamente `ready`/`unready`, nunca el clic genérico. El clic genérico puede acompañar a otras confirmaciones específicas. No suena por cada paso de un slider. Esta conexión de clics cubre menú/lobby, no es un sonido universal en todos los botones del proyecto.
 
 ## Nuevos avisos conectados
 
@@ -98,11 +98,11 @@ Asigna clips diferentes a `connected` y `disconnected`, y también a `ready` y `
 | `lastHider` | El servidor detecta que queda un escondedor | Una vez por ronda, 2D y sin identidad/coordenadas. No suena si la ronda ya empezó con un único escondedor. También cuenta una desconexión que reduzca el equipo a uno. |
 | `shotMiss` | Proyectil que golpea mundo/buscador o agota su vida sin acertar | Sonido 3D en el punto de choque o última posición. No se dispara al limpiar proyectiles por final de ronda. |
 
-Para la cuenta atrás, usa tres tonos de 0.1–0.3 s, progresivos y sin silencios iniciales. Si una fase dura menos de tres segundos o un cliente llega tarde, solo se programan los tonos que aún estén por llegar; nunca se acumulan todos en un frame. Un cambio/cancelación de fase detiene los tonos pendientes.
-
 `ThrowableDefinition.missSound` permite sustituir el fallo por arma. Si está vacío, usa `shotMiss`; si ambos están vacíos, un choque conserva el impacto genérico existente. El fallo reemplaza al impacto sonoro, no añade dos golpes superpuestos. Agotar la vida sin clip de fallo se queda en silencio; no crea una explosión artificial en el aire.
 
 ## Puertas e interacción — slots y componente preparados
+
+Las puertas físicas actuales con `HingeJoint` ya suenan al empujarlas mediante `PushObjects`: el propietario solicita el sonido, el servidor valida fase/movimiento, distancia, bisagra cercana y recarga de 0.6 s, y lo replica en 3D a todos los clientes. No necesitan añadirles un `NetworkObject` ni `DoorAudio`. Esto conecta el audio al empuje existente; no cambia la simulación ni la sincronización física de las puertas.
 
 | Slot central | Método de `DoorAudio` | Propuesta |
 |---|---|---|
@@ -112,7 +112,7 @@ Añade **`DoorAudio`** al objeto de puerta que vaya a controlar la interacción.
 
 El controlador definitivo debe validar la interacción **en servidor** y llamar al método correspondiente cuando la acción suceda. `DoorAudio` envía el sonido 3D a los clientes y admite clips por puerta con prioridad sobre los centrales. Ignora llamadas sin spawn, llamadas de cliente y duplicados del mismo evento en menos de 0.1 s.
 
-No se añade una mecánica de abrir puertas ni se conectan estos métodos a puertas físicas de prueba sin controlador: hacerlo ahora dispararía sonidos en momentos incorrectos o inventaría interacciones. Tampoco expone un RPC de interacción sin validar distancias/permisos. Los cuatro métodos pueden conectarse a UnityEvents del futuro controlador autoritativo.
+Los cuatro métodos de `DoorAudio` son una alternativa para futuros controladores autoritativos; no deben conectarse además del empuje existente para un mismo evento, para evitar duplicados. No se añade una nueva mecánica de apertura.
 
 ## Más ideas para elegir después — propuestas, NO implementadas
 

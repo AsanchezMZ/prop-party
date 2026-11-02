@@ -13,9 +13,9 @@ public class GameAudioConfig : ScriptableObject
     [Header("Interfaz · efectos 2D")]
     public AudioClip uiClick;
     public AudioClip uiBack, uiConfirm, uiError;
-    [Tooltip("Played only when this local client successfully joins a lobby.")]
+    [Tooltip("Played when you or another player joins the lobby.")]
     public AudioClip connected;
-    [Tooltip("Played when this local client leaves or loses its lobby connection; assign a different clip from Connected.")]
+    [Tooltip("Played when you or another player leaves the lobby; assign a different clip from Connected.")]
     public AudioClip disconnected;
     [Tooltip("Played when the local player becomes ready.")]
     public AudioClip ready;

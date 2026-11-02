@@ -134,6 +134,7 @@ public class LobbyUI : MonoBehaviour
 
     void FaceClosed()
     {
+        if (lobby.IsSpawned && network.IsConnectedClient) lobby.SendLocalPortrait();
         home.SetEnabled(true); room.SetEnabled(true);
         Refresh();
         faceButton.Focus();
@@ -180,8 +181,11 @@ public class LobbyUI : MonoBehaviour
         var button = root.Q<Button>(name);
         button.clicked += () =>
         {
-            if (audioSource != null && clickSound != null) audioSource.PlayOneShot(clickSound);
-            else PartyAudio.Instance?.Play(PartyAudio.Settings?.uiClick);
+            if (name != "ready")
+            {
+                if (audioSource != null && clickSound != null) audioSource.PlayOneShot(clickSound);
+                else PartyAudio.Instance?.Play(PartyAudio.Settings?.uiClick);
+            }
             action();
         };
         return button;
@@ -261,12 +265,12 @@ public class LobbyUI : MonoBehaviour
         if (!inRoom || !lobby.IsSpawned) return;
         roster.Clear();
         count.text = $"EL EQUIPO  /  {lobby.Players.Count:00}";
-        int number = 0;
         foreach (var player in lobby.Players)
         {
             var row = Element(roster, "player-row");
             row.AddToClassList(player.Ready ? "is-ready" : "is-waiting");
-            Text(row, $"{++number:00}", "player-number");
+            var portrait = new Image { image = lobby.Portrait(player.ClientId), scaleMode = ScaleMode.StretchToFill };
+            portrait.AddToClassList("player-portrait"); row.Add(portrait);
             var identity = Element(row, "player-identity");
             Text(identity, player.Name.ToString(), "player-name");
             Text(identity, player.ClientId == 0 ? "ANFITRIÓN" : "INVITADO", "player-role");

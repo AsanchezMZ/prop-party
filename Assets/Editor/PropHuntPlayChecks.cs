@@ -91,6 +91,12 @@ public static class PropHuntPlayChecks
                 bot.NetworkObject.Spawn();
                 Require(match.BeginRound(), "Two players start a round");
                 Require(match.Phase.Value == MatchPhase.Hiding, "Hiding phase starts");
+                var waitingHunter = match.Players.First(p => p.Role.Value == PlayerRole.Hunter);
+                Require(!waitingHunter.CanHunt, "Hunter shooting is disabled during the waiting screen.");
+                int shotsBefore = UnityEngine.Object.FindObjectsByType<HunterProjectile>(FindObjectsSortMode.None).Length;
+                waitingHunter.ThrowServerRpc(Vector3.forward);
+                Require(UnityEngine.Object.FindObjectsByType<HunterProjectile>(FindObjectsSortMode.None).Length == shotsBefore,
+                    "Even a direct server RPC cannot fire during hiding.");
                 var prop = match.Players.First(p => p.Role.Value == PlayerRole.Prop);
                 Require(prop.Health.Value == 3, "Lobby health settings reach the map");
                 CheckCameras(match);
@@ -113,6 +119,7 @@ public static class PropHuntPlayChecks
                 Require(prop.NextManualWhistle.Value > network.ServerTime.Time, "Whistle cooldown uses server time");
                 var hunter = match.Players.First(p => p.Role.Value == PlayerRole.Hunter);
                 int hunterScore = hunter.Score.Value;
+                CheckDoorSound(hunter);
                 prop.Hit(999, hunter);
                 Require(hunter.Score.Value == hunterScore + match.Rules.capturePoints, "Capture credits the hunter");
                 Require(prop.Health.Value == 0, "Capture removes health");
@@ -133,6 +140,8 @@ public static class PropHuntPlayChecks
                 var lobby = UnityEngine.Object.FindAnyObjectByType<LobbyManager>();
                 if (lobby == null || !lobby.IsSpawned || lobby.Players.Count == 0) return;
                 Require(network.IsListening, "Host survives lobby return");
+                var resultsAudio = PartyAudio.Instance.GetComponentsInChildren<AudioSource>().First(source => source.name == "Results");
+                Require(!resultsAudio.isPlaying, "Result audio must stop when returning to the lobby.");
                 Require(lobby.Settings.Value.Health == 3, "Session settings survive lobby return");
                 End(true, "Host integration checks passed: lobby settings, cameras, HUD, proximity/LOS scoring, walls, automatic/manual whistles, cooldown, hunter-only footsteps, capture, victory, score reset and lobby return.");
             }
@@ -141,6 +150,25 @@ public static class PropHuntPlayChecks
     }
 
     static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+
+    static void CheckDoorSound(PropHuntPlayer hunter)
+    {
+        var door = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        try
+        {
+            door.transform.position = hunter.transform.position + Vector3.right;
+            door.AddComponent<Rigidbody>().useGravity = false;
+            door.AddComponent<HingeJoint>();
+            Physics.SyncTransforms();
+            hunter.DoorKnockServerRpc(door.transform.position);
+            double acceptedUntil = (double)typeof(PropHuntPlayer).GetField("nextDoorSound", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(hunter);
+            Require(acceptedUntil > NetworkManager.Singleton.ServerTime.Time, "A nearby hinged door accepts the validated sound request.");
+            hunter.DoorKnockServerRpc(door.transform.position);
+            Require((double)typeof(PropHuntPlayer).GetField("nextDoorSound", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(hunter) == acceptedUntil,
+                "Repeated contact cannot spam the door sound.");
+        }
+        finally { UnityEngine.Object.Destroy(door); }
+    }
 
 
     static void CheckCameras(PropHuntMatch match)

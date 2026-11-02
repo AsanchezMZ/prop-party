@@ -11,6 +11,9 @@ public class HunterProjectile : NetworkBehaviour
     Vector3 velocity;
     PropHuntPlayer shooter;
     float remaining;
+    readonly NetworkVariable<Vector3> launchOrigin = new();
+    readonly NetworkVariable<Vector3> launchVelocity = new();
+    readonly NetworkVariable<double> firedAt = new();
 
     public void Launch(PropHuntPlayer owner, Vector3 direction, ThrowableDefinition settings)
     {
@@ -18,6 +21,18 @@ public class HunterProjectile : NetworkBehaviour
         definition = settings;
         velocity = direction * settings.speed;
         remaining = settings.lifetime;
+        launchOrigin.Value = transform.position; launchVelocity.Value = velocity;
+        firedAt.Value = owner.NetworkManager.ServerTime.Time;
+    }
+
+    public static Vector3 StraightPosition(Vector3 origin, Vector3 velocity, float elapsed) => origin + velocity * elapsed;
+
+    void LateUpdate()
+    {
+        if (!IsSpawned || IsServer || visual == null || definition == null || definition.gravity != 0) return;
+        // Render straight shots at server time, without an extra NetworkTransform interpolation buffer.
+        float elapsed = Mathf.Clamp((float)(NetworkManager.ServerTime.Time - firedAt.Value), 0, definition.lifetime);
+        visual.position = StraightPosition(launchOrigin.Value, launchVelocity.Value, elapsed);
     }
 
     void FixedUpdate()

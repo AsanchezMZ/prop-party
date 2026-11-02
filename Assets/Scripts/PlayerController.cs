@@ -37,6 +37,8 @@ public class PlayerController : NetworkBehaviour
     MatchPhase lastPhase = MatchPhase.Waiting;
     float nextAim;
     public bool SpectatorMenu { get; private set; }
+    public Prop AimedProp { get; private set; }
+    public Camera ViewCamera => playerCamera;
     public bool FirstPerson => gameplay != null && (gameplay.Role.Value == PlayerRole.Hunter ||
         (gameplay.Role.Value == PlayerRole.Prop && propFirstPerson));
     public Vector3 EyePosition => transform.TransformPoint(cc.center + Vector3.up * cc.height * 0.4f);
@@ -105,6 +107,9 @@ public class PlayerController : NetworkBehaviour
             SetCursorLocked(true);
 
         bool locked = Cursor.lockState == CursorLockMode.Locked;
+        AimedProp = locked && gameplay != null && gameplay.Match != null && gameplay.Role.Value == PlayerRole.Prop &&
+            (gameplay.Match.Phase.Value == MatchPhase.Hiding || gameplay.Match.Phase.Value == MatchPhase.Hunting)
+            ? FindAimedProp() : null;
         if (locked)
         {
             float mx = Input.GetAxis("Mouse X") * mouseSensitivity;
@@ -125,16 +130,11 @@ public class PlayerController : NetworkBehaviour
                 if (Input.GetKeyDown(KeyCode.F)) gameplay.FreezeServerRpc();
                 if (Input.GetKeyDown(KeyCode.Q)) gameplay.RotateServerRpc(false);
                 if (Input.GetKeyDown(KeyCode.R)) gameplay.RotateServerRpc(true);
-                if (Input.GetKeyDown(KeyCode.E) && Physics.Raycast(playerCamera.transform.position,
-                    playerCamera.transform.forward, out var hit, 10, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
-                {
-                    var prop = hit.collider.GetComponentInParent<Prop>();
-                    if (prop != null) gameplay.DisguiseServerRpc(prop.id);
-                }
+                if (Input.GetKeyDown(KeyCode.E) && AimedProp != null) gameplay.DisguiseServerRpc(AimedProp.id);
             }
             else
             {
-                if (Input.GetMouseButtonDown(0)) gameplay.ThrowServerRpc(cameraPivot.forward);
+                if (gameplay.CanHunt && Input.GetMouseButtonDown(0)) gameplay.ThrowServerRpc(cameraPivot.forward);
                 if (gameplay.CanHunt && Time.unscaledTime >= nextAim)
                 { nextAim = Time.unscaledTime + 0.1f; gameplay.AimServerRpc(cameraPivot.forward); }
             }
@@ -193,6 +193,22 @@ public class PlayerController : NetworkBehaviour
         // Animator (NetworkAnimator replica estos parámetros al resto)
         if (animator != null)
             animator.SetFloat("Speed", animVal, 0.1f, Time.deltaTime);
+    }
+
+    Prop FindAimedProp()
+    {
+        var hits = Physics.RaycastAll(playerCamera.transform.position, playerCamera.transform.forward, 10,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+        foreach (var hit in hits)
+        {
+            if (hit.collider.GetComponentInParent<PropHuntPlayer>() == gameplay) continue;
+            var prop = hit.collider.GetComponentInParent<Prop>();
+            return prop != null && prop.id != 0 && gameplay.Match.Map != null && gameplay.Match.Map.definition != null &&
+                gameplay.Match.Map.definition.catalog != null && gameplay.Match.Map.definition.catalog.TryGet(prop.id, out _) &&
+                Vector3.Distance(prop.transform.position, transform.position) <= gameplay.Match.Rules.disguiseDistance ? prop : null;
+        }
+        return null;
     }
 
     public void Teleport(Vector3 position, Quaternion rotation)

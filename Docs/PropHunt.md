@@ -34,7 +34,7 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 `ThrowableDefinition`: prefab de proyectil, velocidad, gravedad, radio de impacto, vida, daño, cadencia, máscara, sonido de lanzamiento/impacto y efecto de impacto.
 
-El prefab necesita `NetworkObject`, `NetworkTransform` **server authority**, `HunterProjectile` y un hijo visual. Asigna el mismo `ThrowableDefinition` al proyectil y al jugador. Registra el prefab en la lista del `NetworkManager`. Sustituye el hijo visual por un huevo, piedra u otro modelo; no necesita Rigidbody ni collider, el servidor realiza barridos esféricos. El prefab generado inicialmente tiene un hijo visual vacío para asignar tu recurso.
+El prefab necesita `NetworkObject`, `NetworkTransform` **server authority**, `HunterProjectile` y un hijo visual. Asigna el mismo `ThrowableDefinition` al proyectil y al jugador. Registra el prefab en la lista del `NetworkManager`. El huevo ya usa `Assets/PropHuntConfig/Egg.obj` y `Egg.mat`: trayectoria recta (gravedad 0), velocidad 45 m/s y recarga de 0.25 s. No necesita Rigidbody ni collider; el servidor realiza barridos esféricos. Se desactiva el búfer de interpolación y el cliente sitúa el visual de los tiros rectos según su origen, velocidad y reloj de servidor; no elimina la latencia real del envío del disparo por red.
 
 `PropHuntPlayer`: raíz del disfraz, modelo normal, arma, AudioSource 3D, transformación, captura, clips de pasos y salto. Los silbidos usan la colección central `Audio.asset.whistles` para ambos tipos, recogible por prefijo `whistle_{nombre}` desde el menú contextual del asset. El servidor elige el mismo clip para todos. Los pasos se disparan en servidor por desplazamiento; el salto mantiene su sonido local desde el controlador. Sin clips asignados no se reproduce sonido.
 
@@ -45,6 +45,8 @@ La estructura está guardada en `Assets/UI/MainMenu.uxml`, asignada al `UIDocume
 **Tu cara** abre el diálogo de webcam desde inicio o lobby. `FaceCapture`, en el mismo objeto que `LobbyUI`, conserva la referencia a `Assets/Face/FaceConfig.asset` y a la guía `MaskReference`. Permite elegir webcam, pedir permiso, previsualizar con recorte cuadrado y orientación corregida, hacer la foto y volver. Cerrar, desactivar el objeto o cambiar de escena detiene la cámara. No se activa al abrir el menú ni el diálogo. Un fallo o cancelar no sustituye la foto anterior.
 
 La foto JPG se guarda en `Application.persistentDataPath/face.jpg`. `PlayerFace.config` usa el mismo `FaceConfig` para componer la foto con la máscara y la textura base antes de asignarla al material del personaje. Máscara y base deben tener Read/Write activado y coincidir con `FaceConfig.size`. La captura se comparte en la siguiente aparición del jugador; cambiarla en el lobby no necesita volver a conectar. El diálogo indica si falla la escritura y solo puede conservarse en memoria durante esa sesión.
+
+En el lobby se comparte solo una miniatura PNG de 64×64 de la foto guardada (máximo 20 KB, dimensiones comprobadas antes de decodificar). Sustituye los números de jugador y se estira para rellenar el bloque. Los recién llegados reciben las miniaturas existentes; las texturas se liberan al salir del lobby. Nunca se transmite vídeo en directo; sin foto, el bloque conserva su fondo de color.
 
 ## Reglas y red
 
@@ -77,6 +79,8 @@ La foto JPG se guarda en `Application.persistentDataPath/face.jpg`. `PlayerFace.
 
 `Assets/UI/MatchHUD.uxml` y `MatchHUD.uss` definen la barra horizontal superior, la retícula de punto, toasts, indicadores de riesgo y panel de pausa/resultados. Los `UIDocument` de ambos mapas de prueba ya tienen este UXML asignado. El montaje de mapas también lo asigna. El HUD no cambia la activación de cámaras ni fuerza el cursor cada frame.
 
+El prop válido bajo la retícula muestra `[E] nombre` dentro de distancia de camuflaje. Los nametags de escondedores son blancos y solo los ven sus compañeros; los de buscadores son rojos. Los compañeros se ven a través de paredes con flecha y tienen indicador en el borde si quedan fuera de pantalla. Los escondedores solo ven el nombre de un buscador si no está tapado por geometría. La espera del hunter muestra una cuenta atrás grande y el disparo está bloqueado tanto en la entrada local como en el RPC del servidor. Los resultados destacan `¡VICTORIA!`/`¡DERROTA!` y muestran aparte el equipo ganador.
+
 En la sala, **⚙ Ajustes** abre el panel con buscadores, segundos de escondite/caza, silbido automático, vidas y conversión de capturados. Los invitados pueden consultarlo, pero solo el host puede aplicar cambios. Son valores de sesión replicados, validados y copiados al mapa, no cambios al ScriptableObject. Se conservan al volver al lobby mientras continúe el host y se reinician al crear una sesión nueva. El número efectivo de buscadores siempre deja al menos un escondedor.
 
 Puntuación de ronda, siempre calculada en servidor y reiniciada con cada nueva ronda:
@@ -89,7 +93,7 @@ Puntuación de ronda, siempre calculada en servidor y reiniciada con cada nueva 
 
 Los puntos/radios/FOV se editan en `MatchRules`; los sliders de sesión no modifican esos valores. La clasificación aparece en pausa/resultados. Una captura conserva los puntos previos del escondedor convertido.
 
-VFX geométricos sin texturas: anillos de silbido, confeti de captura, destellos de impacto/camuflaje y halo local pulsante cuando hay riesgo. `PropHuntPlayer.effectMaterial` permite sustituir el material de las piezas sin tocar código. El halo solo lo ve el escondedor, no revela su posición a buscadores; los anillos del silbido sí son visibles para todos.
+VFX geométricos sin texturas: confeti de captura, destellos de impacto/camuflaje y halo local pulsante cuando hay riesgo. `PropHuntPlayer.effectMaterial` permite sustituir el material de las piezas sin tocar código. El halo solo lo ve el escondedor, no revela su posición a buscadores. Los silbidos/burlas no emiten VFX.
 
 Los pasos solo se reproducen para buscadores activos, según distancia realmente recorrida y suelo detectado en servidor; saltar o teletransportarse no acumula pasos. Asigna `footstepClips` al jugador para variar muestras, o el campo anterior `footstepSound` como fallback. Sin clips no habrá audio. Un `AudioSource` 3D permite que los demás jugadores los oigan. Los escondedores no generan pasos.
 
@@ -97,7 +101,7 @@ La cámara del propietario se habilita una vez al aparecer y se deshabilita al d
 
 ### Comprobaciones automatizadas
 
-`PropHuntChecks` comprueba límites de ajustes, FOV y recorte de webcam. `PropHuntPlayChecks` verifica en Play Mode: ajustes lobby→mapa→lobby, 100 alternancias de perspectiva sin alternar cámara/listener, FPV de buscadores, elementos del HUD, puntos de proximidad/visión, oclusión por paredes, ausencia de puntos del silbido automático, puntos y recarga manual, pasos solo en buscadores, captura y reset de puntuación. Estas pruebas han pasado en Unity 6000.6.4f1, tanto en modo sin gráficos como con el dispositivo gráfico activo.
+`PropHuntChecks` comprueba límites de ajustes, FOV y recorte de webcam; también añade reglas de visibilidad de nametags, validación de miniaturas y configuración/modelo del huevo. `PropHuntPlayChecks` cubre ajustes lobby→mapa→lobby, cámaras, HUD, puntuación, silbidos, pasos, captura y reset. Se añadieron checks de disparo bloqueado durante escondite, solicitud/cadencia del sonido de puertas y parada del audio de resultados. La versión anterior pasó en Unity 6000.6.4f1; estas ampliaciones todavía no se han ejecutado.
 
 Las comprobaciones de proximidad y pasos usan un escenario de física aislado en el host; no sustituyen probar los colliders y capas de cada mapa final. Revisar manualmente el aspecto del HUD/VFX, la webcam y el audio con clips asignados. Los emojis dependen de los glifos/fallback de fuentes instalados en Unity: si faltan, asigna una fuente de símbolos compatible en Panel Text Settings.
 

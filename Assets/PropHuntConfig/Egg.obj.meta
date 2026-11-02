@@ -1,0 +1,26 @@
+fileFormatVersion: 2
+guid: f9bc337260d84f81b90f7d13b219591d
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable:
+  - first:
+      43: 4300000
+    second: Egg
+  externalObjects: {}
+  materials:
+    materialImportMode: 0
+  meshes:
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useFileUnits: 0
+    isReadable: 0
+    fileIdsGeneration: 2
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+  importAnimation: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Throwable
   m_EditorClassIdentifier: Assembly-CSharp::ThrowableDefinition
   projectilePrefab: {fileID: 4473897285229185111, guid: 871f6bcea564d13448b33fdf12055cd1, type: 3}
-  speed: 18
-  gravity: 15
+  speed: 45
+  gravity: 0
   radius: 0.15
   lifetime: 5
-  cooldown: 0.8
+  cooldown: 0.25
   damage: 1
   hitMask:
     serializedVersion: 2

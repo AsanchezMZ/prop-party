@@ -64,7 +64,7 @@ Button:disabled { opacity: 0.45; }
 .party .section-label { font-size: 12px; letter-spacing: 2px; -unity-font-style: bold; margin-bottom: 16px; }
 .party .roster { flex-grow: 1; }
 .party .player-row { height: 64px; margin-bottom: 8px; flex-direction: row; align-items: center; border-radius: 8px; background-color: rgb(255, 253, 244); border-width: 1px; border-color: rgb(211, 215, 202); padding: 8px 16px; }
-.party .player-number { font-size: 25px; -unity-font-style: bold; margin-right: 18px; color: rgb(20, 128, 119); }
+.party .player-portrait { width: 64px; height: 62px; flex-shrink: 0; margin: -8px 18px -8px -16px; background-color: rgb(20, 128, 119); border-radius: 7px 0 0 7px; }
 .party .player-identity { flex-grow: 1; flex-shrink: 1; min-width: 0; }
 .party .player-name { font-size: 19px; -unity-font-style: bold; overflow: hidden; text-overflow: ellipsis; }
 .party .player-role { font-size: 9px; letter-spacing: 2px; color: rgb(91, 106, 105); margin-top: 3px; }

@@ -8,6 +8,7 @@ public static class PropHuntChecks
     public static void Run()
     {
         CheckMusicSelection();
+        CheckHudAndPortraits();
         Require(FaceCapture.Crop(1920, 1080, false) == new Rect(0.21875f, 0, 0.5625f, 1), "Landscape webcam must crop centrally.");
         Require(FaceCapture.Crop(1080, 1920, false) == new Rect(0, 0.21875f, 1, 0.5625f), "Portrait webcam must crop centrally.");
         Require(FaceCapture.Crop(512, 512, true) == new Rect(0, 1, 1, -1), "Mirrored camera must flip vertically.");
@@ -45,6 +46,33 @@ public static class PropHuntChecks
     }
 
     static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+
+    static void CheckHudAndPortraits()
+    {
+        Require(MatchHUD.CanSeeName(PlayerRole.Prop, PlayerRole.Prop, true), "Props see fellow props through walls.");
+        Require(!MatchHUD.CanSeeName(PlayerRole.Hunter, PlayerRole.Prop, false), "Hunters never see prop name tags.");
+        Require(MatchHUD.CanSeeName(PlayerRole.Hunter, PlayerRole.Hunter, true), "Hunters see fellow hunters through walls.");
+        Require(MatchHUD.CanSeeName(PlayerRole.Prop, PlayerRole.Hunter, false), "Props can identify visible hunters.");
+        Require(!MatchHUD.CanSeeName(PlayerRole.Prop, PlayerRole.Hunter, true), "Walls hide hunter names from props.");
+        Require(!MatchHUD.CanSeeName(PlayerRole.Prop, PlayerRole.Spectator, false), "Spectators have no tag.");
+        Require(HunterProjectile.StraightPosition(Vector3.one, Vector3.forward * 45, 0.5f) == Vector3.one + Vector3.forward * 22.5f,
+            "Straight egg rendering does not add gravity or interpolation delay.");
+        Require(!LobbyManager.ValidPortrait(null) && !LobbyManager.ValidPortrait(new byte[20_001]), "Reject missing and oversized thumbnails.");
+        var texture = new Texture2D(64, 64, TextureFormat.RGB24, false);
+        try
+        {
+            var png = texture.EncodeToPNG();
+            Require(LobbyManager.ValidPortrait(png), "Accept a 64x64 PNG thumbnail.");
+            png[19] = 65;
+            Require(!LobbyManager.ValidPortrait(png), "Reject remote image dimensions before decoding.");
+            png[19] = 64; png[0] = 0;
+            Require(!LobbyManager.ValidPortrait(png), "Reject non-PNG payloads.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(texture); }
+        var egg = AssetDatabase.LoadAssetAtPath<ThrowableDefinition>("Assets/PropHuntConfig/Throwable.asset");
+        Require(egg != null && egg.gravity == 0 && egg.cooldown == 0.25f && egg.speed == 45, "Egg tuning is straight and rapid-fire.");
+        Require(egg.projectilePrefab.GetComponentInChildren<MeshFilter>().sharedMesh != null, "Egg prefab references the authored mesh asset.");
+    }
 
     static void CheckMusicSelection()
     {

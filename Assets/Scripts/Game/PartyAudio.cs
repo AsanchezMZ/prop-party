@@ -10,7 +10,7 @@ public class PartyAudio : MonoBehaviour
     public static PartyAudio Instance { get; private set; }
     public GameAudioConfig Config => config;
     public static GameAudioConfig Settings => Instance != null ? Instance.config : null;
-    AudioSource music, effects, danger, ambience;
+    AudioSource music, effects, danger, ambience, results;
     AudioClip wantedMusic;
     PropHuntMatch match;
     PropHuntPlayer player;
@@ -25,6 +25,7 @@ public class PartyAudio : MonoBehaviour
         Instance = this;
         music = Source("Music", true); effects = Source("UI and round effects", false);
         danger = Source("Local danger", true); ambience = Source("Ambience", true);
+        results = Source("Results", false);
         music.volume = 0;
     }
 
@@ -46,6 +47,7 @@ public class PartyAudio : MonoBehaviour
     void SceneLoaded(Scene scene, LoadSceneMode mode) => FindMatch();
     void FindMatch()
     {
+        if (results != null) results.Stop();
         match = FindAnyObjectByType<PropHuntMatch>(); player = null;
         previousPhase = (MatchPhase)255; previousRole = PlayerRole.Spectator;
         wasNearby = wasSpotted = warned = false; previousScore = 0;
@@ -62,6 +64,7 @@ public class PartyAudio : MonoBehaviour
         var network = NetworkManager.Singleton;
         bool inMatch = match != null && match.IsSpawned;
         var phase = inMatch ? match.Phase.Value : MatchPhase.Waiting;
+        if (!inMatch || phase != MatchPhase.Finished) results.Stop();
         double seconds = inMatch ? match.SecondsLeft : 0;
         var local = network != null && network.IsClient && network.LocalClient != null ? network.LocalClient.PlayerObject : null;
         var currentPlayer = local != null ? local.GetComponent<PropHuntPlayer>() : null;
@@ -84,7 +87,11 @@ public class PartyAudio : MonoBehaviour
             else if (phase == MatchPhase.Finished)
             {
                 if (player != null && player.Role.Value != PlayerRole.Spectator)
-                    Play(player.Role.Value == match.Winner.Value ? config.victory : config.defeat);
+                {
+                    results.clip = player.Role.Value == match.Winner.Value ? config.victory : config.defeat;
+                    results.volume = config.effectsVolume;
+                    if (results.clip != null) results.Play();
+                }
             }
             previousPhase = phase;
         }
@@ -134,6 +141,7 @@ public class PartyAudio : MonoBehaviour
         if (music != null) music.Stop();
         if (danger != null) danger.Stop();
         if (ambience != null) ambience.Stop();
+        if (results != null) results.Stop();
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }

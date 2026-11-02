@@ -38,4 +38,11 @@ public class DoorAudio : NetworkBehaviour
         var clip = sound != null ? sound : config != null ? config.doorKnock : null;
         if (clip != null) source.PlayOneShot(clip, config != null ? config.effectsVolume : 1);
     }
+
+    public static void PlayAt(Vector3 position)
+    {
+        var config = PartyAudio.Settings;
+        if (config != null && config.doorKnock != null)
+            AudioSource.PlayClipAtPoint(config.doorKnock, position, config.effectsVolume);
+    }
 }

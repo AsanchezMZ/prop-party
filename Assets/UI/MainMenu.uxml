@@ -134,7 +134,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement class="face-controls">
                         <ui:Label text="PONLE CARA&#10;AL SOSPECHOSO." class="dialog-title"/>
-                        <ui:Label text="Centra tu cara en la silueta y haz la foto. Se guardará para tu personaje." class="dialog-description"/>
+                        <ui:Label text="Centra tu cara y haz la foto. Se guardará para tu personaje y se compartirá una miniatura con la sala." class="dialog-description"/>
                         <ui:DropdownField name="face-device" label="TU WEBCAM"/>
                         <ui:Label name="face-status" class="face-status"/>
                         <ui:Button name="face-enable" text="ACTIVAR CÁMARA" class="secondary"/>

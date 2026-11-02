@@ -35,6 +35,7 @@ public class PropHuntPlayer : NetworkBehaviour
         (Match.Phase.Value == MatchPhase.Hiding && Role.Value == PlayerRole.Prop)) && !Frozen.Value;
     GameObject disguiseVisual;
     double nextThrow, nextWhistle, nextAction;
+    double nextDoorSound;
     double nearSince, seenSince, nextSense, nextAim;
     Vector3 lastStepPosition;
     float travelled;
@@ -278,6 +279,23 @@ public class PropHuntPlayer : NetworkBehaviour
         CueClientRpc(3);
     }
 
+    [ServerRpc]
+    public void DoorKnockServerRpc(Vector3 point)
+    {
+        if (!CanMove || !float.IsFinite(point.x) || !float.IsFinite(point.y) || !float.IsFinite(point.z) ||
+            Vector3.Distance(point, transform.position) > 4 || NetworkManager.ServerTime.Time < nextDoorSound) return;
+        foreach (var collider in Physics.OverlapSphere(point, 0.5f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+        {
+            var body = collider.attachedRigidbody;
+            if (body == null || body.isKinematic || body.GetComponent<HingeJoint>() == null) continue;
+            nextDoorSound = NetworkManager.ServerTime.Time + 0.6;
+            DoorKnockClientRpc(point); break;
+        }
+    }
+
+    [ClientRpc]
+    void DoorKnockClientRpc(Vector3 point) => DoorAudio.PlayAt(point);
+
     public void Hit(int damage, PropHuntPlayer hunter = null)
     {
         if (!IsServer || Role.Value != PlayerRole.Prop || Match.Phase.Value != MatchPhase.Hunting) return;
@@ -334,10 +352,9 @@ public class PropHuntPlayer : NetworkBehaviour
                 7 => settings.freeze, 8 => settings.freeze, 9 => settings.rotate, _ => null
             };
         if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.effectsVolume : 1);
-        if (cue == 0 || cue == 1 || cue == 2 || cue == 5 || cue == 6)
+        if (cue == 1 || cue == 2 || cue == 6)
             PartyVfx.Burst(transform.position + Vector3.up * 0.5f,
-                cue == 2 || cue == 6 ? new Color(1, 0.35f, 0.3f) : cue == 1 ? new Color(0.2f, 0.9f, 0.75f) : new Color(1, 0.8f, 0.2f),
-                cue == 0 || cue == 5, effectMaterial);
+                cue == 1 ? new Color(0.2f, 0.9f, 0.75f) : new Color(1, 0.35f, 0.3f), false, effectMaterial);
         if (IsOwner) Cue?.Invoke(cue);
     }
 }

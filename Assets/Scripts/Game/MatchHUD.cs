@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,7 +11,10 @@ public class MatchHUD : MonoBehaviour
 {
     [SerializeField] PropHuntMatch match;
     [SerializeField] string lobbyScene;
-    Label timer, role, hint, result, score, health, risk;
+    Label timer, role, hint, result, score, health, risk, targetProp, resultTeam, releaseTimer;
+    VisualElement nameLayer;
+    readonly Dictionary<PropHuntPlayer, Label> nameTags = new();
+    readonly List<PropHuntPlayer> staleTags = new();
     VisualElement blackout, actions, crosshair, toasts, riskHalo, hitFlash, leaderboard;
     Button replay, lobby, resume, whistle;
     NetworkManager network;
@@ -31,8 +35,12 @@ public class MatchHUD : MonoBehaviour
         network.OnClientDisconnectCallback += Disconnected;
         var root = document.rootVisualElement;
         root.pickingMode = PickingMode.Ignore;
+        nameLayer = new VisualElement { pickingMode = PickingMode.Ignore };
+        nameLayer.AddToClassList("name-layer"); root.Q("hud-root").Insert(0, nameLayer);
         timer = root.Q<Label>("timer"); role = root.Q<Label>("role"); hint = root.Q<Label>("hint");
         result = root.Q<Label>("result"); score = root.Q<Label>("score"); health = root.Q<Label>("health"); risk = root.Q<Label>("risk");
+        targetProp = root.Q<Label>("target-prop"); resultTeam = root.Q<Label>("result-team"); releaseTimer = root.Q<Label>("release-timer");
+        targetProp.enableRichText = false;
         blackout = root.Q("blackout"); actions = root.Q("actions"); crosshair = root.Q("crosshair");
         toasts = root.Q("toasts"); riskHalo = root.Q("risk-halo"); hitFlash = root.Q("hit-flash"); leaderboard = root.Q("leaderboard");
         replay = root.Q<Button>("replay"); lobby = root.Q<Button>("lobby"); resume = root.Q<Button>("resume"); whistle = root.Q<Button>("whistle");
@@ -79,6 +87,7 @@ public class MatchHUD : MonoBehaviour
         }
         bool locked = Cursor.lockState == CursorLockMode.Locked;
         blackout.style.display = hiding && hunter ? DisplayStyle.Flex : DisplayStyle.None;
+        releaseTimer.text = $"{Mathf.CeilToInt((float)match.SecondsLeft):00}";
         crosshair.style.display = locked && !finished && !waiting && (prop || (hunter && !hiding)) ? DisplayStyle.Flex : DisplayStyle.None;
         role.text = prop ? "🎭 ESCONDEDOR" : hunter ? "🔎 BUSCADOR · FPV" : "👻 ESPECTADOR";
         int seconds = Mathf.CeilToInt((float)match.SecondsLeft);
@@ -98,15 +107,80 @@ public class MatchHUD : MonoBehaviour
         hitFlash.style.opacity = flash;
         hint.text = prop ? $"E camuflar · Q/R girar · F suspender{(player.Frozen.Value ? " ❄" : "")} · V {(controller.FirstPerson ? "FPV" : "TPV")} · G silbar · Esc menú" :
             hunter ? "Clic lanzar · Esc menú · Tab continuar" : "→ cambiar jugador observado · Esc menú · Tab cerrar";
+        targetProp.style.display = prop && locked && !finished && controller.AimedProp != null ? DisplayStyle.Flex : DisplayStyle.None;
+        targetProp.text = controller.AimedProp != null ? $"[E]  {controller.AimedProp.propName}" : "";
         bool menu = finished || waiting || ((prop || hunter) ? !locked : controller.SpectatorMenu);
         actions.style.display = menu ? DisplayStyle.Flex : DisplayStyle.None;
         replay.style.display = network.IsServer && (finished || waiting) ? DisplayStyle.Flex : DisplayStyle.None;
         lobby.style.display = network.IsServer ? DisplayStyle.Flex : DisplayStyle.None;
         resume.style.display = !finished && !waiting && (prop || hunter) ? DisplayStyle.Flex : DisplayStyle.None;
-        result.text = finished ? (match.Winner.Value == PlayerRole.Prop ? "🎉 ¡GANAN LOS ESCONDEDORES!" : "🔎 ¡GANAN LOS BUSCADORES!") : waiting ? "👥 ESPERANDO AL EQUIPO" : "🍹 UN RESPIRO";
+        bool won = player.Role.Value == match.Winner.Value;
+        result.text = finished ? (player.Role.Value == PlayerRole.Spectator ? "¡RONDA TERMINADA!" : won ? "¡VICTORIA!" : "¡DERROTA!") : waiting ? "ESPERANDO AL EQUIPO" : "UN RESPIRO";
+        result.EnableInClassList("result-title", finished);
+        result.EnableInClassList("result-win", finished && won);
+        result.EnableInClassList("result-lose", finished && !won && player.Role.Value != PlayerRole.Spectator);
+        resultTeam.style.display = finished ? DisplayStyle.Flex : DisplayStyle.None;
+        resultTeam.text = match.Winner.Value == PlayerRole.Prop ? "GANAN LOS ESCONDEDORES" : "GANAN LOS BUSCADORES";
         if (menu && Time.unscaledTime >= nextRanking) { nextRanking = Time.unscaledTime + 0.5f; RefreshRanking(); }
         if (pendingPoints > 0 && Time.unscaledTime >= nextScoreToast)
         { Toast($"⭐ +{pendingPoints} puntos"); pendingPoints = 0; nextScoreToast = Time.unscaledTime + 2; }
+    }
+
+    public static bool CanSeeName(PlayerRole viewer, PlayerRole target, bool occluded) =>
+        viewer != PlayerRole.Spectator && target != PlayerRole.Spectator &&
+        (viewer == target || (target == PlayerRole.Hunter && !occluded));
+
+    void LateUpdate()
+    {
+        if (nameLayer == null || player == null || match == null || controller == null) return;
+        bool active = match.IsSpawned && (match.Phase.Value == MatchPhase.Hunting ||
+            (match.Phase.Value == MatchPhase.Hiding && player.Role.Value == PlayerRole.Prop)) &&
+            Cursor.lockState == CursorLockMode.Locked;
+        nameLayer.style.display = active ? DisplayStyle.Flex : DisplayStyle.None;
+        staleTags.Clear();
+        foreach (var entry in nameTags)
+            if (entry.Key == null || !match.Players.Contains(entry.Key)) staleTags.Add(entry.Key);
+        foreach (var entry in staleTags) { nameTags[entry].RemoveFromHierarchy(); nameTags.Remove(entry); }
+        if (!active) return;
+        var camera = controller.ViewCamera;
+        float width = nameLayer.resolvedStyle.width, height = nameLayer.resolvedStyle.height;
+        if (camera == null || width < 200 || height < 100) return;
+        foreach (var other in match.Players)
+        {
+            if (other == player) continue;
+            if (!nameTags.TryGetValue(other, out var tag))
+            {
+                tag = new Label { enableRichText = false, pickingMode = PickingMode.Ignore };
+                tag.AddToClassList("name-tag"); nameLayer.Add(tag); nameTags.Add(other, tag);
+            }
+            tag.style.display = DisplayStyle.None;
+            if (!CanSeeName(player.Role.Value, other.Role.Value, false)) continue;
+            var body = other.GetComponent<CharacterController>().bounds;
+            var head = new Vector3(body.center.x, body.max.y + 0.25f, body.center.z);
+            bool blocked = false;
+            var delta = body.center - camera.transform.position;
+            foreach (var hit in Physics.RaycastAll(camera.transform.position, delta.normalized, delta.magnitude,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                var owner = hit.collider.GetComponentInParent<PropHuntPlayer>();
+                if (owner != player && owner != other) { blocked = true; break; }
+            }
+            if (!CanSeeName(player.Role.Value, other.Role.Value, blocked)) continue;
+            var viewport = camera.WorldToViewportPoint(head);
+            bool outside = viewport.z <= 0 || viewport.x < 0.05f || viewport.x > 0.95f || viewport.y < 0.08f || viewport.y > 0.9f;
+            bool teammate = other.Role.Value == player.Role.Value;
+            if (outside && !teammate) continue;
+            Vector2 direction = new(viewport.x - 0.5f, viewport.y - 0.5f);
+            if (viewport.z <= 0) direction = -direction;
+            if (direction.sqrMagnitude < 0.0001f) direction = Vector2.down;
+            string arrow = outside ? (Mathf.Abs(direction.x) > Mathf.Abs(direction.y) ? (direction.x > 0 ? "→ " : "← ") : direction.y > 0 ? "↑ " : "↓ ") : blocked ? "▼ " : "";
+            float x = outside ? 0.5f + direction.normalized.x * 0.48f : viewport.x;
+            float y = outside ? 0.5f + direction.normalized.y * 0.48f : viewport.y;
+            tag.style.left = Mathf.Clamp(x * width - 90, 8, width - 188);
+            tag.style.top = Mathf.Clamp((1 - y) * height - 32, 64, height - 80);
+            tag.style.color = other.Role.Value == PlayerRole.Hunter ? new Color(1, 0.24f, 0.24f) : Color.white;
+            tag.text = arrow + other.DisplayName.Value.ToString(); tag.style.display = DisplayStyle.Flex;
+        }
     }
 
     void RefreshRanking()
