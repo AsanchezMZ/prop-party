@@ -16,4 +16,4 @@ MonoBehaviour:
   sceneName: Assets/Scenes/maps/Map_City.unity
   description: 
   preview: {fileID: 0}
-  catalog: {fileID: 0}
+  catalog: {fileID: 11400000, guid: af54353f14fa56244a58353c016c89a8, type: 2}
