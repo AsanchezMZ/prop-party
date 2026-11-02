@@ -22,7 +22,8 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 - Prefab raíz con `Prop`; hijo `Visual` con el modelo y colliders. El visual debe contener solo presentación: no scripts de gameplay ni `NetworkObject`.
 - Asigna un `id` positivo único por tipo y `visual`. El catálogo contiene los prefabs permitidos de ese mapa. El ID 0 significa sin disfraz.
-- Ajusta `disguiseRadius` y `disguiseHeight`: la colisión del jugador disfrazado es una cápsula configurable, no una malla exacta.
+- Selecciona `collisionShape` en `Prop`: `Capsule` (predeterminado, con `disguiseRadius` y `disguiseHeight`), `Box` (con `disguiseBoxSize`, apoyada en la base) o `Model` (las mallas de los `MeshFilter` activos de `Visual`, incluidos sus hijos). Al seleccionar el prop, el editor dibuja la forma en cian. La selección configura los impactos sobre el disfraz, no sustituye los colliders del objeto original del mapa.
+- El movimiento sigue usando la cápsula de `CharacterController`; sus dimensiones se ajustan con `disguiseRadius` y `disguiseHeight` en los tres modos. Caja y modelo giran con el disfraz. `Model` sin mallas vuelve a la cápsula con un aviso; los modelos animados con solo `SkinnedMeshRenderer` no están soportados.
 - Coloca instancias del prefab en la escena. `canDisappear` decide si participan en el sorteo; `spawnProbability` es la probabilidad individual de aparecer. Con 0 nunca aparece, con 1 siempre aparece. Los permanentes ignoran esa probabilidad.
 - `slotId` es único **por instancia en el mapa**, distinto del ID del tipo. El recolector asigna estos IDs y guarda las referencias, incluidos objetos inactivos. Recolecta otra vez al añadir o quitar objetos.
 - El servidor publica una semilla por ronda. Cada cliente calcula presencia y orientación con la misma semilla y slots. Son sorteos independientes Bernoulli: no garantizan una cantidad fija de objetos ni de tipos presentes.

@@ -8,7 +8,9 @@ public static class PropHuntChecks
     public static void Run()
     {
         CheckMusicSelection();
+        CheckPropCollisions();
         CheckHudAndPortraits();
+        CheckPresentationAssets();
         Require(FaceCapture.Crop(1920, 1080, false) == new Rect(0.21875f, 0, 0.5625f, 1), "Landscape webcam must crop centrally.");
         Require(FaceCapture.Crop(1080, 1920, false) == new Rect(0, 0.21875f, 1, 0.5625f), "Portrait webcam must crop centrally.");
         Require(FaceCapture.Crop(512, 512, true) == new Rect(0, 1, 1, -1), "Mirrored camera must flip vertically.");
@@ -46,6 +48,76 @@ public static class PropHuntChecks
     }
 
     static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
+
+    [MenuItem("PropHunt/Run presentation checks")]
+    public static void CheckPresentationAssets()
+    {
+        var loading = Resources.Load<UnityEngine.UIElements.VisualTreeAsset>("LoadingScreen");
+        Require(loading != null, "Loading screen must be included in player builds.");
+        var root = loading.CloneTree();
+        Require(UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.ProgressBar>(root, "loading-progress") != null &&
+            UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Button>(root, "loading-retry") != null &&
+            UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Button>(root, "loading-leave") != null,
+            "Loading screen needs progress, retry and return controls.");
+        var trail = Resources.Load<Material>("EggTrail");
+        Require(trail != null && trail.shader != null && trail.shader.name == "Universal Render Pipeline/Particles/Unlit" &&
+            trail.GetFloat("_ZWrite") == 0 && trail.GetFloat("_Surface") == 1 && trail.renderQueue == 3000,
+            "Egg trail must use a build-included transparent, non-depth-writing material.");
+        var audio = AssetDatabase.LoadAssetAtPath<GameAudioConfig>("Assets/PropHuntConfig/Audio.asset");
+        Require(audio != null && audio.uiClick != null && audio.disguise != null && audio.uiClick != audio.disguise &&
+            AssetDatabase.GetAssetPath(audio.disguise).EndsWith("disguise.wav", StringComparison.OrdinalIgnoreCase),
+            "Map selection must use distinct UI-click and disguise.wav clips.");
+        Debug.Log("Presentation checks passed: loading UI, egg trail material and map audio.");
+    }
+
+    public static void CheckPropCollisions()
+    {
+        var go = new GameObject("Prop collision check");
+        GameObject model = null;
+        try
+        {
+            var prop = go.AddComponent<Prop>();
+            model = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var originalCollider = model.GetComponent<Collider>();
+            Require(!prop.ConfigureDisguiseColliders(model), "Existing props default to the controller capsule.");
+            Require(!originalCollider.enabled, "Cloned visual colliders must be disabled.");
+
+            prop.collisionShape = Prop.CollisionShape.Box;
+            prop.disguiseBoxSize = new Vector3(-1, 2, 3);
+            Require(prop.ConfigureDisguiseColliders(model), "Box mode creates a custom hitbox.");
+            var boxes = model.GetComponents<BoxCollider>();
+            var box = boxes[boxes.Length - 1];
+            Require(box.enabled && box.size == new Vector3(0.1f, 2, 3) && box.center == Vector3.up,
+                "Box dimensions are clamped and the base is at the origin.");
+            Require(box.Raycast(new Ray(new Vector3(0, 1, -5), Vector3.forward), out _, 10),
+                "The configured box receives hits inside its silhouette.");
+            Require(!box.Raycast(new Ray(new Vector3(1, 1, -5), Vector3.forward), out _, 10),
+                "The configured box rejects hits outside its silhouette.");
+
+            prop.collisionShape = Prop.CollisionShape.Model;
+            var child = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            child.transform.SetParent(model.transform);
+            child.transform.localPosition = Vector3.right * 2;
+            Require(prop.ConfigureDisguiseColliders(model), "Model mode creates mesh hitboxes.");
+            Require(!box.enabled && !child.GetComponent<BoxCollider>().enabled, "Model mode disables primitive hitboxes.");
+            foreach (var filter in model.GetComponentsInChildren<MeshFilter>())
+                Require(filter.GetComponent<MeshCollider>().sharedMesh == filter.sharedMesh,
+                    "Every model part uses its own mesh, including transformed children.");
+            Physics.SyncTransforms();
+            Require(child.GetComponent<MeshCollider>().Raycast(new Ray(new Vector3(2, 0, -5), Vector3.forward), out _, 10),
+                "Model hits respect child transforms.");
+            prop.collisionShape = Prop.CollisionShape.Capsule;
+            Require(!prop.ConfigureDisguiseColliders(model), "Switching back restores capsule hit detection.");
+            foreach (var collider in model.GetComponentsInChildren<Collider>())
+                Require(!collider.enabled, "Switching back disables custom hitboxes.");
+            Debug.Log("Prop collision checks passed: capsule, box, model and switching.");
+        }
+        finally
+        {
+            if (model != null) UnityEngine.Object.DestroyImmediate(model);
+            UnityEngine.Object.DestroyImmediate(go);
+        }
+    }
 
     static void CheckHudAndPortraits()
     {

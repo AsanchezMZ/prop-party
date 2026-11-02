@@ -10,6 +10,9 @@ public class Prop : MonoBehaviour
     public int slotId;
     public string propName = "prop";
     public Transform visual;
+    public enum CollisionShape { Capsule, Box, Model }
+    public CollisionShape collisionShape = CollisionShape.Capsule;
+    public Vector3 disguiseBoxSize = new Vector3(0.8f, 1, 0.8f);
     [Min(0.1f)] public float disguiseRadius = 0.4f;
     [Min(0.2f)] public float disguiseHeight = 1;
     [SerializeField, Range(0f, 1f)] float spawnProbability = 1.0f;
@@ -56,6 +59,32 @@ public class Prop : MonoBehaviour
         visual.localRotation = baseLocalRot * Quaternion.Euler(offset);
     }
 
+    public Vector3 BoxSize => new Vector3(Mathf.Max(0.1f, disguiseBoxSize.x),
+        Mathf.Max(0.1f, disguiseBoxSize.y), Mathf.Max(0.1f, disguiseBoxSize.z));
+
+    public bool ConfigureDisguiseColliders(GameObject model)
+    {
+        foreach (var collider in model.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+        if (collisionShape == CollisionShape.Capsule) return false;
+        if (collisionShape == CollisionShape.Box)
+        {
+            var box = model.AddComponent<BoxCollider>();
+            box.size = BoxSize;
+            box.center = Vector3.up * box.size.y * 0.5f;
+            return true;
+        }
+        bool hasMesh = false;
+        foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true))
+        {
+            if (filter.sharedMesh == null || !filter.gameObject.activeInHierarchy) continue;
+            var collider = filter.gameObject.AddComponent<MeshCollider>();
+            collider.sharedMesh = filter.sharedMesh;
+            hasMesh = true;
+        }
+        if (!hasMesh) Debug.LogWarning($"{name}: Model collision requires an active MeshFilter; using the capsule instead.", this);
+        return hasMesh;
+    }
+
     static float Rand01(int seed, int slot, int channel)
     {
         uint h = Hash((uint)seed ^ Hash((uint)slot * 31u + (uint)channel * 7919u + 17u));
@@ -72,6 +101,31 @@ public class Prop : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
+        if (collisionShape == CollisionShape.Box)
+        {
+            using (new Handles.DrawingScope(Color.cyan, transform.localToWorldMatrix *
+                Matrix4x4.TRS(Vector3.zero, visual != null ? visual.localRotation : Quaternion.identity,
+                    visual != null ? visual.localScale : Vector3.one)))
+                Handles.DrawWireCube(Vector3.up * BoxSize.y * 0.5f, BoxSize);
+            return;
+        }
+        if (collisionShape == CollisionShape.Model && visual != null)
+        {
+            bool hasMesh = false;
+            Matrix4x4 previousMatrix = Gizmos.matrix;
+            Color previousColor = Gizmos.color;
+            foreach (var filter in visual.GetComponentsInChildren<MeshFilter>())
+            {
+                if (filter.sharedMesh == null) continue;
+                Gizmos.color = Color.cyan;
+                Gizmos.matrix = filter.transform.localToWorldMatrix;
+                Gizmos.DrawWireMesh(filter.sharedMesh);
+                hasMesh = true;
+            }
+            Gizmos.matrix = previousMatrix;
+            Gizmos.color = previousColor;
+            if (hasMesh) return;
+        }
         float radius = Mathf.Max(0.1f, disguiseRadius);
         float height = Mathf.Max(radius * 2, disguiseHeight);
         Vector3 bottom = transform.position + Vector3.up * radius;

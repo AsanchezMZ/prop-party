@@ -24,6 +24,7 @@ public class MatchHUD : MonoBehaviour
     bool leaving;
     float flash, nextRanking, nextScoreToast;
     int pendingPoints;
+    float scorePulse, cuePulse, phasePulse;
     MatchPhase lastPhase = (MatchPhase)255;
 
     void Start()
@@ -84,6 +85,7 @@ public class MatchHUD : MonoBehaviour
             Toast(waiting ? "👥 Esperando jugadores…" : hiding ? "🙈 ¡A esconderse!" : finished ?
                 (match.Winner.Value == PlayerRole.Prop ? "🎉 ¡Ganan los escondedores!" : "🔎 ¡Ganan los buscadores!") : "🔥 ¡Empieza la caza!");
             lastPhase = phase;
+            phasePulse = 1;
         }
         bool locked = Cursor.lockState == CursorLockMode.Locked;
         blackout.style.display = hiding && hunter ? DisplayStyle.Flex : DisplayStyle.None;
@@ -91,6 +93,15 @@ public class MatchHUD : MonoBehaviour
         crosshair.style.display = locked && !finished && !waiting && (prop || (hunter && !hiding)) ? DisplayStyle.Flex : DisplayStyle.None;
         role.text = prop ? "🎭 ESCONDEDOR" : hunter ? "🔎 BUSCADOR · FPV" : "👻 ESPECTADOR";
         int seconds = Mathf.CeilToInt((float)match.SecondsLeft);
+        scorePulse = Mathf.MoveTowards(scorePulse, 0, Time.unscaledDeltaTime * 3);
+        cuePulse = Mathf.MoveTowards(cuePulse, 0, Time.unscaledDeltaTime * 4);
+        phasePulse = Mathf.MoveTowards(phasePulse, 0, Time.unscaledDeltaTime * 2);
+        score.style.scale = new Scale(Vector3.one * (1 + 0.18f * Mathf.Sin(scorePulse * Mathf.PI)));
+        crosshair.style.scale = new Scale(Vector3.one * (1 + cuePulse * 2));
+        role.style.translate = new Translate(0, -12 * Mathf.Sin(phasePulse * Mathf.PI));
+        result.style.scale = new Scale(Vector3.one * (1 + 0.04f * Mathf.Sin(Time.unscaledTime * 2)));
+        float urgency = phase == MatchPhase.Hunting && seconds <= 10 ? 1 + 0.07f * Mathf.Sin(Time.unscaledTime * 8) : 1;
+        timer.style.scale = new Scale(Vector3.one * urgency);
         timer.text = waiting ? "⏳ Esperando" : $"⏱ {seconds / 60:00}:{seconds % 60:00}";
         health.text = $"❤ {player.Health.Value}"; health.style.display = prop ? DisplayStyle.Flex : DisplayStyle.None;
         score.text = $"⭐ {player.Score.Value}";
@@ -198,12 +209,14 @@ public class MatchHUD : MonoBehaviour
 
     void ScoreChanged(int oldValue, int value)
     {
+        if (value > oldValue) scorePulse = 1;
         pendingPoints = value > oldValue ? (int)System.Math.Min(int.MaxValue, (long)pendingPoints + value - oldValue) : 0;
     }
     void NearbyChanged(bool oldValue, bool value) { if (value) Toast("🔥 Un buscador está cerca. ¡No te delates!"); }
     void SightChanged(bool oldValue, bool value) { if (value) Toast("👀 Estás en su campo de visión. ¡Eso da puntos!"); }
     void OnCue(int cue)
     {
+        cuePulse = 1;
         if (cue == 6) { flash = 0.35f; Toast("💥 ¡Te han dado!"); }
         else if (cue == 2) { flash = 0.6f; Toast("🎊 ¡Te han encontrado!"); }
         else if (cue == 5) Toast("🎵 ¡Silbido manual! Te has delatado.");
@@ -217,6 +230,13 @@ public class MatchHUD : MonoBehaviour
         if (toasts.childCount >= 3) toasts.RemoveAt(0);
         var toast = new Label(message) { enableRichText = false, pickingMode = PickingMode.Ignore };
         toast.AddToClassList("toast"); toasts.Add(toast);
+        float born = Time.unscaledTime;
+        toast.schedule.Execute(() =>
+        {
+            float age = Time.unscaledTime - born;
+            toast.style.opacity = Mathf.Clamp01(age / 0.18f) * Mathf.Clamp01((3.5f - age) / 0.3f);
+            toast.style.translate = new Translate(24 * (1 - Mathf.Clamp01(age / 0.25f)), 0);
+        }).Every(33).Until(() => toast.parent == null);
         toast.schedule.Execute(() => toast.RemoveFromHierarchy()).StartingIn(3500);
     }
 
@@ -226,7 +246,8 @@ public class MatchHUD : MonoBehaviour
         if (leaving) return;
         leaving = true; network.Shutdown();
         Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
-        if (Application.CanStreamedLevelBeLoaded(lobbyScene)) SceneManager.LoadScene(lobbyScene);
+        if (Application.CanStreamedLevelBeLoaded(lobbyScene))
+        { PartyLoadingScreen.Show(); SceneManager.LoadSceneAsync(lobbyScene); }
     }
 
     void OnDestroy()

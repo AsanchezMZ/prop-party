@@ -11,6 +11,7 @@ public class HunterProjectile : NetworkBehaviour
     Vector3 velocity;
     PropHuntPlayer shooter;
     float remaining;
+    TrailRenderer trail;
     readonly NetworkVariable<Vector3> launchOrigin = new();
     readonly NetworkVariable<Vector3> launchVelocity = new();
     readonly NetworkVariable<double> firedAt = new();
@@ -27,12 +28,39 @@ public class HunterProjectile : NetworkBehaviour
 
     public static Vector3 StraightPosition(Vector3 origin, Vector3 velocity, float elapsed) => origin + velocity * elapsed;
 
+    public override void OnNetworkSpawn()
+    {
+        if (!IsClient || Application.isBatchMode) return;
+        var go = new GameObject("Egg trajectory");
+        go.transform.position = visual != null ? visual.position : transform.position;
+        trail = go.AddComponent<TrailRenderer>();
+        trail.sharedMaterial = Resources.Load<Material>("EggTrail");
+        trail.time = 0.3f; trail.minVertexDistance = 0.08f;
+        trail.startWidth = 0.09f; trail.endWidth = 0;
+        trail.startColor = new Color(1, 0.85f, 0.35f, 0.85f);
+        trail.endColor = new Color(1, 0.98f, 0.85f, 0);
+        trail.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        trail.receiveShadows = false;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (trail == null) return;
+        trail.emitting = false;
+        Destroy(trail.gameObject, trail.time);
+        trail = null;
+    }
+
     void LateUpdate()
     {
-        if (!IsSpawned || IsServer || visual == null || definition == null || definition.gravity != 0) return;
+        if (!IsSpawned) return;
         // Render straight shots at server time, without an extra NetworkTransform interpolation buffer.
-        float elapsed = Mathf.Clamp((float)(NetworkManager.ServerTime.Time - firedAt.Value), 0, definition.lifetime);
-        visual.position = StraightPosition(launchOrigin.Value, launchVelocity.Value, elapsed);
+        if (!IsServer && visual != null && definition != null && definition.gravity == 0)
+        {
+            float elapsed = Mathf.Clamp((float)(NetworkManager.ServerTime.Time - firedAt.Value), 0, definition.lifetime);
+            visual.position = StraightPosition(launchOrigin.Value, launchVelocity.Value, elapsed);
+        }
+        if (trail != null) trail.transform.position = visual != null ? visual.position : transform.position;
     }
 
     void FixedUpdate()
@@ -55,6 +83,7 @@ public class HunterProjectile : NetworkBehaviour
         {
             var target = hit.collider.GetComponentInParent<PropHuntPlayer>();
             if (target == shooter || (target != null && target.Role.Value == PlayerRole.Spectator)) continue;
+            if (target != null && target.IgnoreMovementHitbox(hit.collider)) continue;
             bool hitProp = target != null && target.Role.Value == PlayerRole.Prop;
             if (hitProp) target.Hit(definition.damage, shooter);
             ImpactClientRpc(hit.point, !hitProp, true);

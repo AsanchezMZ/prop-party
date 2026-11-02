@@ -60,7 +60,11 @@ public class LobbyManager : NetworkBehaviour
     }
 
     void ListChanged(NetworkListEvent<LobbyPlayer> change) => Changed?.Invoke();
-    void MapChanged(int previous, int current) => Changed?.Invoke();
+    void MapChanged(int previous, int current)
+    {
+        if (IsClient) PartyAudio.Instance?.Play(PartyAudio.Settings?.disguise);
+        Changed?.Invoke();
+    }
     void SettingsChanged(MatchSettings previous, MatchSettings current) => Changed?.Invoke();
 
     public override void OnNetworkDespawn()
@@ -201,7 +205,9 @@ public class LobbyManager : NetworkBehaviour
         if (!CanStart) return;
         var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
         if (bootstrap != null) bootstrap.SessionSettings = Settings.Value;
+        PartyLoadingScreen.Show();
         loading = NetworkManager.SceneManager.LoadScene(Maps[SelectedMap.Value].sceneName, LoadSceneMode.Single) == SceneEventProgressStatus.Started;
+        if (!loading) PartyLoadingScreen.Cancel();
         Changed?.Invoke();
     }
 

@@ -1,4 +1,13 @@
 /* Shared HUD primitives. Menu rules below are scoped to .party. */
+.loading-screen { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; }
+.loading-card { width: 520px; max-width: 92%; padding: 28px; }
+.party .loading-title { font-size: 52px; -unity-font-style: bold; letter-spacing: -2px; color: rgb(20, 128, 119); white-space: normal; }
+.party .loading-mascot { font-size: 48px; color: rgb(25, 43, 48); background-color: rgb(255, 207, 59); border-radius: 48px; align-self: flex-end; padding: 14px; margin: 16px; }
+.party .loading-status { font-size: 17px; white-space: normal; margin: 18px 0; }
+.party .loading-tip { font-size: 13px; white-space: normal; margin: 18px 0; }
+.loading-screen .unity-progress-bar__progress { background-color: rgb(65, 196, 179); }
+.loading-screen .unity-progress-bar__background { background-color: rgb(211, 215, 202); height: 26px; border-radius: 7px; }
+.loading-screen .unity-progress-bar__title { color: rgb(25, 43, 48); -unity-font-style: bold; }
 .card { padding: 24px; background-color: rgb(25, 43, 48); border-radius: 16px; margin: 16px; }
 .card-title { font-size: 27px; -unity-font-style: bold; color: white; }
 .description { font-size: 14px; color: rgb(207, 222, 221); white-space: normal; margin: 8px 0 16px; }

@@ -34,6 +34,9 @@ public class LobbyUI : MonoBehaviour
     bool connecting;
     bool disconnectSoundPlayed;
     float connectionStarted;
+    VisualElement[] mascots;
+    float mapChangedAt = -10;
+    int shownMap = -1;
 
     void Start()
     {
@@ -56,6 +59,17 @@ public class LobbyUI : MonoBehaviour
         status = root.Q<Label>("status"); count = root.Q<Label>("player-count");
         previewTitle = root.Q<Label>("map-title"); mapDescription = root.Q<Label>("map-description");
         maps = root.Q<DropdownField>("maps");
+        maps.RegisterCallback<PointerDownEvent>(evt =>
+        {
+            if (evt.button == 0 && maps.enabledInHierarchy) PartyAudio.Instance?.Play(PartyAudio.Settings?.uiClick);
+        }, TrickleDown.TrickleDown);
+        maps.RegisterCallback<KeyDownEvent>(evt =>
+        {
+            if (evt.keyCode == KeyCode.Space || evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter ||
+                evt.keyCode == KeyCode.UpArrow || evt.keyCode == KeyCode.DownArrow)
+                PartyAudio.Instance?.Play(PartyAudio.Settings?.uiClick);
+        }, TrickleDown.TrickleDown);
+        mascots = new[] { root.Q(className: "suspect-box"), root.Q(className: "suspect-mug"), root.Q(className: "suspect-egg") };
         maps.RegisterValueChangedCallback(_ =>
         {
             if (!network.IsServer || !lobby.IsSpawned || maps.index < 0 || maps.index >= lobby.Maps.Length || maps.index == lobby.SelectedMap.Value) return;
@@ -219,6 +233,11 @@ public class LobbyUI : MonoBehaviour
     void Update()
     {
         if (connecting && Time.unscaledTime - connectionStarted > 15) Fail("Sin respuesta. Comprueba la IP y el puerto.");
+        if (mascots == null) return;
+        for (int i = 0; i < mascots.Length; i++)
+            if (mascots[i] != null) mascots[i].style.translate = new Translate(0, Mathf.Sin(Time.unscaledTime * 1.6f + i * 2) * 7);
+        float pop = 1 + Mathf.Sin(Mathf.Clamp01((Time.unscaledTime - mapChangedAt) / 0.4f) * Mathf.PI) * 0.025f;
+        preview.style.scale = new Scale(new Vector3(pop, pop, 1));
     }
 
     void Connected(ulong id)
@@ -281,6 +300,7 @@ public class LobbyUI : MonoBehaviour
         for (int i = 0; i < lobby.Maps.Length; i++) choices.Add($"{i + 1}. {(lobby.Maps[i] != null ? lobby.Maps[i].displayName : "Sin configurar")}");
         maps.choices = choices;
         int selected = lobby.SelectedMap.Value;
+        if (selected != shownMap) { if (shownMap >= 0) mapChangedAt = Time.unscaledTime; shownMap = selected; }
         if (selected >= 0 && selected < choices.Count)
         {
             maps.SetValueWithoutNotify(choices[selected]);

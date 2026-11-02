@@ -103,7 +103,25 @@ public class GameBootstrap : MonoBehaviour
             var obj = Instantiate(playerPrefab, pos, rot);
             obj.SpawnAsPlayerObject(clientId, true);   // true = se destruye con el dueño
         }
-        if (!match.BeginRound()) Debug.LogWarning("Round waiting: check player count, rules and team spawn points.");
+        StartCoroutine(BeginWhenPrepared(match));
+    }
+
+    System.Collections.IEnumerator BeginWhenPrepared(PropHuntMatch match)
+    {
+        float deadline = Time.realtimeSinceStartup + 60;
+        while (match != null && nm != null && nm.IsServer)
+        {
+            bool ready = match.Players.Count > 0;
+            foreach (var player in match.Players) ready &= player.AssetsReady.Value;
+            if (ready)
+            {
+                if (!match.BeginRound()) Debug.LogWarning("Round waiting: check player count, rules and team spawn points.");
+                yield break;
+            }
+            if (Time.realtimeSinceStartup >= deadline)
+            { Debug.LogWarning("Round waiting: a client has not prepared its assets. Retry from the HUD when ready."); yield break; }
+            yield return null;
+        }
     }
 
     static Vector3 GetGroundedSpawnPosition(SpawnPoint spawnPoint)

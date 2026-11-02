@@ -85,10 +85,14 @@ public static class PropHuntPlayChecks
                 if (match == null || !match.IsSpawned || network.LocalClient.PlayerObject == null) return;
                 var host = network.LocalClient.PlayerObject.GetComponent<PropHuntPlayer>();
                 Require(host != null, "Player has gameplay component");
+                if (!host.AssetsReady.Value) return;
                 var prefab = network.NetworkConfig.Prefabs.NetworkPrefabsLists.SelectMany(list => list.PrefabList)
                     .Select(entry => entry.Prefab).First(p => p != null && p.GetComponent<PropHuntPlayer>() != null);
                 bot = UnityEngine.Object.Instantiate(prefab, host.transform.position + Vector3.right * 3, Quaternion.identity).GetComponent<PropHuntPlayer>();
                 bot.NetworkObject.Spawn();
+                bot.AssetsReady.Value = false;
+                Require(!match.BeginRound(), "Round cannot start before every player prepares its assets");
+                bot.AssetsReady.Value = true; // The synthetic bot has no remote loading screen.
                 Require(match.BeginRound(), "Two players start a round");
                 Require(match.Phase.Value == MatchPhase.Hiding, "Hiding phase starts");
                 var waitingHunter = match.Players.First(p => p.Role.Value == PlayerRole.Hunter);

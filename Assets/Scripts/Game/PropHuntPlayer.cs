@@ -29,11 +29,14 @@ public class PropHuntPlayer : NetworkBehaviour
     public readonly NetworkVariable<bool> Frozen = new();
     public readonly NetworkVariable<float> Rotation = new();
     public readonly NetworkVariable<int> Health = new();
+    public readonly NetworkVariable<bool> AssetsReady = new();
     public PropHuntMatch Match { get; private set; }
     public bool CanHunt => Match != null && Match.Phase.Value == MatchPhase.Hunting && Role.Value == PlayerRole.Hunter;
     public bool CanMove => Match != null && (Match.Phase.Value == MatchPhase.Hunting ||
         (Match.Phase.Value == MatchPhase.Hiding && Role.Value == PlayerRole.Prop)) && !Frozen.Value;
     GameObject disguiseVisual;
+    bool hasDisguiseColliders;
+    public bool IgnoreMovementHitbox(Collider collider) => hasDisguiseColliders && collider is CharacterController;
     double nextThrow, nextWhistle, nextAction;
     double nextDoorSound;
     double nearSince, seenSince, nextSense, nextAim;
@@ -61,7 +64,17 @@ public class PropHuntPlayer : NetworkBehaviour
         RefreshVisual();
         lastStepPosition = transform.position;
         if (IsOwner) NameServerRpc(new FixedString32Bytes(LocalProfile.PlayerName));
+        if (IsOwner) StartCoroutine(ReportAssetsReady());
     }
+
+    System.Collections.IEnumerator ReportAssetsReady()
+    {
+        while (IsSpawned && !PartyLoadingScreen.Ready) yield return null;
+        if (IsSpawned) AssetsReadyServerRpc();
+    }
+
+    [ServerRpc]
+    void AssetsReadyServerRpc() => AssetsReady.Value = true;
 
     public override void OnNetworkDespawn()
     {
@@ -79,7 +92,8 @@ public class PropHuntPlayer : NetworkBehaviour
 
     void RefreshVisual()
     {
-        if (disguiseVisual != null) Destroy(disguiseVisual);
+        if (disguiseVisual != null) { disguiseVisual.SetActive(false); Destroy(disguiseVisual); }
+        hasDisguiseColliders = false;
         var controller = GetComponent<CharacterController>();
         controller.height = originalHeight; controller.radius = originalRadius; controller.center = originalCenter;
         bool disguised = Role.Value == PlayerRole.Prop && Disguise.Value != 0;
@@ -93,13 +107,15 @@ public class PropHuntPlayer : NetworkBehaviour
         var catalog = Match.Map != null && Match.Map.definition != null ? Match.Map.definition.catalog : null;
         if (catalog != null && catalog.TryGet(Disguise.Value, out var prop) && prop.visual != null)
         {
-            // shortcut: capsule hitbox per prop; use authored compound hitboxes for irregular silhouettes.
+            // shortcut: locomotion stays capsule-shaped; replace CharacterController for shape-accurate movement.
             controller.radius = Mathf.Max(0.1f, prop.disguiseRadius);
             controller.height = Mathf.Max(controller.radius * 2, prop.disguiseHeight);
             controller.center = Vector3.up * controller.height * 0.5f;
             disguiseVisual = Instantiate(prop.visual.gameObject, disguiseRoot);
             disguiseVisual.transform.localPosition = Vector3.zero;
-            foreach (var collider in disguiseVisual.GetComponentsInChildren<Collider>()) collider.enabled = false;
+            hasDisguiseColliders = prop.ConfigureDisguiseColliders(disguiseVisual);
+            foreach (var collider in disguiseVisual.GetComponentsInChildren<Collider>())
+                if (collider.enabled) Physics.IgnoreCollision(controller, collider);
             foreach (var renderer in disguiseVisual.GetComponentsInChildren<Renderer>()) renderer.forceRenderingOff = IsOwner && firstPersonVisual;
         }
     }

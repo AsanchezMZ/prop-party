@@ -35,6 +35,7 @@ public class PropHuntMatch : NetworkBehaviour
     {
         if (!IsServer || rules == null || map == null || players.Count < Mathf.Max(2, rules.minimumPlayers)) return false;
         if (Phase.Value != MatchPhase.Waiting && Phase.Value != MatchPhase.Finished) return false;
+        foreach (var player in players) if (!player.AssetsReady.Value) return false;
         if (!map.TrySpawn(PlayerRole.Hunter, 0, out _) || !map.TrySpawn(PlayerRole.Prop, 0, out _)) return false;
         for (int i = players.Count - 1; i > 0; i--)
         {
@@ -86,6 +87,10 @@ public class PropHuntMatch : NetworkBehaviour
     public void ReturnToLobby()
     {
         if (IsServer && Application.CanStreamedLevelBeLoaded(lobbyScene))
-            NetworkManager.SceneManager.LoadScene(lobbyScene, LoadSceneMode.Single);
+        {
+            PartyLoadingScreen.Show();
+            if (NetworkManager.SceneManager.LoadScene(lobbyScene, LoadSceneMode.Single) != SceneEventProgressStatus.Started)
+                PartyLoadingScreen.Cancel();
+        }
     }
 }
