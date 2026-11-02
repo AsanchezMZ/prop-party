@@ -102,7 +102,7 @@ public class HunterProjectile : NetworkBehaviour
         var miss = definition.missSound != null ? definition.missSound : PartyAudio.Settings?.shotMiss;
         var impact = definition.impactSound != null ? definition.impactSound : PartyAudio.Settings?.impactSound;
         var clip = missed && miss != null ? miss : collided ? impact : null;
-        if (clip != null) AudioSource.PlayClipAtPoint(clip, position, PartyAudio.Settings != null ? PartyAudio.Settings.effectsVolume : 1);
+        if (clip != null) AudioSource.PlayClipAtPoint(clip, position, PartyAudio.Settings != null ? PartyAudio.Settings.EffectsVolume : GamePreferences.EffectsVolume);
         if (collided && definition.impactEffect != null) Destroy(Instantiate(definition.impactEffect, position, Quaternion.identity), 3);
     }
 }

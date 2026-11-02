@@ -4,6 +4,10 @@
 
 Abre la escena de menú habilitada en Build Profiles y ejecuta con dos instancias (Multiplayer Play Mode ya está instalado). Crea una sala y conecta la otra instancia a la IP del host, puerto UDP 7777. Ambos jugadores deben pulsar **Estoy listo**; el host elige mapa y comienza. Cambiar mapa desmarca los preparados.
 
+El selector incluye **Aleatorio**: el host sortea entre los mapas configurados con escena habilitada al iniciar la partida y todos cargan el mismo resultado. Elegir este modo también desmarca los preparados.
+
+**Ajustes del juego:** el botón **AJUSTES** de la cabecera abre un diálogo local con pestañas **Vídeo** (resolución, calidad, pantalla completa sin bordes, VSync y límite de FPS) y **Audio** (general, música y efectos/interfaz/ambiente). Está disponible en inicio y sala, también para invitados; no modifica las reglas de la ronda ni desmarca preparados. Los controles usan `uiClick`. **Aplicar** guarda en `PlayerPrefs` y activa los cambios; **Volver** o Escape descartan lo pendiente. El nombre y **TU CARA** permanecen en la cabecera. No hay remapeo de teclas. La resolución y el modo de pantalla solo se cambian en el ejecutable, no en la Game view del editor.
+
 El montaje inicial se hace con **PropHunt → Configure enabled build scenes**. Configura las escenas habilitadas que tengan `SpawnPoint`, crea los datos en `Assets/PropHuntConfig`, conecta el prefab de jugador del `GameBootstrap` y añade el proyectil a la lista de prefabs de red existente. Guarda escenas y assets: úsalo después de guardar tu trabajo. No ejecutes esta migración para retocar mapas ya personalizados: edita sus referencias en el Inspector.
 
 ## Añadir un mapa
@@ -109,5 +113,7 @@ Las comprobaciones de proximidad y pasos usan un escenario de física aislado en
 **PropHunt → Run deterministic prop checks** comprueba extremos 0/1, repetibilidad, distribución y props permanentes. Se puede ejecutar en batch con `-executeMethod PropHuntChecks.Run`.
 
 `-batchmode -nographics -executeMethod PropHuntPlayChecks.Run` (sin `-quit`) ejecuta una comprobación de integración en Play Mode: crea un host, prepara el lobby, carga un mapa por Netcode, añade un segundo jugador local de prueba y comprueba roles, suspensión, captura, victoria, repetición y vuelta al lobby. Termina el editor con código 0/1. Esta prueba no sustituye una sesión con un cliente remoto.
+
+También comprueba la selección aleatoria (excluyendo mapas no disponibles y desmarcando preparados), el cierre repetido y la creación de una nueva sala después de cerrar la anterior, tratando los errores de consola como fallos.
 
 Validación manual con dos instancias: preparado/cambio de mapa; misma presencia de props en ambos clientes; espera del hunter; camuflaje cercano frente a lejano; rotación y suspensión visibles remotamente; proyectil bloqueado por paredes; daño, conversión y espectador; silbido espacial con un clip asignado; victoria por tiempo y por captura; desconexión; repetir ronda y volver a sala. Comprueba también el menú a 1280×720 y una ventana estrecha.

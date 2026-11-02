@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,6 +8,7 @@ using UnityEngine.SceneManagement;
 
 public class LobbyManager : NetworkBehaviour
 {
+    public const int RandomMap = -1;
     [SerializeField] MapDefinition[] mapDefinitions = Array.Empty<MapDefinition>();
     [SerializeField] MatchRules rules;
     public MapDefinition[] Maps => mapDefinitions;
@@ -25,9 +27,10 @@ public class LobbyManager : NetworkBehaviour
     {
         get
         {
-            if (!IsServer || loading || rules == null || Players.Count < Mathf.Max(2, rules.minimumPlayers) ||
-                SelectedMap.Value < 0 || SelectedMap.Value >= Maps.Length || Maps[SelectedMap.Value] == null ||
-                !Application.CanStreamedLevelBeLoaded(Maps[SelectedMap.Value].sceneName)) return false;
+            if (!IsSpawned || !IsServer || NetworkManager.ShutdownInProgress || loading || rules == null ||
+                Players.Count < Mathf.Max(2, rules.minimumPlayers)) return false;
+            if (SelectedMap.Value == RandomMap ? !Enumerable.Range(0, Maps.Length).Any(IsMapAvailable) :
+                !IsMapAvailable(SelectedMap.Value)) return false;
             foreach (var player in Players) if (!player.Ready) return false;
             return true;
         }
@@ -40,6 +43,7 @@ public class LobbyManager : NetworkBehaviour
         loading = false;
         if (IsServer && rules != null)
         {
+            Players.Clear();
             var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
             Settings.Value = bootstrap != null && bootstrap.SessionSettings.HasValue ? bootstrap.SessionSettings.Value : MatchSettings.From(rules);
         }
@@ -104,7 +108,8 @@ public class LobbyManager : NetworkBehaviour
 
     public void SelectMap(int index)
     {
-        if (!IsServer || loading || index < 0 || index >= Maps.Length || index == SelectedMap.Value) return;
+        if (!IsSpawned || !IsServer || NetworkManager.ShutdownInProgress || loading || index < RandomMap ||
+            index >= Maps.Length || index == SelectedMap.Value) return;
         SelectedMap.Value = index;
         for (int i = 0; i < Players.Count; i++)
         { var player = Players[i]; player.Ready = false; Players[i] = player; }
@@ -112,6 +117,7 @@ public class LobbyManager : NetworkBehaviour
 
     void RemovePlayer(ulong id)
     {
+        if (!IsSpawned || !IsServer || NetworkManager.ShutdownInProgress) return;
         for (int i = 0; i < Players.Count; i++)
             if (Players[i].ClientId == id)
             {
@@ -124,6 +130,7 @@ public class LobbyManager : NetworkBehaviour
 
     void OtherConnected(ulong id)
     {
+        if (!IsSpawned || !IsServer || NetworkManager.ShutdownInProgress) return;
         var listeners = new List<ulong>();
         foreach (var player in Players) if (player.ClientId != id) listeners.Add(player.ClientId);
         if (listeners.Count == 0) return;
@@ -200,13 +207,25 @@ public class LobbyManager : NetworkBehaviour
     }
 
 
+    bool IsMapAvailable(int index) => index >= 0 && index < Maps.Length && Maps[index] != null &&
+        !string.IsNullOrWhiteSpace(Maps[index].sceneName) && Application.CanStreamedLevelBeLoaded(Maps[index].sceneName);
+
+    public int ResolveMap()
+    {
+        if (SelectedMap.Value != RandomMap) return IsMapAvailable(SelectedMap.Value) ? SelectedMap.Value : RandomMap;
+        var available = Enumerable.Range(0, Maps.Length).Where(IsMapAvailable).ToArray();
+        return available.Length > 0 ? available[UnityEngine.Random.Range(0, available.Length)] : RandomMap;
+    }
+
     public void StartGame()
     {
         if (!CanStart) return;
+        int map = ResolveMap();
+        if (map == RandomMap) return;
         var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
         if (bootstrap != null) bootstrap.SessionSettings = Settings.Value;
         PartyLoadingScreen.Show();
-        loading = NetworkManager.SceneManager.LoadScene(Maps[SelectedMap.Value].sceneName, LoadSceneMode.Single) == SceneEventProgressStatus.Started;
+        loading = NetworkManager.SceneManager.LoadScene(Maps[map].sceneName, LoadSceneMode.Single) == SceneEventProgressStatus.Started;
         if (!loading) PartyLoadingScreen.Cancel();
         Changed?.Invoke();
     }

@@ -11,6 +11,7 @@ public static class PropHuntChecks
         CheckPropCollisions();
         CheckHudAndPortraits();
         CheckPresentationAssets();
+        CheckGameSettings();
         Require(FaceCapture.Crop(1920, 1080, false) == new Rect(0.21875f, 0, 0.5625f, 1), "Landscape webcam must crop centrally.");
         Require(FaceCapture.Crop(1080, 1920, false) == new Rect(0, 0.21875f, 1, 0.5625f), "Portrait webcam must crop centrally.");
         Require(FaceCapture.Crop(512, 512, true) == new Rect(0, 1, 1, -1), "Mirrored camera must flip vertically.");
@@ -68,6 +69,39 @@ public static class PropHuntChecks
             AssetDatabase.GetAssetPath(audio.disguise).EndsWith("disguise.wav", StringComparison.OrdinalIgnoreCase),
             "Map selection must use distinct UI-click and disguise.wav clips.");
         Debug.Log("Presentation checks passed: loading UI, egg trail material and map audio.");
+    }
+
+    public static void CheckGameSettings()
+    {
+        var menu = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>("Assets/UI/MainMenu.uxml");
+        Require(menu != null, "Game settings live in the existing menu asset.");
+        var root = menu.CloneTree();
+        foreach (var name in new[] { "game-settings-button", "game-video-tab", "game-audio-tab", "game-settings-back", "game-settings-apply" })
+            Require(UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Button>(root, name) != null, "Missing settings button: " + name);
+        foreach (var name in new[] { "game-resolution", "game-quality", "game-fps" })
+            Require(UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.DropdownField>(root, name) != null, "Missing video setting: " + name);
+        foreach (var name in new[] { "game-master", "game-music", "game-effects" })
+        {
+            var slider = UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.SliderInt>(root, name);
+            Require(slider != null && slider.lowValue == 0 && slider.highValue == 100, "Audio sliders use percentage bounds.");
+        }
+        Require(UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.TextField>(root, "player-name") != null &&
+            UnityEngine.UIElements.UQueryExtensions.Q<UnityEngine.UIElements.Button>(root, "face-button") != null,
+            "Name and webcam keep their existing entry points.");
+        Require(GamePreferences.ValidFrameRate(-20) == -1 && GamePreferences.ValidFrameRate(0) == -1 &&
+            GamePreferences.ValidFrameRate(5) == 30 && GamePreferences.ValidFrameRate(999) == 240 && GamePreferences.ValidFrameRate(144) == 144,
+            "Saved frame limits remain valid, including unlimited.");
+        var audio = ScriptableObject.CreateInstance<GameAudioConfig>();
+        try
+        {
+            Require(Mathf.Approximately(audio.MusicVolume, audio.musicVolume * GamePreferences.MusicVolume) &&
+                Mathf.Approximately(audio.EffectsVolume, audio.effectsVolume * GamePreferences.EffectsVolume) &&
+                Mathf.Approximately(audio.DangerVolume, audio.dangerVolume * GamePreferences.EffectsVolume) &&
+                Mathf.Approximately(audio.AmbienceVolume, audio.ambienceVolume * GamePreferences.EffectsVolume),
+                "Local audio settings multiply authored levels without changing the config asset.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(audio); }
+        Debug.Log("Game settings checks passed: menu controls, profile entry points, frame limits and audio multipliers.");
     }
 
     public static void CheckPropCollisions()

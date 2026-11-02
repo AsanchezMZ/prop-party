@@ -29,9 +29,12 @@ public class LobbyUI : MonoBehaviour
     MatchSettings shownSettings;
     Label settingsNote;
     bool settingsOpen;
+    GameSettingsDialog gameSettings;
+    Button gameSettingsButton;
     IVisualElementScheduledItem toastTimer;
     NetworkManager network;
     bool connecting;
+    bool leaving;
     bool disconnectSoundPlayed;
     float connectionStarted;
     VisualElement[] mascots;
@@ -72,8 +75,8 @@ public class LobbyUI : MonoBehaviour
         mascots = new[] { root.Q(className: "suspect-box"), root.Q(className: "suspect-mug"), root.Q(className: "suspect-egg") };
         maps.RegisterValueChangedCallback(_ =>
         {
-            if (!network.IsServer || !lobby.IsSpawned || maps.index < 0 || maps.index >= lobby.Maps.Length || maps.index == lobby.SelectedMap.Value) return;
-            lobby.SelectMap(maps.index);
+            if (!network.IsServer || !lobby.IsSpawned || maps.index < 0 || maps.index > lobby.Maps.Length) return;
+            lobby.SelectMap(maps.index == lobby.Maps.Length ? LobbyManager.RandomMap : maps.index);
         });
         host = Bind(root, "host", () => Connect(true));
         join = Bind(root, "join", () => ShowJoin(true));
@@ -105,6 +108,7 @@ public class LobbyUI : MonoBehaviour
         });
         faceButton = Bind(root, "face-button", () =>
         {
+            gameSettingsButton.SetEnabled(false);
             home.SetEnabled(false); room.SetEnabled(false); playerName.SetEnabled(false); faceButton.SetEnabled(false);
             faceCapture.Open();
         });
@@ -114,10 +118,17 @@ public class LobbyUI : MonoBehaviour
             faceCapture.Closed += FaceClosed;
         }
         else faceButton.SetEnabled(false);
+        gameSettingsButton = root.Q<Button>("game-settings-button");
+        gameSettings = new GameSettingsDialog(root, visible =>
+        {
+            home.SetEnabled(!visible); room.SetEnabled(!visible);
+            Refresh();
+        });
         root.RegisterCallback<KeyDownEvent>(evt =>
         {
             if (evt.keyCode != KeyCode.Escape) return;
-            if (settingsOpen) ShowSettings(false);
+            if (gameSettings.IsOpen) { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiClick); gameSettings.Close(); }
+            else if (settingsOpen) ShowSettings(false);
             else if (faceCapture != null && faceCapture.IsOpen) faceCapture.Close();
             else if (joinPanel.style.display == DisplayStyle.Flex) ShowJoin(false);
             else return;
@@ -128,7 +139,7 @@ public class LobbyUI : MonoBehaviour
         network.OnClientDisconnectCallback += Disconnected;
         network.OnTransportFailure += TransportFailed;
         if (PartyAudio.Instance == null && audioSource != null && menuMusic != null)
-        { audioSource.clip = menuMusic; audioSource.loop = true; audioSource.Play(); }
+        { audioSource.clip = menuMusic; audioSource.loop = true; }
         Refresh();
     }
 
@@ -163,6 +174,7 @@ public class LobbyUI : MonoBehaviour
 
     void ShowSettings(bool visible)
     {
+        gameSettingsButton.SetEnabled(!visible);
         settingsOpen = visible;
         settingsPanel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         room.SetEnabled(!visible); faceButton.SetEnabled(!visible && faceCapture != null);
@@ -184,6 +196,7 @@ public class LobbyUI : MonoBehaviour
 
     void ShowJoin(bool visible)
     {
+        gameSettingsButton.SetEnabled(!visible);
         joinPanel.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         home.SetEnabled(!visible); playerName.SetEnabled(!visible);
         faceButton.SetEnabled(!visible && faceCapture != null);
@@ -207,7 +220,7 @@ public class LobbyUI : MonoBehaviour
 
     void Connect(bool asHost)
     {
-        if (network.IsListening || connecting) return;
+        if (network.IsListening || network.ShutdownInProgress || connecting || leaving) return;
         disconnectSoundPlayed = false;
         string ip = address.value.Trim();
         if (!asHost && !IPAddress.TryParse(ip, out _)) { Notify("Introduce una dirección IP válida."); return; }
@@ -232,6 +245,14 @@ public class LobbyUI : MonoBehaviour
 
     void Update()
     {
+        if (PartyAudio.Instance == null && audioSource != null && menuMusic != null && audioSource.clip == menuMusic)
+        {
+            audioSource.volume = GamePreferences.MusicVolume;
+            if (!PartyLoadingScreen.Ready) audioSource.Stop();
+            else if (!audioSource.isPlaying) audioSource.Play();
+        }
+        if (leaving && !network.IsListening && !network.ShutdownInProgress)
+        { leaving = false; Refresh(false); }
         if (connecting && Time.unscaledTime - connectionStarted > 15) Fail("Sin respuesta. Comprueba la IP y el puerto.");
         if (mascots == null) return;
         for (int i = 0; i < mascots.Length; i++)
@@ -251,10 +272,11 @@ public class LobbyUI : MonoBehaviour
     {
         if (id == network.LocalClientId || !network.IsClient)
         {
+            if (leaving) return;
             PlayDisconnect();
             connecting = false;
             string reason = network.DisconnectReason;
-            network.Shutdown();
+            StopNetwork();
             Notify(string.IsNullOrEmpty(reason) ? "Se ha cerrado la sala." : reason);
             Refresh(false);
         }
@@ -266,18 +288,29 @@ public class LobbyUI : MonoBehaviour
         PartyAudio.Instance?.Play(PartyAudio.Settings?.disconnected);
     }
     void TransportFailed() => Fail("Error de transporte. Revisa la conexión.");
-    void Fail(string message) { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiError); connecting = false; network.Shutdown(); Notify(message); Refresh(false); }
-    void Leave() { PlayDisconnect(); network.Shutdown(); connecting = false; Notify("👋 Has salido de la sala."); Refresh(false); }
-    void Refresh() => Refresh(network.IsConnectedClient);
+    void StopNetwork()
+    {
+        leaving = true;
+        connecting = false;
+        if (network.IsListening && !network.ShutdownInProgress) network.Shutdown();
+    }
+    void Fail(string message) { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiError); StopNetwork(); Notify(message); Refresh(false); }
+    void Leave() { if (leaving) return; PlayDisconnect(); StopNetwork(); Notify("👋 Has salido de la sala."); Refresh(false); }
+    void Refresh() => Refresh(!leaving && network.IsConnectedClient);
 
     void Refresh(bool inRoom)
     {
         home.style.display = inRoom ? DisplayStyle.None : DisplayStyle.Flex;
         room.style.display = inRoom ? DisplayStyle.Flex : DisplayStyle.None;
-        host.SetEnabled(!connecting); join.SetEnabled(!connecting); connect.SetEnabled(!connecting);
+        bool canConnect = !connecting && !leaving && !network.ShutdownInProgress;
+        host.SetEnabled(canConnect); join.SetEnabled(canConnect); connect.SetEnabled(canConnect);
         bool faceOpen = faceCapture != null && faceCapture.IsOpen;
-        playerName.SetEnabled(!inRoom && !connecting && !faceOpen);
-        faceButton.SetEnabled(!connecting && faceCapture != null && !faceOpen && !settingsOpen);
+        bool gameSettingsOpen = gameSettings != null && gameSettings.IsOpen;
+        playerName.SetEnabled(!inRoom && !connecting && !faceOpen && !gameSettingsOpen);
+        faceButton.SetEnabled(!connecting && faceCapture != null && !faceOpen && !settingsOpen && !gameSettingsOpen);
+        gameSettingsButton.SetEnabled(!connecting && !leaving && !faceOpen && !settingsOpen && !gameSettingsOpen &&
+            joinPanel.style.display != DisplayStyle.Flex);
+        if (gameSettingsOpen) { home.SetEnabled(false); room.SetEnabled(false); }
         if (!inRoom && settingsOpen) { ShowSettings(false); room.SetEnabled(true); }
         if (settingsOpen && !shownSettings.Equals(lobby.Settings.Value)) PopulateSettings();
         if (inRoom) joinPanel.style.display = DisplayStyle.None;
@@ -298,10 +331,18 @@ public class LobbyUI : MonoBehaviour
         }
         var choices = new List<string>();
         for (int i = 0; i < lobby.Maps.Length; i++) choices.Add($"{i + 1}. {(lobby.Maps[i] != null ? lobby.Maps[i].displayName : "Sin configurar")}");
+        choices.Add("Aleatorio");
         maps.choices = choices;
         int selected = lobby.SelectedMap.Value;
         if (selected != shownMap) { if (shownMap >= 0) mapChangedAt = Time.unscaledTime; shownMap = selected; }
-        if (selected >= 0 && selected < choices.Count)
+        if (selected == LobbyManager.RandomMap)
+        {
+            maps.SetValueWithoutNotify(choices[choices.Count - 1]);
+            previewTitle.text = "MAPA ALEATORIO";
+            mapDescription.text = "El anfitrión sorteará un mapa disponible al empezar la partida.";
+            preview.style.backgroundImage = StyleKeyword.None;
+        }
+        else if (selected >= 0 && selected < lobby.Maps.Length)
         {
             maps.SetValueWithoutNotify(choices[selected]);
             var map = lobby.Maps[selected];

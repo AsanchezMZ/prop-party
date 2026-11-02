@@ -46,6 +46,11 @@ public class GameAudioConfig : ScriptableObject
     [Range(0, 1)] public float dangerVolume = 0.35f;
     [Range(0, 1)] public float ambienceVolume = 0.2f;
 
+    public float MusicVolume => musicVolume * GamePreferences.MusicVolume;
+    public float EffectsVolume => effectsVolume * GamePreferences.EffectsVolume;
+    public float DangerVolume => dangerVolume * GamePreferences.EffectsVolume;
+    public float AmbienceVolume => ambienceVolume * GamePreferences.EffectsVolume;
+
     public AudioClip SelectMusic(bool inMatch, bool connectedToRoom, MatchPhase phase, double secondsLeft)
     {
         if (!inMatch) return connectedToRoom ? lobbyMusic : menuMusic;

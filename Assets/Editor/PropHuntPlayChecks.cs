@@ -21,6 +21,17 @@ public static class PropHuntPlayChecks
 
     public static void Run()
     {
+        RunMap("");
+    }
+
+    public static void RunApartment()
+    {
+        RunMap("Assets/Brick Project Studio/Apartment Kit/Scenes/Scene_01.unity");
+    }
+
+    static void RunMap(string scenePath)
+    {
+        SessionState.SetString(Key + ".Map", scenePath);
         foreach (var entry in EditorBuildSettings.scenes.Where(s => s.enabled))
         {
             EditorSceneManager.OpenScene(entry.path);
@@ -59,6 +70,18 @@ public static class PropHuntPlayChecks
             var network = NetworkManager.Singleton;
             if (stage == 0)
             {
+                var audio = PartyAudio.Instance;
+                var music = audio.GetComponentsInChildren<AudioSource>().First(source => source.name == "Music");
+                var readySetter = typeof(PartyLoadingScreen).GetProperty("Ready").GetSetMethod(true);
+                bool wasReady = PartyLoadingScreen.Ready;
+                try
+                {
+                    readySetter.Invoke(null, new object[] { false });
+                    music.volume = 1;
+                    typeof(PartyAudio).GetMethod("UpdateMusic", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(audio, null);
+                    Require(!music.isPlaying && music.volume == 0, "Loading must immediately stop music, without a fade-out tail");
+                }
+                finally { readySetter.Invoke(null, new object[] { wasReady }); }
                 lobbyScene = SceneManager.GetActiveScene().name;
                 Require(network.StartHost(), "Host starts"); stage++; return;
             }
@@ -69,6 +92,7 @@ public static class PropHuntPlayChecks
                 Require(!lobby.CanStart, "Single player cannot start");
                 lobby.ToggleReadyServerRpc();
                 Require(lobby.Players[0].Ready, "Ready request reaches server");
+                CheckMapSelection(lobby);
                 var settings = lobby.Settings.Value;
                 settings.Health = 3;
                 Require(lobby.ApplySettings(settings), "Host can change settings");
@@ -76,7 +100,9 @@ public static class PropHuntPlayChecks
                 Require(lobby.Settings.Value.Health == 3, "Session settings change without mutating rules");
                 network.GetComponent<GameBootstrap>().SessionSettings = lobby.Settings.Value;
                 Require(lobby.Maps.Length > 0, "Configured maps exist");
-                Require(network.SceneManager.LoadScene(lobby.Maps[0].sceneName, LoadSceneMode.Single) == SceneEventProgressStatus.Started, "Network map load starts");
+                string requestedMap = SessionState.GetString(Key + ".Map", "");
+                var map = string.IsNullOrEmpty(requestedMap) ? lobby.Maps[0] : lobby.Maps.Single(m => m != null && m.sceneName == requestedMap);
+                Require(network.SceneManager.LoadScene(map.sceneName, LoadSceneMode.Single) == SceneEventProgressStatus.Started, "Network map load starts");
                 stage++; return;
             }
             var match = UnityEngine.Object.FindAnyObjectByType<PropHuntMatch>();
@@ -89,7 +115,7 @@ public static class PropHuntPlayChecks
                 var prefab = network.NetworkConfig.Prefabs.NetworkPrefabsLists.SelectMany(list => list.PrefabList)
                     .Select(entry => entry.Prefab).First(p => p != null && p.GetComponent<PropHuntPlayer>() != null);
                 bot = UnityEngine.Object.Instantiate(prefab, host.transform.position + Vector3.right * 3, Quaternion.identity).GetComponent<PropHuntPlayer>();
-                bot.NetworkObject.Spawn();
+                bot.NetworkObject.Spawn(true);
                 bot.AssetsReady.Value = false;
                 Require(!match.BeginRound(), "Round cannot start before every player prepares its assets");
                 bot.AssetsReady.Value = true; // The synthetic bot has no remote loading screen.
@@ -147,13 +173,82 @@ public static class PropHuntPlayChecks
                 var resultsAudio = PartyAudio.Instance.GetComponentsInChildren<AudioSource>().First(source => source.name == "Results");
                 Require(!resultsAudio.isPlaying, "Result audio must stop when returning to the lobby.");
                 Require(lobby.Settings.Value.Health == 3, "Session settings survive lobby return");
-                End(true, "Host integration checks passed: lobby settings, cameras, HUD, proximity/LOS scoring, walls, automatic/manual whistles, cooldown, hunter-only footsteps, capture, victory, score reset and lobby return.");
+                lobby.Players.Add(new LobbyPlayer { ClientId = ulong.MaxValue });
+                var ui = UnityEngine.Object.FindAnyObjectByType<LobbyUI>();
+                typeof(LobbyUI).GetMethod("Leave", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(ui, null);
+                int playersBefore = lobby.Players.Count;
+                typeof(LobbyManager).GetMethod("RemovePlayer", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(lobby, new object[] { network.LocalClientId });
+                Require(lobby.Players.Count == playersBefore, "Shutdown callbacks do not mutate replicated lobby state");
+                typeof(LobbyUI).GetMethod("Leave", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(ui, null);
+                typeof(LobbyUI).GetMethod("Disconnected", BindingFlags.NonPublic | BindingFlags.Instance)
+                    .Invoke(ui, new object[] { network.LocalClientId });
+                Require(ui.GetComponent<UIDocument>().rootVisualElement.Q<Label>("status").text.Contains("Has salido"),
+                    "Repeated shutdown callbacks preserve the intentional leave message");
+                stage++; return;
+            }
+            if (stage == 6)
+            {
+                if (network.IsListening || network.ShutdownInProgress) return;
+                var ui = UnityEngine.Object.FindAnyObjectByType<LobbyUI>();
+                if (!ui.GetComponent<UIDocument>().rootVisualElement.Q<Button>("host").enabledSelf) return;
+                typeof(LobbyUI).GetMethod("Connect", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(ui, new object[] { true });
+                stage++; return;
+            }
+            if (stage == 7)
+            {
+                var lobby = UnityEngine.Object.FindAnyObjectByType<LobbyManager>();
+                if (!network.IsConnectedClient || lobby == null || !lobby.IsSpawned || lobby.Players.Count == 0) return;
+                Require(lobby.Players.Count == 1, "Reopened lobby contains only the new host");
+                var ui = UnityEngine.Object.FindAnyObjectByType<LobbyUI>();
+                typeof(LobbyUI).GetMethod("Leave", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(ui, null);
+                stage++; return;
+            }
+            if (stage == 8 && !network.IsListening && !network.ShutdownInProgress)
+            {
+                End(true, "Host integration checks passed, including lobby close, reopen and close without errors.");
             }
         }
         catch (Exception exception) { End(false, exception.ToString()); }
     }
 
     static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+
+    static void CheckMapSelection(LobbyManager lobby)
+    {
+        var field = typeof(LobbyManager).GetField("mapDefinitions", BindingFlags.NonPublic | BindingFlags.Instance);
+        var original = lobby.Maps;
+        var invalid = ScriptableObject.CreateInstance<MapDefinition>();
+        var randomState = UnityEngine.Random.state;
+        try
+        {
+            field.SetValue(lobby, new[] { original[0], null, invalid, original[0] });
+            lobby.SelectMap(LobbyManager.RandomMap);
+            Require(lobby.SelectedMap.Value == LobbyManager.RandomMap && !lobby.Players[0].Ready,
+                "Random mode is synchronized and clears ready state");
+            var root = UnityEngine.Object.FindAnyObjectByType<LobbyUI>().GetComponent<UIDocument>().rootVisualElement;
+            Require(root.Q<DropdownField>("maps").value == "Aleatorio" && root.Q<Label>("map-title").text == "MAPA ALEATORIO",
+                "Random mode has a distinct selection and preview");
+            bool first = false, last = false;
+            UnityEngine.Random.InitState(42);
+            for (int i = 0; i < 100; i++)
+            {
+                int selected = lobby.ResolveMap();
+                Require(selected == 0 || selected == 3, "Random selection excludes missing and unavailable maps");
+                first |= selected == 0; last |= selected == 3;
+            }
+            Require(first && last, "All available entries can be drawn");
+            field.SetValue(lobby, Array.Empty<MapDefinition>());
+            Require(lobby.ResolveMap() == LobbyManager.RandomMap && !lobby.CanStart, "No available map prevents starting");
+        }
+        finally
+        {
+            field.SetValue(lobby, original);
+            lobby.SelectMap(0);
+            UnityEngine.Random.state = randomState;
+            UnityEngine.Object.DestroyImmediate(invalid);
+        }
+    }
 
     static void CheckDoorSound(PropHuntPlayer hunter)
     {

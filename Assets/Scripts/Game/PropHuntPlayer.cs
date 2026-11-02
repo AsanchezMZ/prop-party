@@ -343,7 +343,7 @@ public class PropHuntPlayer : NetworkBehaviour
     public void JumpSound()
     {
         var clip = jumpSound != null ? jumpSound : PartyAudio.Settings?.jump;
-        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, PartyAudio.Settings != null ? PartyAudio.Settings.effectsVolume : 1);
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, PartyAudio.Settings != null ? PartyAudio.Settings.EffectsVolume : GamePreferences.EffectsVolume);
     }
 
     [ClientRpc]
@@ -367,7 +367,7 @@ public class PropHuntPlayer : NetworkBehaviour
                 3 => settings.throwSound, 6 => settings.hurt,
                 7 => settings.freeze, 8 => settings.freeze, 9 => settings.rotate, _ => null
             };
-        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.effectsVolume : 1);
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.EffectsVolume : GamePreferences.EffectsVolume);
         if (cue == 1 || cue == 2 || cue == 6)
             PartyVfx.Burst(transform.position + Vector3.up * 0.5f,
                 cue == 1 ? new Color(0.2f, 0.9f, 0.75f) : new Color(1, 0.35f, 0.3f), false, effectMaterial);

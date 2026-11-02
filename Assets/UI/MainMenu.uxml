@@ -5,6 +5,7 @@
             <ui:VisualElement class="menu-header">
                 <ui:Label text="PropParty" class="wordmark"/>
                 <ui:Label text="&#10;" class="edition"/>
+                <ui:Button name="game-settings-button" text="AJUSTES" tooltip="Ajustes de vídeo y audio de este equipo" class="game-settings-button secondary"/>
                 <ui:Button name="face-button" text="TU CARA" tooltip="Captura tu cara para el personaje" class="face-button secondary"/>
                 <ui:TextField name="player-name" label="TÚ" value="Player" max-length="24" class="profile"/>
             </ui:VisualElement>
@@ -65,7 +66,7 @@
                 </ui:VisualElement>
                 <ui:VisualElement class="room-actions">
                     <ui:Button name="leave" text="←  SALIR" class="quiet"/>
-                    <ui:Button name="settings" text="⚙ AJUSTES" class="secondary"/>
+                    <ui:Button name="settings" text="⚙ REGLAS" class="secondary"/>
                     <ui:Button name="ready" text="ESTOY LISTO" class="secondary"/>
                     <ui:Button name="start" text="¡A JUGAR!    →" class="primary"/>
                 </ui:VisualElement>
@@ -140,6 +141,52 @@
                         <ui:Button name="face-enable" text="ACTIVAR CÁMARA" class="secondary"/>
                         <ui:Button name="face-snap" text="¡ESA ES MI CARA!    →" enabled="false" class="primary"/>
                         <ui:Button name="face-back" text="←  VOLVER" class="quiet"/>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="game-settings-overlay" class="join-overlay" style="display: none;">
+                <ui:VisualElement class="settings-dialog game-settings-dialog">
+                    <ui:Label text="PONTE A GUSTO" class="dialog-title"/>
+                    <ui:Label text="Vídeo y audio de tu equipo. Las reglas de la sala se ajustan por separado." class="dialog-description"/>
+                    <ui:VisualElement class="game-settings-tabs">
+                        <ui:Button name="game-video-tab" text="VÍDEO" class="secondary game-settings-tab is-selected"/>
+                        <ui:Button name="game-audio-tab" text="AUDIO" class="secondary game-settings-tab"/>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="game-video-page" class="settings-grid game-settings-page">
+                        <ui:VisualElement class="settings-column settings-column-left">
+                            <ui:VisualElement class="setting-row"><ui:DropdownField name="game-resolution" label="RESOLUCIÓN"/></ui:VisualElement>
+                            <ui:VisualElement class="setting-row"><ui:DropdownField name="game-quality" label="CALIDAD GRÁFICA"/></ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Modo de pantalla" class="setting-title"/>
+                                <ui:Toggle name="game-fullscreen" text="Pantalla completa sin bordes" class="setting-toggle"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="settings-column">
+                            <ui:VisualElement class="setting-row"><ui:DropdownField name="game-fps" label="LÍMITE DE FPS"/></ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Sincronización vertical" class="setting-title"/>
+                                <ui:Toggle name="game-vsync" text="Activar VSync" class="setting-toggle"/>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement name="game-audio-page" class="game-settings-page" style="display: none;">
+                        <ui:VisualElement class="setting-row">
+                            <ui:Label text="Volumen general · %" class="setting-title"/>
+                            <ui:SliderInt name="game-master" tooltip="Volumen de todo el juego" low-value="0" high-value="100" show-input-field="true" class="setting-slider"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="setting-row">
+                            <ui:Label text="Música · %" class="setting-title"/>
+                            <ui:SliderInt name="game-music" low-value="0" high-value="100" show-input-field="true" class="setting-slider"/>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="setting-row">
+                            <ui:Label text="Efectos, interfaz y ambiente · %" class="setting-title"/>
+                            <ui:SliderInt name="game-effects" low-value="0" high-value="100" show-input-field="true" class="setting-slider"/>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label name="game-settings-note" class="settings-note"/>
+                    <ui:VisualElement class="settings-actions">
+                        <ui:Button name="game-settings-back" text="← VOLVER" tooltip="Cerrar sin aplicar los cambios pendientes" class="quiet"/>
+                        <ui:Button name="game-settings-apply" text="APLICAR" class="primary"/>
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>

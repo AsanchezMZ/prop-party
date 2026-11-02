@@ -55,7 +55,7 @@ public class PartyAudio : MonoBehaviour
 
     public void Play(AudioClip clip)
     {
-        if (clip != null && effects != null) effects.PlayOneShot(clip, config != null ? config.effectsVolume : 1);
+        if (clip != null && effects != null) effects.PlayOneShot(clip, config != null ? config.EffectsVolume : GamePreferences.EffectsVolume);
     }
 
     void Update()
@@ -75,7 +75,7 @@ public class PartyAudio : MonoBehaviour
         }
         wantedMusic = config.SelectMusic(inMatch, network != null && network.IsConnectedClient, phase, seconds);
         UpdateMusic();
-        SetLoop(ambience, inMatch && phase != MatchPhase.Finished ? config.ambienceLoop : null, config.ambienceVolume);
+        SetLoop(ambience, inMatch && phase != MatchPhase.Finished ? config.ambienceLoop : null, config.AmbienceVolume);
         if (inMatch && phase != previousPhase)
         {
             if (phase == MatchPhase.Hiding) { warned = false; Play(config.roundStart); }
@@ -89,7 +89,7 @@ public class PartyAudio : MonoBehaviour
                 if (player != null && player.Role.Value != PlayerRole.Spectator)
                 {
                     results.clip = player.Role.Value == match.Winner.Value ? config.victory : config.defeat;
-                    results.volume = config.effectsVolume;
+                    results.volume = config.EffectsVolume;
                     if (results.clip != null) results.Play();
                 }
             }
@@ -103,7 +103,7 @@ public class PartyAudio : MonoBehaviour
         if (nearby && !wasNearby) Play(config.nearbyEnter);
         if (!nearby && wasNearby && hidingPlayer) Play(config.nearbyExit);
         if (spotted && !wasSpotted) Play(config.spottedEnter);
-        SetLoop(danger, spotted && config.spottedLoop != null ? config.spottedLoop : nearby ? config.nearbyLoop : null, config.dangerVolume);
+        SetLoop(danger, spotted && config.spottedLoop != null ? config.spottedLoop : nearby ? config.nearbyLoop : null, config.DangerVolume);
         wasNearby = nearby; wasSpotted = spotted;
         if (player != null)
         {
@@ -115,7 +115,13 @@ public class PartyAudio : MonoBehaviour
 
     void UpdateMusic()
     {
-        float target = music.clip == wantedMusic ? config.musicVolume : 0;
+        if (!PartyLoadingScreen.Ready)
+        {
+            music.Stop();
+            music.volume = 0;
+            return;
+        }
+        float target = music.clip == wantedMusic ? config.MusicVolume : 0;
         music.volume = Mathf.MoveTowards(music.volume, target, Time.unscaledDeltaTime * 1.5f);
         if (music.clip == wantedMusic)
         {

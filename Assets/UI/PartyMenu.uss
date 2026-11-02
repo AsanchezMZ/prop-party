@@ -148,3 +148,13 @@ Button:disabled { opacity: 0.45; }
 .party .settings-actions { flex-direction: row; justify-content: space-between; }
 .party .settings-actions Button { width: 240px; height: 46px; margin-bottom: 0; }
 .party .status { display: none; position: absolute; bottom: 20px; left: 230px; right: 230px; padding: 12px 18px; border-radius: 12px; background-color: rgb(25, 64, 67); color: rgb(255, 245, 209); white-space: normal; -unity-text-align: middle-center; }
+.party Button.game-settings-button { width: 116px; height: 36px; margin: 0 12px 0 0; padding: 0 8px; font-size: 11px; border-bottom-width: 3px; }
+.party .game-settings-dialog { padding: 22px 28px; }
+.party .game-settings-dialog .dialog-description { margin: 6px 0 12px; }
+.party .game-settings-tabs { flex-direction: row; margin-bottom: 10px; border-bottom-width: 2px; border-bottom-color: rgb(211, 215, 202); }
+.party Button.game-settings-tab { width: 172px; height: 42px; margin: 0 12px 10px 0; font-size: 14px; }
+.party Button.game-settings-tab.is-selected { background-color: rgb(65, 196, 179); border-bottom-color: rgb(20, 128, 119); }
+.party .game-settings-page { height: 270px; flex-shrink: 0; }
+.party .game-settings-dialog .setting-row { height: 80px; padding: 8px 14px; }
+.party .game-settings-dialog .setting-title { height: 20px; font-size: 16px; margin-bottom: 3px; }
+.party .game-settings-dialog .setting-row .unity-base-field__label { margin-bottom: 5px; }
