@@ -16,7 +16,7 @@ MonoBehaviour:
   hunters: 1
   hidingSeconds: 20
   huntingSeconds: 180
-  whistleSeconds: 25
+  whistleSeconds: 45
   capturedBecomeHunters: 1
   disguiseDistance: 3
   propHealth: 2

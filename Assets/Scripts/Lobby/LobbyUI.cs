@@ -38,6 +38,7 @@ public class LobbyUI : MonoBehaviour
     bool disconnectSoundPlayed;
     float connectionStarted;
     VisualElement[] mascots;
+    List<VisualElement> backgroundShapes;
     float mapChangedAt = -10;
     int shownMap = -1;
 
@@ -53,6 +54,7 @@ public class LobbyUI : MonoBehaviour
         }
         var root = document.rootVisualElement;
         content = root.Q("menu-root");
+        backgroundShapes = root.Query(className: "ambient-shape").ToList();
         if (background != null) content.style.backgroundImage = new StyleBackground(background);
         home = root.Q("home"); room = root.Q("room"); roster = root.Q("roster");
         preview = root.Q("map-preview"); joinPanel = root.Q("join-overlay");
@@ -255,6 +257,12 @@ public class LobbyUI : MonoBehaviour
         { leaving = false; Refresh(false); }
         if (connecting && Time.unscaledTime - connectionStarted > 15) Fail("Sin respuesta. Comprueba la IP y el puerto.");
         if (mascots == null) return;
+        for (int i = 0; i < backgroundShapes.Count; i++)
+        {
+            float phase = Time.unscaledTime * 0.22f + i * 1.7f;
+            backgroundShapes[i].style.translate = new Translate(Mathf.Sin(phase) * 32, Mathf.Cos(phase * 0.8f) * 24);
+            backgroundShapes[i].style.rotate = new Rotate(new Angle(Time.unscaledTime * (i % 2 == 0 ? 3 : -3)));
+        }
         for (int i = 0; i < mascots.Length; i++)
             if (mascots[i] != null) mascots[i].style.translate = new Translate(0, Mathf.Sin(Time.unscaledTime * 1.6f + i * 2) * 7);
         float pop = 1 + Mathf.Sin(Mathf.Clamp01((Time.unscaledTime - mapChangedAt) / 0.4f) * Mathf.PI) * 0.025f;

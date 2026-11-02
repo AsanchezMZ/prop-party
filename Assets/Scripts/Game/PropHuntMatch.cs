@@ -17,14 +17,25 @@ public class PropHuntMatch : NetworkBehaviour
     public readonly NetworkVariable<double> Deadline = new();
     public readonly NetworkVariable<PlayerRole> Winner = new(PlayerRole.Spectator);
     public readonly NetworkVariable<MatchSettings> Settings = new();
+    public readonly NetworkVariable<bool> LastHiderRemaining = new();
+    NetworkList<bool> doorStates;
+    double nextAutomaticWhistle;
+
+    void Awake() => doorStates = new NetworkList<bool>();
     public override void OnNetworkSpawn()
     {
+        doorStates.OnListChanged += DoorChanged;
+        if (IsServer && map != null)
+        {
+            doorStates.Clear();
+            foreach (var door in map.doors) doorStates.Add(false);
+        }
+        ApplyDoors();
         if (!IsServer || rules == null) return;
         var bootstrap = NetworkManager.GetComponent<GameBootstrap>();
         Settings.Value = (bootstrap != null && bootstrap.SessionSettings.HasValue ? bootstrap.SessionSettings.Value : MatchSettings.From(rules)).Validated();
     }
     readonly List<PropHuntPlayer> players = new();
-    bool lastHiderAnnounced;
     public IReadOnlyList<PropHuntPlayer> Players => players;
     public double SecondsLeft => System.Math.Max(0, Deadline.Value - NetworkManager.ServerTime.Time);
 
@@ -45,7 +56,13 @@ public class PropHuntMatch : NetworkBehaviour
         foreach (var spawner in FindObjectsByType<MapPropSpawner>(FindObjectsSortMode.None))
             if (spawner.gameObject.scene == gameObject.scene) spawner.Roll();
         int hunters = Mathf.Clamp(Settings.Value.Hunters, 1, players.Count - 1);
-        lastHiderAnnounced = players.Count - hunters <= 1;
+        LastHiderRemaining.Value = players.Count - hunters == 1;
+        for (int i = 0; i < doorStates.Count; i++) doorStates[i] = false;
+        ApplyDoors();
+        var audio = PartyAudio.Settings;
+        float intro = audio != null && audio.roundStart != null ? audio.roundStart.length : 0;
+        float huntCue = audio != null && audio.huntStart != null ? audio.huntStart.length : 0;
+        nextAutomaticWhistle = NetworkManager.ServerTime.Time + Mathf.Max(Settings.Value.HidingSeconds, intro + 2.5f) + Mathf.Max(40, huntCue + 7);
         for (int i = 0; i < players.Count; i++)
         {
             var role = i < hunters ? PlayerRole.Hunter : PlayerRole.Prop;
@@ -68,8 +85,7 @@ public class PropHuntMatch : NetworkBehaviour
             if (player.Role.Value == PlayerRole.Hunter) hunters++;
         }
         if (props == 0 || hunters == 0) { Finish(props == 0 ? PlayerRole.Hunter : PlayerRole.Prop); return; }
-        if (props == 1 && !lastHiderAnnounced)
-        { lastHiderAnnounced = true; LastHiderClientRpc(); }
+        LastHiderRemaining.Value = props == 1;
         if (SecondsLeft > 0) return;
         if (Phase.Value == MatchPhase.Hiding)
         {
@@ -81,8 +97,49 @@ public class PropHuntMatch : NetworkBehaviour
 
     void Finish(PlayerRole winner) { Winner.Value = winner; Phase.Value = MatchPhase.Finished; }
 
+    public bool ReserveAutomaticWhistle(float duration)
+    {
+        double now = NetworkManager.ServerTime.Time;
+        if (!IsServer || Phase.Value != MatchPhase.Hunting || now < nextAutomaticWhistle) return false;
+        nextAutomaticWhistle = now + Mathf.Max(0, duration) + 8;
+        return true;
+    }
+
+    public void TryToggleDoor(int index, PropHuntPlayer player, Vector3 eye)
+    {
+        if (!IsServer || map == null || player == null || player.Match != this || !player.CanUseDoor ||
+            !float.IsFinite(eye.x) || !float.IsFinite(eye.y) || !float.IsFinite(eye.z) ||
+            index < 0 || index >= map.doors.Length || index >= doorStates.Count) return;
+        var door = map.doors[index];
+        double now = NetworkManager.ServerTime.Time;
+        if (door == null || !door.CanUse(player, eye, now)) return;
+        door.Used(now);
+        doorStates[index] = !doorStates[index];
+        DoorCueClientRpc(index);
+    }
+
     [ClientRpc]
-    void LastHiderClientRpc() => PartyAudio.Instance?.Play(PartyAudio.Settings?.lastHider);
+    void DoorCueClientRpc(int index)
+    {
+        if (map != null && index >= 0 && index < map.doors.Length && map.doors[index] != null)
+            DoorAudio.PlayAt(map.doors[index].transform.position);
+    }
+
+    void DoorChanged(NetworkListEvent<bool> change)
+    {
+        if (map == null) return;
+        if (change.Type == NetworkListEvent<bool>.EventType.Value && change.Index >= 0 && change.Index < map.doors.Length)
+            map.doors[change.Index]?.Apply(change.Value);
+        else ApplyDoors();
+    }
+
+    void ApplyDoors()
+    {
+        if (map == null) return;
+        for (int i = 0; i < map.doors.Length && i < doorStates.Count; i++) map.doors[i]?.Apply(doorStates[i], true);
+    }
+
+    public override void OnNetworkDespawn() => doorStates.OnListChanged -= DoorChanged;
 
     public void ReturnToLobby()
     {

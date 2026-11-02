@@ -107,9 +107,8 @@ public class PlayerController : NetworkBehaviour
             SetCursorLocked(true);
 
         bool locked = Cursor.lockState == CursorLockMode.Locked;
-        AimedProp = locked && gameplay != null && gameplay.Match != null && gameplay.Role.Value == PlayerRole.Prop &&
-            (gameplay.Match.Phase.Value == MatchPhase.Hiding || gameplay.Match.Phase.Value == MatchPhase.Hunting)
-            ? FindAimedProp() : null;
+        AimedProp = null; AimedDoor = null;
+        if (locked && gameplay != null && gameplay.CanUseDoor) FindAimedTargets();
         if (locked)
         {
             float mx = Input.GetAxis("Mouse X") * mouseSensitivity;
@@ -123,6 +122,11 @@ public class PlayerController : NetworkBehaviour
 
         if (gameplay != null && locked)
         {
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                if (AimedDoor != null) gameplay.UseDoorServerRpc(System.Array.IndexOf(gameplay.Match.Map.doors, AimedDoor));
+                else if (AimedProp != null) gameplay.DisguiseServerRpc(AimedProp.id);
+            }
             if (gameplay.Role.Value == PlayerRole.Prop)
             {
                 if (Input.GetKeyDown(KeyCode.V)) TogglePerspective();
@@ -130,7 +134,6 @@ public class PlayerController : NetworkBehaviour
                 if (Input.GetKeyDown(KeyCode.F)) gameplay.FreezeServerRpc();
                 if (Input.GetKeyDown(KeyCode.Q)) gameplay.RotateServerRpc(false);
                 if (Input.GetKeyDown(KeyCode.R)) gameplay.RotateServerRpc(true);
-                if (Input.GetKeyDown(KeyCode.E) && AimedProp != null) gameplay.DisguiseServerRpc(AimedProp.id);
             }
             else
             {
@@ -195,7 +198,9 @@ public class PlayerController : NetworkBehaviour
             animator.SetFloat("Speed", animVal, 0.1f, Time.deltaTime);
     }
 
-    Prop FindAimedProp()
+    public ApartmentDoor AimedDoor { get; private set; }
+
+    void FindAimedTargets()
     {
         var hits = Physics.RaycastAll(playerCamera.transform.position, playerCamera.transform.forward, 10,
             Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
@@ -203,12 +208,17 @@ public class PlayerController : NetworkBehaviour
         foreach (var hit in hits)
         {
             if (hit.collider.GetComponentInParent<PropHuntPlayer>() == gameplay) continue;
+            var door = hit.collider.GetComponentInParent<ApartmentDoor>();
+            if (door != null && gameplay.Match.Map != null &&
+                System.Array.IndexOf(gameplay.Match.Map.doors, door) >= 0 &&
+                Vector3.Distance(hit.point, EyePosition) <= 3)
+            { AimedDoor = door; return; }
             var prop = hit.collider.GetComponentInParent<Prop>();
-            return prop != null && prop.id != 0 && gameplay.Match.Map != null && gameplay.Match.Map.definition != null &&
+            if (gameplay.Role.Value == PlayerRole.Prop && prop != null && prop.id != 0 && gameplay.Match.Map != null && gameplay.Match.Map.definition != null &&
                 gameplay.Match.Map.definition.catalog != null && gameplay.Match.Map.definition.catalog.TryGet(prop.id, out _) &&
-                Vector3.Distance(prop.transform.position, transform.position) <= gameplay.Match.Rules.disguiseDistance ? prop : null;
+                Vector3.Distance(prop.transform.position, transform.position) <= gameplay.Match.Rules.disguiseDistance) AimedProp = prop;
+            return;
         }
-        return null;
     }
 
     public void Teleport(Vector3 position, Quaternion rotation)

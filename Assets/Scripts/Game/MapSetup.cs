@@ -4,6 +4,7 @@ public class MapSetup : MonoBehaviour
 {
     public MapDefinition definition;
     public SpawnPoint[] spawns;
+    public ApartmentDoor[] doors = System.Array.Empty<ApartmentDoor>();
 
     public bool TrySpawn(PlayerRole role, int index, out Transform point)
     {

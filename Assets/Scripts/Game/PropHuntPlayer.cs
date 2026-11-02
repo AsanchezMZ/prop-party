@@ -32,6 +32,9 @@ public class PropHuntPlayer : NetworkBehaviour
     public readonly NetworkVariable<bool> AssetsReady = new();
     public PropHuntMatch Match { get; private set; }
     public bool CanHunt => Match != null && Match.Phase.Value == MatchPhase.Hunting && Role.Value == PlayerRole.Hunter;
+    public bool CanUseDoor => Match != null &&
+        ((Match.Phase.Value == MatchPhase.Hunting && (Role.Value == PlayerRole.Hunter || Role.Value == PlayerRole.Prop)) ||
+         (Match.Phase.Value == MatchPhase.Hiding && Role.Value == PlayerRole.Prop));
     public bool CanMove => Match != null && (Match.Phase.Value == MatchPhase.Hunting ||
         (Match.Phase.Value == MatchPhase.Hiding && Role.Value == PlayerRole.Prop)) && !Frozen.Value;
     GameObject disguiseVisual;
@@ -44,6 +47,7 @@ public class PropHuntPlayer : NetworkBehaviour
     float travelled;
     bool firstPersonVisual;
     PlayerController movement;
+    AudioSource whistleSource;
     float originalHeight, originalRadius;
     Vector3 originalCenter;
 
@@ -51,6 +55,14 @@ public class PropHuntPlayer : NetworkBehaviour
     {
         var controller = GetComponent<CharacterController>();
         movement = GetComponent<PlayerController>();
+        whistleSource = gameObject.AddComponent<AudioSource>();
+        whistleSource.playOnAwake = false; whistleSource.spatialBlend = 1;
+        if (audioSource != null)
+        {
+            whistleSource.minDistance = audioSource.minDistance;
+            whistleSource.maxDistance = audioSource.maxDistance;
+            whistleSource.rolloffMode = audioSource.rolloffMode;
+        }
         originalHeight = controller.height; originalRadius = controller.radius; originalCenter = controller.center;
     }
 
@@ -128,8 +140,15 @@ public class PropHuntPlayer : NetworkBehaviour
         double now = NetworkManager.ServerTime.Time;
         if (Role.Value == PlayerRole.Prop && Match.Phase.Value == MatchPhase.Hunting && now >= nextWhistle)
         {
-            nextWhistle = now + Match.Settings.Value.WhistleSeconds;
-            PlayWhistle(false);
+            var settings = PartyAudio.Settings;
+            int index = settings != null ? settings.PickWhistleIndex() : -1;
+            var clip = settings != null ? settings.WhistleAt(index) : null;
+            if (Match.ReserveAutomaticWhistle(clip != null ? clip.length : 0))
+            {
+                nextWhistle = now + Mathf.Max(35, Match.Settings.Value.WhistleSeconds) + Random.Range(0, 12);
+                CueClientRpc(0, index);
+            }
+            else nextWhistle = now + 2;
         }
         if (now >= nextSense)
         {
@@ -237,7 +256,7 @@ public class PropHuntPlayer : NetworkBehaviour
         Frozen.Value = false;
         Rotation.Value = spawn.eulerAngles.y;
         nextThrow = nextAction = 0;
-        nextWhistle = NetworkManager.ServerTime.Time + Match.Settings.Value.HidingSeconds + Match.Settings.Value.WhistleSeconds;
+        nextWhistle = NetworkManager.ServerTime.Time + Match.Settings.Value.HidingSeconds + Mathf.Max(40, Match.Settings.Value.WhistleSeconds) + Random.Range(0, 12);
         travelled = 0; lastStepPosition = spawn.position;
         GetComponent<PlayerController>().Teleport(spawn.position, spawn.rotation);
         TeleportClientRpc(spawn.position, spawn.rotation);
@@ -293,6 +312,12 @@ public class PropHuntPlayer : NetworkBehaviour
         projectile.Launch(this, direction.normalized, weapon);
         projectile.NetworkObject.Spawn();
         CueClientRpc(3);
+    }
+
+    [ServerRpc]
+    public void UseDoorServerRpc(int index)
+    {
+        if (CanUseDoor) Match.TryToggleDoor(index, this, movement.EyePosition);
     }
 
     [ServerRpc]
@@ -367,7 +392,13 @@ public class PropHuntPlayer : NetworkBehaviour
                 3 => settings.throwSound, 6 => settings.hurt,
                 7 => settings.freeze, 8 => settings.freeze, 9 => settings.rotate, _ => null
             };
-        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.EffectsVolume : GamePreferences.EffectsVolume);
+        if ((cue == 0 || cue == 5) && clip != null)
+        {
+            whistleSource.clip = clip;
+            whistleSource.volume = settings != null ? settings.EffectsVolume : GamePreferences.EffectsVolume;
+            whistleSource.Play();
+        }
+        else if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.EffectsVolume : GamePreferences.EffectsVolume);
         if (cue == 1 || cue == 2 || cue == 6)
             PartyVfx.Burst(transform.position + Vector3.up * 0.5f,
                 cue == 1 ? new Color(0.2f, 0.9f, 0.75f) : new Color(1, 0.35f, 0.3f), false, effectMaterial);

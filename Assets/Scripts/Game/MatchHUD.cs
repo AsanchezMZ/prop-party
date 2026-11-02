@@ -24,7 +24,9 @@ public class MatchHUD : MonoBehaviour
     bool leaving;
     float flash, nextRanking, nextScoreToast;
     int pendingPoints;
-    float scorePulse, cuePulse, phasePulse;
+    float scorePulse, cuePulse, phasePulse, healthPulse, bannerUntil;
+    Label phaseBanner;
+    VisualElement whistleFill;
     MatchPhase lastPhase = (MatchPhase)255;
 
     void Start()
@@ -45,6 +47,9 @@ public class MatchHUD : MonoBehaviour
         blackout = root.Q("blackout"); actions = root.Q("actions"); crosshair = root.Q("crosshair");
         toasts = root.Q("toasts"); riskHalo = root.Q("risk-halo"); hitFlash = root.Q("hit-flash"); leaderboard = root.Q("leaderboard");
         replay = root.Q<Button>("replay"); lobby = root.Q<Button>("lobby"); resume = root.Q<Button>("resume"); whistle = root.Q<Button>("whistle");
+        phaseBanner = root.Q<Label>("phase-banner");
+        whistleFill = new VisualElement { pickingMode = PickingMode.Ignore };
+        whistleFill.AddToClassList("whistle-fill"); whistle.Add(whistleFill);
         replay.clicked += () => { if (!match.BeginRound()) Toast("👥 Faltan jugadores o puntos de aparición."); };
         lobby.clicked += () => match.ReturnToLobby();
         resume.clicked += () => { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; };
@@ -59,6 +64,7 @@ public class MatchHUD : MonoBehaviour
         player.Cue += OnCue; player.Score.OnValueChanged += ScoreChanged;
         player.HunterNearby.OnValueChanged += NearbyChanged;
         player.InHunterSight.OnValueChanged += SightChanged;
+        player.Health.OnValueChanged += HealthChanged;
         pendingPoints = 0; flash = 0;
     }
 
@@ -68,6 +74,7 @@ public class MatchHUD : MonoBehaviour
         player.Cue -= OnCue; player.Score.OnValueChanged -= ScoreChanged;
         player.HunterNearby.OnValueChanged -= NearbyChanged;
         player.InHunterSight.OnValueChanged -= SightChanged;
+        player.Health.OnValueChanged -= HealthChanged;
     }
 
     void Update()
@@ -86,6 +93,8 @@ public class MatchHUD : MonoBehaviour
                 (match.Winner.Value == PlayerRole.Prop ? "🎉 ¡Ganan los escondedores!" : "🔎 ¡Ganan los buscadores!") : "🔥 ¡Empieza la caza!");
             lastPhase = phase;
             phasePulse = 1;
+            bannerUntil = Time.unscaledTime + 2.8f;
+            phaseBanner.text = hiding ? "¡A ESCONDERSE!" : finished ? "¡RONDA TERMINADA!" : waiting ? "PREPARANDO LA FIESTA" : "¡EMPIEZA LA CAZA!";
         }
         bool locked = Cursor.lockState == CursorLockMode.Locked;
         blackout.style.display = hiding && hunter ? DisplayStyle.Flex : DisplayStyle.None;
@@ -96,6 +105,13 @@ public class MatchHUD : MonoBehaviour
         scorePulse = Mathf.MoveTowards(scorePulse, 0, Time.unscaledDeltaTime * 3);
         cuePulse = Mathf.MoveTowards(cuePulse, 0, Time.unscaledDeltaTime * 4);
         phasePulse = Mathf.MoveTowards(phasePulse, 0, Time.unscaledDeltaTime * 2);
+        healthPulse = Mathf.MoveTowards(healthPulse, 0, Time.unscaledDeltaTime * 2);
+        health.style.translate = new Translate(Mathf.Sin(healthPulse * 32) * healthPulse * 7, 0);
+        float bannerAge = 2.8f - (bannerUntil - Time.unscaledTime);
+        phaseBanner.style.opacity = Mathf.Clamp01(bannerAge / 0.2f) * Mathf.Clamp01((bannerUntil - Time.unscaledTime) / 0.45f);
+        phaseBanner.style.translate = new Translate(0, -30 * (1 - Mathf.Clamp01(bannerAge / 0.35f)));
+        phaseBanner.style.scale = new Scale(Vector3.one * (1 + 0.12f * Mathf.Sin(Mathf.Clamp01(bannerAge / 0.5f) * Mathf.PI)));
+        releaseTimer.style.scale = new Scale(Vector3.one * (1 + 0.06f * Mathf.Pow(Mathf.Max(0, Mathf.Sin(Time.unscaledTime * Mathf.PI * 2)), 6)));
         score.style.scale = new Scale(Vector3.one * (1 + 0.18f * Mathf.Sin(scorePulse * Mathf.PI)));
         crosshair.style.scale = new Scale(Vector3.one * (1 + cuePulse * 2));
         role.style.translate = new Translate(0, -12 * Mathf.Sin(phasePulse * Mathf.PI));
@@ -108,6 +124,9 @@ public class MatchHUD : MonoBehaviour
         risk.style.display = prop ? DisplayStyle.Flex : DisplayStyle.None;
         risk.text = player.InHunterSight.Value ? "👀 ¡A LA VISTA!" : player.HunterNearby.Value ? "🔥 ¡CERCA!" : "🌿 Tranquilo";
         float cooldown = Mathf.Max(0, (float)(player.NextManualWhistle.Value - network.ServerTime.Time));
+        whistleFill.style.width = Length.Percent(100 * (1 - Mathf.Clamp01(cooldown / PropHuntPlayer.ManualWhistleCooldown)));
+        whistle.EnableInClassList("whistle-ready", cooldown <= 0 && phase == MatchPhase.Hunting);
+        risk.style.scale = new Scale(Vector3.one * (1 + (player.HunterNearby.Value ? 0.1f * Mathf.Pow(Mathf.Max(0, Mathf.Sin(Time.unscaledTime * 6)), 8) : 0)));
         whistle.style.display = prop ? DisplayStyle.Flex : DisplayStyle.None;
         whistle.text = cooldown > 0 ? $"🎵 {Mathf.CeilToInt(cooldown)} s" : "🎵 Silbar [G]";
         whistle.SetEnabled(prop && phase == MatchPhase.Hunting && cooldown <= 0);
@@ -116,10 +135,12 @@ public class MatchHUD : MonoBehaviour
             player.InHunterSight.Value ? new Color(1, 0.3f, 0.4f) : new Color(1, 0.72f, 0.2f);
         flash = Mathf.MoveTowards(flash, 0, Time.unscaledDeltaTime * 2);
         hitFlash.style.opacity = flash;
-        hint.text = prop ? $"E camuflar · Q/R girar · F suspender{(player.Frozen.Value ? " ❄" : "")} · V {(controller.FirstPerson ? "FPV" : "TPV")} · G silbar · Esc menú" :
-            hunter ? "Clic lanzar · Esc menú · Tab continuar" : "→ cambiar jugador observado · Esc menú · Tab cerrar";
-        targetProp.style.display = prop && locked && !finished && controller.AimedProp != null ? DisplayStyle.Flex : DisplayStyle.None;
-        targetProp.text = controller.AimedProp != null ? $"[E]  {controller.AimedProp.propName}" : "";
+        hint.text = prop ? $"E interactuar/camuflar · Q/R girar · F suspender{(player.Frozen.Value ? " ❄" : "")} · V {(controller.FirstPerson ? "FPV" : "TPV")} · G silbar · Esc menú" :
+            hunter ? "Clic lanzar · E puertas · Esc menú · Tab continuar" : "→ cambiar jugador observado · Esc menú · Tab cerrar";
+        targetProp.style.display = locked && !finished && (controller.AimedProp != null || controller.AimedDoor != null) ? DisplayStyle.Flex : DisplayStyle.None;
+        targetProp.text = controller.AimedDoor != null ? (controller.AimedDoor.IsOpen ? "[E]  Cerrar puerta" : "[E]  Abrir puerta") :
+            controller.AimedProp != null ? $"[E]  {controller.AimedProp.propName}" : "";
+        targetProp.style.translate = new Translate(0, Mathf.Sin(Time.unscaledTime * 3) * 3);
         bool menu = finished || waiting || ((prop || hunter) ? !locked : controller.SpectatorMenu);
         actions.style.display = menu ? DisplayStyle.Flex : DisplayStyle.None;
         replay.style.display = network.IsServer && (finished || waiting) ? DisplayStyle.Flex : DisplayStyle.None;
@@ -212,6 +233,7 @@ public class MatchHUD : MonoBehaviour
         if (value > oldValue) scorePulse = 1;
         pendingPoints = value > oldValue ? (int)System.Math.Min(int.MaxValue, (long)pendingPoints + value - oldValue) : 0;
     }
+    void HealthChanged(int previous, int current) { if (current < previous) healthPulse = 1; }
     void NearbyChanged(bool oldValue, bool value) { if (value) Toast("🔥 Un buscador está cerca. ¡No te delates!"); }
     void SightChanged(bool oldValue, bool value) { if (value) Toast("👀 Estás en su campo de visión. ¡Eso da puntos!"); }
     void OnCue(int cue)

@@ -35,3 +35,7 @@
 .hud Button:hover { background-color: rgb(255, 231, 142); }
 .hud Button:focus { border-color: rgb(0, 130, 122); }
 .hud Button:disabled { opacity: 0.45; }
+.hud .phase-banner { position: absolute; top: 23%; left: 12%; right: 12%; font-size: 46px; -unity-font-style: bold; -unity-text-align: middle-center; color: rgb(255, 213, 78); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(25, 43, 48); white-space: normal; opacity: 0; }
+.whistle-fill { position: absolute; left: 5px; bottom: 2px; height: 3px; max-width: 92%; border-radius: 3px; background-color: rgb(25, 100, 86); }
+.hud .whistle-ready { border-color: rgb(12, 133, 103); background-color: rgb(143, 239, 202); }
+.hud .chip { transition-property: background-color, border-color; transition-duration: 0.2s; }

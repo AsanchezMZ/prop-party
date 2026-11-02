@@ -69,11 +69,13 @@ En el lobby se comparte solo una miniatura PNG de 64×64 de la foto guardada (m�
 
 ## Controles
 
+En **Apartamento**, buscadores y escondedores pueden abrir/cerrar puertas con **E** al apuntarlas a menos de 3 m. El estado se replica desde la partida; el servidor comprueba equipo, fase, distancia, línea de visión y cadencia. Los buscadores no interactúan durante el tiempo bloqueado de escondite. Las animaciones originales y sus colliders se conservan; el clic local del jugador de demostración está desactivado en esas puertas. **PropHunt → Configure apartment door interactions** vuelve a enlazar las puertas si se añaden nuevas instancias al mapa.
+
 | Acción | Tecla |
 |---|---|
 | Mover / correr / andar despacio | WASD / Shift / Ctrl |
 | Saltar | Espacio |
-| Copiar prop apuntado | E |
+| Copiar prop apuntado / abrir o cerrar puerta del apartamento | E |
 | Girar disfraz | Q / R, pasos de 15° |
 | Suspender o soltar, también en el aire | F |
 | Alternar primera / tercera persona (solo escondedores) | V |

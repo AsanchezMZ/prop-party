@@ -1,6 +1,16 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/PartyMenu.uss?fileID=7433441132597879392&amp;guid=6b4ac884563daa44e9fe4a22b02380d1&amp;type=3#PartyMenu"/>
     <ui:VisualElement name="menu-root" class="party">
+        <ui:VisualElement name="ambient-background" class="ambient-background" picking-mode="Ignore">
+            <ui:VisualElement class="ambient-shape ambient-mint" picking-mode="Ignore"/>
+            <ui:VisualElement class="ambient-shape ambient-gold" picking-mode="Ignore"/>
+            <ui:VisualElement class="ambient-shape ambient-coral" picking-mode="Ignore"/>
+            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 12%; top: 68%;"/>
+            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 84%; top: 12%;"/>
+            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 55%; top: 82%;"/>
+            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 35%; top: 6%;"/>
+            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 92%; top: 65%;"/>
+        </ui:VisualElement>
         <PartyMenuStage class="menu-stage">
             <ui:VisualElement class="menu-header">
                 <ui:Label text="PropParty" class="wordmark"/>

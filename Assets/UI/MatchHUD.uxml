@@ -10,6 +10,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="risk-halo" class="risk-halo" picking-mode="Ignore"/>
         <ui:VisualElement name="hit-flash" class="hit-flash" picking-mode="Ignore"/>
+        <ui:Label name="phase-banner" class="phase-banner" picking-mode="Ignore"/>
         <ui:VisualElement class="top-bar" picking-mode="Ignore">
             <ui:Label name="role" text="🎭 PROP PARTY" class="chip role-chip"/>
             <ui:Label name="timer" text="⏱ 00:00" class="chip timer-chip"/>

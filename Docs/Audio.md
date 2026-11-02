@@ -6,7 +6,7 @@ Selecciona **`Assets/PropHuntConfig/Audio.asset`** en Project. Todos los slots s
 
 Los WAV que tienen correspondencia por nombre en `Assets/Sound/` ya están asignados en ese asset; `footsteps_1`–`footsteps_5` van a la colección de pasos y todos los `whistle_{nombre}` a `whistles`. `victory.wav` y `defeat.wav` son las pistas largas de resultados. `explosion.wav` queda sin asignar porque no hay un slot de explosión y ya existe `impactSound.wav`; los slots sin un WAV correspondiente siguen vacíos.
 
-`PartyAudio`, ya enlazado en el NetworkManager del menú, mantiene música y avisos al cambiar de escena. Hay canales y volúmenes separados para música, efectos, peligro y ambiente. La música tiene una transición corta de volumen; los avisos no la interrumpen.
+`PartyAudio`, ya enlazado en el NetworkManager del menú, mantiene música y avisos al cambiar de escena. Hay canales separados para música, interfaz, avisos de ronda, peligro y ambiente. Durante la carga no suena música. Los avisos de ronda detienen la música mientras suenan: la pista de esconderse empieza cuando termina `roundStart`, no encima de ella. El inicio espera 2,5 s y los avisos obligatorios dejan al menos 5 s de separación tras acabar el anterior; los avisos obsoletos no se acumulan.
 
 Los clips que ya asignes directamente al jugador o a `ThrowableDefinition` tienen prioridad sobre el slot central equivalente. Así puedes tener distintos impactos por arma sin modificar el catálogo común. Los avisos locales no generan RPC nuevos; las acciones espaciales aprovechan los eventos de juego existentes.
 
@@ -18,10 +18,12 @@ Los clips que ya asignes directamente al jugador o a `ThrowableDefinition` tiene
 | `lobbyMusic` | Sala y espera | Variante relajada del tema principal | Bucle de 30–60 s |
 | `hidingMusic` | Tiempo para esconderse | Marimba/pizzicatos y prisa suave, no terror | Bucle de 20–40 s |
 | `gameplayMusic` | Caza | Ritmo travieso, con espacio para escuchar pistas | Bucle de 60–120 s |
-| `finalStretchMusic` | Últimos 30 s de caza | Variante más rápida e intensa | Bucle de 15–30 s |
+| `finalStretchMusic` | Últimos 30 s de caza **o** último escondedor | Una sola pista de tensión para ambos eventos | Bucle de 15–30 s |
 | `ambienceLoop` | Mapa durante espera/escondite/caza | Aire de habitación o exterior suave, sin pasos falsos | Bucle de 30–90 s |
 
 Si falta `finalStretchMusic`, sigue la música normal de caza. Los otros slots vacíos no reproducen música. Ambiente y música son independientes. Todas estas pistas se reproducen en 2D.
+
+La condición de último escondedor está replicada por el servidor. Usa el mismo canal de música que los últimos 30 s: coincidir ambos eventos no reinicia ni duplica la pista. El campo anterior `lastHider` se conserva, pero ya no dispara un efecto adicional.
 
 ## Transiciones de ronda — conectadas, 2D
 
@@ -40,13 +42,13 @@ No hay pista genérica de resultados ni efectos separados de fin, victoria o der
 
 | Slot | Evento | Propuesta |
 |---|---|---|
-| `nearbyEnter` | Un buscador entra en proximidad | Golpe de corazón o sorpresa, 0.2–0.5 s |
-| `nearbyExit` | Sales del radio durante la caza | Resoplido de alivio o caída de tensión, 0.2–0.7 s |
-| `nearbyLoop` | Hay buscadores cerca | Latido suave, bucle de 2–4 s |
+| `nearbyEnter` | Un buscador entra en proximidad | Desasociado; el WAV se conserva |
+| `nearbyExit` | Sales del radio durante la caza | Desasociado; el WAV se conserva |
+| `nearbyLoop` | Hay buscadores cerca | `heartbeat.wav`, en bucle local solo para el escondedor |
 | `spottedEnter` | Campo de visión con línea directa | Acento de cuerda cómico, 0.2–0.7 s |
 | `spottedLoop` | Sigues a la vista | Variante más rápida del latido; sustituye el bucle anterior |
 
-No revela al buscador dónde estás. «A la vista» es una comprobación geométrica, no que el humano te haya reconocido. Estos avisos deben dejar oír pasos y silbidos.
+No revela al buscador dónde estás. «A la vista» es una comprobación geométrica, no que el humano te haya reconocido. La cercanía usa solo el latido, sin cambiar de bucle al entrar en visión. Estos avisos deben dejar oír pasos y silbidos.
 
 ## Acciones y combate — conectados
 
@@ -63,7 +65,7 @@ No revela al buscador dónde estás. «A la vista» es una comprobación geomét
 | `hurt` | 3D | Golpe cartoon, 0.1–0.4 s |
 | `captured` | 3D | Estallido de confeti/revelación, 0.4–1 s |
 | `hitConfirmation` | Local del tirador | Tick limpio de acierto, 0.05–0.2 s |
-| `scoreTick` | Local | Moneda/estrella suave al aumentar puntos, 0.05–0.2 s |
+| `scoreTick` | Local | Desasociado; se conservan el WAV y la puntuación visual |
 
 Los sonidos 3D nacen en el jugador/proyectil y se atenúan con la distancia. El salto conserva su ejecución local, sin nuevo RPC. Una captura puede disparar impacto, daño y revelación: usa clips complementarios o deja algunos vacíos.
 
@@ -71,7 +73,9 @@ Los sonidos 3D nacen en el jugador/proyectil y se atenúan con la distancia. El 
 
 Importa archivos como `whistle_corto.wav`, `whistle_pajaro.wav` o `whistle_burla.ogg`. En el Inspector de `Audio.asset`, abre el menú contextual del componente y ejecuta **Collect whistle_* audio clips**. Recoge todos los AudioClip del proyecto cuyo nombre empiece exactamente por `whistle_` y tenga un nombre detrás, ordenados por nombre/ruta. La acción reemplaza la colección y admite Undo; guarda el asset después. También puedes asignar la lista a mano.
 
-El juego usa referencias serializadas: no busca archivos ni carga por nombre durante la partida. El servidor elige al azar entre entradas no vacías y transmite el índice a todos los clientes; todos oyen el mismo clip. Usa el mismo catálogo/build en todos los participantes. Repite la recolección al importar nuevos silbidos.
+El juego usa referencias serializadas: no busca archivos ni carga por nombre durante la partida. El servidor sortea entre entradas no vacías con peso inversamente proporcional a su duración (mínimo de cálculo: 0,25 s), por lo que los silbidos cortos salen más que los largos. Transmite el índice a todos los clientes; todos oyen el mismo clip. Usa el mismo catálogo/build en todos los participantes. Repite la recolección al importar nuevos silbidos.
+
+El intervalo automático predeterminado es de 45 s, con una variación adicional de 0–12 s por jugador y mínimo efectivo de 35 s. El primer aviso espera al menos 40 s tras esconderse y respeta la duración de los avisos iniciales. Entre silbidos automáticos de distintos jugadores se deja la duración del clip anterior más 8 s. Los manuales conservan su recarga de 5 s; un silbido nuevo del mismo jugador sustituye al anterior en vez de superponerse.
 
 No hay diferencia sonora entre automático y manual, ni un override de silbido por jugador. La diferencia es únicamente de reglas: el manual suma puntos y tiene 5 segundos de recarga; el automático no suma. Ambos son solo audio, sin anillos ni otros VFX que revelen su posición. Una colección vacía o sin clips válidos se queda en silencio. La colección incluye `whistle_scream`.
 

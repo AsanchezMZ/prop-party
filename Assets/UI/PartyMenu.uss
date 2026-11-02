@@ -18,6 +18,12 @@ Button { min-height: 48px; margin: 8px 0 0; border-radius: 10px; border-width: 0
 Button:disabled { opacity: 0.45; }
 
 .party { flex-grow: 1; width: 100%; height: 100%; overflow: hidden; background-color: rgb(244, 240, 228); color: rgb(25, 43, 48); }
+.ambient-background { position: absolute; left: 0; right: 0; top: 0; bottom: 0; overflow: hidden; }
+.ambient-shape { position: absolute; opacity: 0.24; }
+.ambient-mint { width: 560px; height: 560px; left: -180px; top: -230px; border-radius: 280px; background-color: rgb(85, 213, 185); }
+.ambient-gold { width: 600px; height: 600px; right: -240px; bottom: -300px; border-radius: 300px; background-color: rgb(255, 207, 59); }
+.ambient-coral { width: 320px; height: 320px; left: 46%; top: 24%; border-radius: 160px; background-color: rgb(245, 151, 125); opacity: 0.1; }
+.ambient-chip { width: 17px; height: 34px; border-radius: 5px; background-color: rgb(20, 128, 119); opacity: 0.12; }
 .party Label { margin: 0; padding: 0; }
 .party .menu-stage { position: absolute; width: 1280px; height: 720px; transform-origin: 0% 0%; }
 .party .menu-header { position: absolute; left: 64px; right: 64px; top: 24px; height: 54px; flex-direction: row; align-items: center; border-bottom-width: 2px; border-bottom-color: rgb(211, 215, 202); padding-bottom: 12px; }

@@ -10,7 +10,10 @@ public class PartyAudio : MonoBehaviour
     public static PartyAudio Instance { get; private set; }
     public GameAudioConfig Config => config;
     public static GameAudioConfig Settings => Instance != null ? Instance.config : null;
-    AudioSource music, effects, danger, ambience, results;
+    AudioSource music, effects, danger, ambience, results, announcements;
+    AudioClip pendingAnnouncement;
+    float nextAnnouncement;
+    bool announcing;
     AudioClip wantedMusic;
     PropHuntMatch match;
     PropHuntPlayer player;
@@ -26,6 +29,7 @@ public class PartyAudio : MonoBehaviour
         music = Source("Music", true); effects = Source("UI and round effects", false);
         danger = Source("Local danger", true); ambience = Source("Ambience", true);
         results = Source("Results", false);
+        announcements = Source("Round announcements", false);
         music.volume = 0;
     }
 
@@ -48,6 +52,8 @@ public class PartyAudio : MonoBehaviour
     void FindMatch()
     {
         if (results != null) results.Stop();
+        if (announcements != null) announcements.Stop();
+        pendingAnnouncement = null; announcing = false; nextAnnouncement = 0;
         match = FindAnyObjectByType<PropHuntMatch>(); player = null;
         previousPhase = (MatchPhase)255; previousRole = PlayerRole.Spectator;
         wasNearby = wasSpotted = warned = false; previousScore = 0;
@@ -73,19 +79,25 @@ public class PartyAudio : MonoBehaviour
             player = currentPlayer; previousScore = player != null ? player.Score.Value : 0;
             previousRole = player != null ? player.Role.Value : PlayerRole.Spectator;
         }
-        wantedMusic = config.SelectMusic(inMatch, network != null && network.IsConnectedClient, phase, seconds);
-        UpdateMusic();
-        SetLoop(ambience, inMatch && phase != MatchPhase.Finished ? config.ambienceLoop : null, config.AmbienceVolume);
         if (inMatch && phase != previousPhase)
         {
-            if (phase == MatchPhase.Hiding) { warned = false; Play(config.roundStart); }
+            if (phase == MatchPhase.Hiding)
+            {
+                warned = false;
+                announcements.Stop(); announcing = false;
+                pendingAnnouncement = config.roundStart;
+                nextAnnouncement = Time.unscaledTime + 2.5f;
+            }
             else if (phase == MatchPhase.Hunting)
             {
-                if (previousPhase != MatchPhase.Hiding) { warned = false; Play(config.roundStart); }
-                Play(config.huntStart);
+                warned = false;
+                pendingAnnouncement = config.huntStart;
+                nextAnnouncement = Mathf.Max(nextAnnouncement, Time.unscaledTime + 2);
             }
             else if (phase == MatchPhase.Finished)
             {
+                announcements.Stop(); pendingAnnouncement = null; announcing = false;
+                music.Stop(); music.volume = 0;
                 if (player != null && player.Role.Value != PlayerRole.Spectator)
                 {
                     results.clip = player.Role.Value == match.Winner.Value ? config.victory : config.defeat;
@@ -96,14 +108,40 @@ public class PartyAudio : MonoBehaviour
             previousPhase = phase;
         }
         if (inMatch && phase == MatchPhase.Hunting && seconds <= 10 && !warned)
-        { warned = true; Play(config.lastSecondsWarning); }
+        {
+            warned = true;
+            // A delayed hunt announcement takes priority over a late countdown cue.
+            if (pendingAnnouncement == null && !announcements.isPlaying && Time.unscaledTime >= nextAnnouncement)
+                pendingAnnouncement = config.lastSecondsWarning;
+        }
+        if (!PartyLoadingScreen.Ready)
+        {
+            announcements.Pause();
+        }
+        else
+        {
+            if (announcing) announcements.UnPause();
+            if (announcing && !announcements.isPlaying)
+            { announcing = false; nextAnnouncement = Time.unscaledTime + 5; }
+            if (pendingAnnouncement != null && !announcements.isPlaying && Time.unscaledTime >= nextAnnouncement)
+            {
+                announcements.clip = pendingAnnouncement; pendingAnnouncement = null;
+                announcements.volume = config.EffectsVolume;
+                announcements.Play(); announcing = true;
+            }
+        }
+        announcements.volume = config.EffectsVolume;
+        wantedMusic = config.SelectMusic(inMatch, network != null && network.IsConnectedClient, phase, seconds,
+            inMatch && match.LastHiderRemaining.Value);
+        UpdateMusic();
+        SetLoop(ambience, PartyLoadingScreen.Ready && inMatch && phase != MatchPhase.Finished ? config.ambienceLoop : null, config.AmbienceVolume);
         bool hidingPlayer = inMatch && phase == MatchPhase.Hunting && player != null && player.Role.Value == PlayerRole.Prop;
         bool nearby = hidingPlayer && player.HunterNearby.Value;
         bool spotted = hidingPlayer && player.InHunterSight.Value;
         if (nearby && !wasNearby) Play(config.nearbyEnter);
         if (!nearby && wasNearby && hidingPlayer) Play(config.nearbyExit);
         if (spotted && !wasSpotted) Play(config.spottedEnter);
-        SetLoop(danger, spotted && config.spottedLoop != null ? config.spottedLoop : nearby ? config.nearbyLoop : null, config.DangerVolume);
+        SetLoop(danger, PartyLoadingScreen.Ready && nearby ? config.nearbyLoop : null, config.DangerVolume);
         wasNearby = nearby; wasSpotted = spotted;
         if (player != null)
         {
@@ -115,7 +153,7 @@ public class PartyAudio : MonoBehaviour
 
     void UpdateMusic()
     {
-        if (!PartyLoadingScreen.Ready)
+        if (!PartyLoadingScreen.Ready || announcing || pendingAnnouncement != null)
         {
             music.Stop();
             music.volume = 0;
@@ -148,6 +186,7 @@ public class PartyAudio : MonoBehaviour
         if (danger != null) danger.Stop();
         if (ambience != null) ambience.Stop();
         if (results != null) results.Stop();
+        if (announcements != null) announcements.Stop();
     }
 
     void OnDestroy() { if (Instance == this) Instance = null; }

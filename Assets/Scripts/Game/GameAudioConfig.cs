@@ -51,21 +51,27 @@ public class GameAudioConfig : ScriptableObject
     public float DangerVolume => dangerVolume * GamePreferences.EffectsVolume;
     public float AmbienceVolume => ambienceVolume * GamePreferences.EffectsVolume;
 
-    public AudioClip SelectMusic(bool inMatch, bool connectedToRoom, MatchPhase phase, double secondsLeft)
+    public AudioClip SelectMusic(bool inMatch, bool connectedToRoom, MatchPhase phase, double secondsLeft, bool lastHider = false)
     {
         if (!inMatch) return connectedToRoom ? lobbyMusic : menuMusic;
         if (phase == MatchPhase.Hiding) return hidingMusic;
         if (phase == MatchPhase.Hunting)
-            return secondsLeft <= 30 && finalStretchMusic != null ? finalStretchMusic : gameplayMusic;
+            return (secondsLeft <= 30 || lastHider) && finalStretchMusic != null ? finalStretchMusic : gameplayMusic;
         return phase == MatchPhase.Finished ? null : lobbyMusic;
     }
 
     public int PickWhistleIndex()
     {
-        int selected = -1, count = 0;
+        int selected = -1;
+        float total = 0;
         if (whistles == null) return selected;
         for (int i = 0; i < whistles.Length; i++)
-            if (whistles[i] != null && Random.Range(0, ++count) == 0) selected = i;
+        {
+            if (whistles[i] == null) continue;
+            float weight = 1 / Mathf.Max(0.25f, whistles[i].length);
+            total += weight;
+            if (Random.value * total < weight) selected = i;
+        }
         return selected;
     }
 
