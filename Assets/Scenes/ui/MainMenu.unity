@@ -569,6 +569,7 @@ MonoBehaviour:
   mapDefinitions:
   - {fileID: 11400000, guid: cb7da6033ab08ed45a12aa709962a71b, type: 2}
   - {fileID: 11400000, guid: 0b3cf49f49075e54683272cb690171e1, type: 2}
+  - {fileID: 11400000, guid: 335ea2c87538af9438ce990f8b819981, type: 2}
   - {fileID: 11400000, guid: abb7ebbf14093244cae20ba00631bee5, type: 2}
   rules: {fileID: 11400000, guid: 43d03d8a07ae9de4cad5f400dba289f3, type: 2}
   Players:

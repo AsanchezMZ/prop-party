@@ -411,7 +411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ac2f20840392474f8fdf250b3d69f55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Prop
-  id: 10
+  id: 40
   slotId: 2
   propName: Table End 01
   visual: {fileID: 8999999999999999999}
