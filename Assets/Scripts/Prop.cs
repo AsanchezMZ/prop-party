@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class Prop : MonoBehaviour
 {
@@ -66,4 +69,29 @@ public class Prop : MonoBehaviour
         x ^= x >> 16;
         return x;
     }
+#if UNITY_EDITOR
+    void OnDrawGizmosSelected()
+    {
+        float radius = Mathf.Max(0.1f, disguiseRadius);
+        float height = Mathf.Max(radius * 2, disguiseHeight);
+        Vector3 bottom = transform.position + Vector3.up * radius;
+        Vector3 top = transform.position + Vector3.up * (height - radius);
+        Vector3 right = Vector3.right * radius;
+        Vector3 forward = Vector3.forward * radius;
+
+        using (new Handles.DrawingScope(Color.cyan))
+        {
+            Handles.DrawWireDisc(bottom, Vector3.up, radius);
+            Handles.DrawWireDisc(top, Vector3.up, radius);
+            Handles.DrawWireArc(top, Vector3.forward, Vector3.right, 180, radius);
+            Handles.DrawWireArc(top, Vector3.right, Vector3.back, 180, radius);
+            Handles.DrawWireArc(bottom, Vector3.forward, Vector3.left, 180, radius);
+            Handles.DrawWireArc(bottom, Vector3.right, Vector3.forward, 180, radius);
+            Handles.DrawLine(bottom + right, top + right);
+            Handles.DrawLine(bottom - right, top - right);
+            Handles.DrawLine(bottom + forward, top + forward);
+            Handles.DrawLine(bottom - forward, top - forward);
+        }
+    }
+#endif
 }
