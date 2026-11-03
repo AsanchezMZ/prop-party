@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   displayName: City
   sceneName: Assets/Scenes/maps/Map_City.unity
-  description: 
-  preview: {fileID: 0}
+  description: "Un entorno urbano cualquiera. \xA1Hey! \xA1La papelera se ha movido! \xBFmapache o prop?"
+  preview: {fileID: 2800000, guid: 4d905b1c3d83be645afbe2d0beff3dcc, type: 3}
   catalog: {fileID: 11400000, guid: af54353f14fa56244a58353c016c89a8, type: 2}

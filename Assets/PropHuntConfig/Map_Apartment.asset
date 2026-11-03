@@ -15,5 +15,5 @@ MonoBehaviour:
   displayName: Apartamento
   sceneName: Assets/Scenes/maps/Map_Apartment.unity
   description: "Un apartamento lleno de objetos cotidianos. \xA1Hasta el cepillo de dientes puede esconder a alguien!"
-  preview: {fileID: 0}
+  preview: {fileID: 2800000, guid: 2222adc2bcb6a464087781bafb396d28, type: 3}
   catalog: {fileID: 11400000, guid: 796672c58f17f3849aeaab79802ce914, type: 2}

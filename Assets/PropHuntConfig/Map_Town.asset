@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   displayName: Town
   sceneName: Assets/Scenes/maps/Map_Town.unity
-  description: 
-  preview: {fileID: 0}
+  description: "Un pueblo diminuto entre monta\xF1as nada artificiales."
+  preview: {fileID: 2800000, guid: 64e1cd4b4c69a5440a65130f7b7c713a, type: 3}
   catalog: {fileID: 11400000, guid: c4009e80bacc09c40b0f81a357d48ade, type: 2}
