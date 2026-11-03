@@ -111,7 +111,9 @@ public class GameBootstrap : MonoBehaviour
         float deadline = Time.realtimeSinceStartup + 60;
         while (match != null && nm != null && nm.IsServer)
         {
-            bool ready = match.Players.Count > 0;
+            if (match.Phase.Value != MatchPhase.Waiting) yield break;
+            bool enoughPlayers = match.Players.Count >= Mathf.Max(2, match.Rules != null ? match.Rules.minimumPlayers : 2);
+            bool ready = enoughPlayers;
             foreach (var player in match.Players) ready &= player.AssetsReady.Value;
             if (ready)
             {
@@ -119,7 +121,10 @@ public class GameBootstrap : MonoBehaviour
                 yield break;
             }
             if (Time.realtimeSinceStartup >= deadline)
-            { Debug.LogWarning("Round waiting: a client has not prepared its assets. Retry from the HUD when ready."); yield break; }
+            {
+                if (enoughPlayers) Debug.LogWarning("Round waiting: a client has not prepared its assets. Retry from the HUD when ready.");
+                yield break;
+            }
             yield return null;
         }
     }

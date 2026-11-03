@@ -16,9 +16,10 @@ public class PartyAudio : MonoBehaviour
     bool announcing;
     AudioClip wantedMusic;
     PropHuntMatch match;
+    MatchHUD hud;
     PropHuntPlayer player;
     MatchPhase previousPhase = (MatchPhase)255;
-    PlayerRole previousRole = PlayerRole.Spectator;
+    PlayerRole resultRole = PlayerRole.Spectator;
     bool wasNearby, wasSpotted, warned;
     int previousScore;
 
@@ -28,7 +29,7 @@ public class PartyAudio : MonoBehaviour
         Instance = this;
         music = Source("Music", true); effects = Source("UI and round effects", false);
         danger = Source("Local danger", true); ambience = Source("Ambience", true);
-        results = Source("Results", false);
+        results = Source("Results", true);
         announcements = Source("Round announcements", false);
         music.volume = 0;
     }
@@ -55,7 +56,8 @@ public class PartyAudio : MonoBehaviour
         if (announcements != null) announcements.Stop();
         pendingAnnouncement = null; announcing = false; nextAnnouncement = 0;
         match = FindAnyObjectByType<PropHuntMatch>(); player = null;
-        previousPhase = (MatchPhase)255; previousRole = PlayerRole.Spectator;
+        hud = FindAnyObjectByType<MatchHUD>();
+        previousPhase = (MatchPhase)255; resultRole = PlayerRole.Spectator;
         wasNearby = wasSpotted = warned = false; previousScore = 0;
     }
 
@@ -71,14 +73,16 @@ public class PartyAudio : MonoBehaviour
         bool inMatch = match != null && match.IsSpawned;
         var phase = inMatch ? match.Phase.Value : MatchPhase.Waiting;
         if (!inMatch || phase != MatchPhase.Finished) results.Stop();
+        results.volume = config.MusicVolume;
         double seconds = inMatch ? match.SecondsLeft : 0;
         var local = network != null && network.IsClient && network.LocalClient != null ? network.LocalClient.PlayerObject : null;
         var currentPlayer = local != null ? local.GetComponent<PropHuntPlayer>() : null;
         if (currentPlayer != player)
         {
             player = currentPlayer; previousScore = player != null ? player.Score.Value : 0;
-            previousRole = player != null ? player.Role.Value : PlayerRole.Spectator;
+            resultRole = player != null ? player.Role.Value : PlayerRole.Spectator;
         }
+        if (player != null && player.Role.Value != PlayerRole.Spectator) resultRole = player.Role.Value;
         if (inMatch && phase != previousPhase)
         {
             if (phase == MatchPhase.Hiding)
@@ -98,10 +102,10 @@ public class PartyAudio : MonoBehaviour
             {
                 announcements.Stop(); pendingAnnouncement = null; announcing = false;
                 music.Stop(); music.volume = 0;
-                if (player != null && player.Role.Value != PlayerRole.Spectator)
+                if (player != null && resultRole != PlayerRole.Spectator)
                 {
-                    results.clip = player.Role.Value == match.Winner.Value ? config.victory : config.defeat;
-                    results.volume = config.EffectsVolume;
+                    results.clip = resultRole == match.Winner.Value ? config.victory : config.defeat;
+                    results.volume = config.MusicVolume;
                     if (results.clip != null) results.Play();
                 }
             }
@@ -132,7 +136,8 @@ public class PartyAudio : MonoBehaviour
         }
         announcements.volume = config.EffectsVolume;
         wantedMusic = config.SelectMusic(inMatch, network != null && network.IsConnectedClient, phase, seconds,
-            inMatch && match.LastHiderRemaining.Value);
+            inMatch && player != null && player.Role.Value == PlayerRole.Prop && match.LastHiderRemaining.Value,
+            player != null && player.Role.Value == PlayerRole.Spectator);
         UpdateMusic();
         SetLoop(ambience, PartyLoadingScreen.Ready && inMatch && phase != MatchPhase.Finished ? config.ambienceLoop : null, config.AmbienceVolume);
         bool hidingPlayer = inMatch && phase == MatchPhase.Hunting && player != null && player.Role.Value == PlayerRole.Prop;
@@ -141,13 +146,13 @@ public class PartyAudio : MonoBehaviour
         if (nearby && !wasNearby) Play(config.nearbyEnter);
         if (!nearby && wasNearby && hidingPlayer) Play(config.nearbyExit);
         if (spotted && !wasSpotted) Play(config.spottedEnter);
-        SetLoop(danger, PartyLoadingScreen.Ready && nearby ? config.nearbyLoop : null, config.DangerVolume);
+        bool heartbeat = hidingPlayer && hud != null && hud.isActiveAndEnabled && hud.HeartbeatActive;
+        SetLoop(danger, PartyLoadingScreen.Ready && heartbeat ? config.nearbyLoop : null, config.DangerVolume);
         wasNearby = nearby; wasSpotted = spotted;
         if (player != null)
         {
-            if (player.Role.Value == PlayerRole.Spectator && previousRole != PlayerRole.Spectator) Play(config.spectatorEnter);
             if (player.Score.Value > previousScore) Play(config.scoreTick);
-            previousRole = player.Role.Value; previousScore = player.Score.Value;
+            previousScore = player.Score.Value;
         }
     }
 
@@ -159,7 +164,8 @@ public class PartyAudio : MonoBehaviour
             music.volume = 0;
             return;
         }
-        float target = music.clip == wantedMusic ? config.MusicVolume : 0;
+        float level = wantedMusic != null && (wantedMusic == config.hidingMusic || wantedMusic == config.finalStretchMusic) ? 0.7f : 1;
+        float target = music.clip == wantedMusic ? config.MusicVolume * level : 0;
         music.volume = Mathf.MoveTowards(music.volume, target, Time.unscaledDeltaTime * 1.5f);
         if (music.clip == wantedMusic)
         {

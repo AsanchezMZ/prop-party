@@ -69,7 +69,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 69d34d926fac5cdcc9edebe2617de479, type: 3}
   - {fileID: 8300000, guid: 20ab4cfe10e1a9bf6eb6e6f5ff3253b6, type: 3}
   - {fileID: 8300000, guid: d7e3075f11f254e339404e3e2606b3d4, type: 3}
-  musicVolume: 0.35
+  musicVolume: 0.18
   effectsVolume: 0.8
   dangerVolume: 0.35
   ambienceVolume: 0.2

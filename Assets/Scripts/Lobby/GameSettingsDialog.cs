@@ -9,7 +9,7 @@ public sealed class GameSettingsDialog
 {
     readonly VisualElement panel, videoPage, audioPage;
     readonly Button videoTab, audioTab;
-    readonly DropdownField resolution, quality, frameRate;
+    readonly DropdownField resolution, frameRate;
     readonly Toggle fullscreen, vsync;
     readonly SliderInt master, music, effects;
     readonly Label note;
@@ -25,7 +25,7 @@ public sealed class GameSettingsDialog
         panel = root.Q("game-settings-overlay");
         videoPage = root.Q("game-video-page"); audioPage = root.Q("game-audio-page");
         videoTab = root.Q<Button>("game-video-tab"); audioTab = root.Q<Button>("game-audio-tab");
-        resolution = root.Q<DropdownField>("game-resolution"); quality = root.Q<DropdownField>("game-quality");
+        resolution = root.Q<DropdownField>("game-resolution");
         frameRate = root.Q<DropdownField>("game-fps");
         fullscreen = root.Q<Toggle>("game-fullscreen"); vsync = root.Q<Toggle>("game-vsync");
         master = root.Q<SliderInt>("game-master"); music = root.Q<SliderInt>("game-music"); effects = root.Q<SliderInt>("game-effects");
@@ -38,7 +38,7 @@ public sealed class GameSettingsDialog
             slider.RegisterValueChangedCallback(_ => Click());
         fullscreen.RegisterValueChangedCallback(_ => Click());
         vsync.RegisterValueChangedCallback(evt => { Click(); frameRate.SetEnabled(!evt.newValue); });
-        foreach (var dropdown in new[] { resolution, quality, frameRate })
+        foreach (var dropdown in new[] { resolution, frameRate })
         {
             dropdown.RegisterCallback<PointerDownEvent>(evt => { if (evt.button == 0) Click(); }, TrickleDown.TrickleDown);
             dropdown.RegisterCallback<KeyDownEvent>(evt =>
@@ -68,8 +68,6 @@ public sealed class GameSettingsDialog
         if (!resolutions.Contains(current)) resolutions.Add(current);
         resolution.choices = resolutions.Select(r => $"{r.x} × {r.y}").ToList();
         resolution.SetValueWithoutNotify(resolution.choices[resolutions.IndexOf(current)]);
-        quality.choices = QualitySettings.names.ToList();
-        quality.SetValueWithoutNotify(quality.choices[QualitySettings.GetQualityLevel()]);
         frameRate.choices = frameRates.Select(fps => fps < 0 ? "Sin límite" : $"{fps} FPS").ToList();
         int index = Array.IndexOf(frameRates, Application.targetFrameRate);
         frameRate.SetValueWithoutNotify(frameRate.choices[Mathf.Max(0, index)]);
@@ -97,9 +95,9 @@ public sealed class GameSettingsDialog
 
     void Apply()
     {
-        if (resolution.index < 0 || quality.index < 0 || frameRate.index < 0) return;
+        if (resolution.index < 0 || frameRate.index < 0) return;
         var size = resolutions[resolution.index];
-        GamePreferences.SetVideo(size.x, size.y, fullscreen.value, quality.index, vsync.value, frameRates[frameRate.index]);
+        GamePreferences.SetVideo(size.x, size.y, fullscreen.value, QualitySettings.GetQualityLevel(), vsync.value, frameRates[frameRate.index]);
         GamePreferences.SetAudio(master.value / 100f, music.value / 100f, effects.value / 100f);
         PlayerPrefs.Save();
         note.text = "Ajustes guardados en este equipo.";

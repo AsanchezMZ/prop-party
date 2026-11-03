@@ -20,6 +20,7 @@ public class PropHuntMatch : NetworkBehaviour
     public readonly NetworkVariable<bool> LastHiderRemaining = new();
     NetworkList<bool> doorStates;
     double nextAutomaticWhistle;
+    int initialHiders;
 
     void Awake() => doorStates = new NetworkList<bool>();
     public override void OnNetworkSpawn()
@@ -56,7 +57,8 @@ public class PropHuntMatch : NetworkBehaviour
         foreach (var spawner in FindObjectsByType<MapPropSpawner>(FindObjectsSortMode.None))
             if (spawner.gameObject.scene == gameObject.scene) spawner.Roll();
         int hunters = Mathf.Clamp(Settings.Value.Hunters, 1, players.Count - 1);
-        LastHiderRemaining.Value = players.Count - hunters == 1;
+        initialHiders = players.Count - hunters;
+        LastHiderRemaining.Value = false;
         for (int i = 0; i < doorStates.Count; i++) doorStates[i] = false;
         ApplyDoors();
         var audio = PartyAudio.Settings;
@@ -85,7 +87,7 @@ public class PropHuntMatch : NetworkBehaviour
             if (player.Role.Value == PlayerRole.Hunter) hunters++;
         }
         if (props == 0 || hunters == 0) { Finish(props == 0 ? PlayerRole.Hunter : PlayerRole.Prop); return; }
-        LastHiderRemaining.Value = props == 1;
+        LastHiderRemaining.Value = initialHiders > 1 && props == 1;
         if (SecondsLeft > 0) return;
         if (Phase.Value == MatchPhase.Hiding)
         {

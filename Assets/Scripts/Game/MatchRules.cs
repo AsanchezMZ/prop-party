@@ -11,6 +11,9 @@ public class MatchRules : ScriptableObject
     public bool capturedBecomeHunters = true;
     [Min(0.5f)] public float disguiseDistance = 3;
     [Min(1)] public int propHealth = 2;
+    [Tooltip("Wrong shots into Prop objects before elimination; 0 means unlimited.")]
+    [Range(0, 50)] public int hunterMissLimit = 10;
+    public bool identifyHiders = true;
     [Header("Puntuación (servidor)")]
     [Min(1)] public float proximityRadius = 8;
     [Min(1)] public float visibilityDistance = 20;

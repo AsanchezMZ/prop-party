@@ -28,13 +28,14 @@ public class Prop : MonoBehaviour
     void OnDisable() => active.Remove(this);
 
     void OnValidate()
-{
-    if (visual == null)
     {
-        var t = transform.Find("Visual");
-        if (t != null) visual = t;
+        if (visual == null)
+        {
+            var t = transform.Find("Visual");
+            if (t != null) visual = t;
+        }
+        ValidateDisguiseDimensions();
     }
-}
 
     public static bool ExistsNear(int id, Vector3 pos, float maxDist)
     {
@@ -59,11 +60,49 @@ public class Prop : MonoBehaviour
         visual.localRotation = baseLocalRot * Quaternion.Euler(offset);
     }
 
-    public Vector3 BoxSize => new Vector3(Mathf.Max(0.1f, disguiseBoxSize.x),
-        Mathf.Max(0.1f, disguiseBoxSize.y), Mathf.Max(0.1f, disguiseBoxSize.z));
+    public Vector3 BoxSize
+    {
+        get { ValidateDisguiseDimensions(); return disguiseBoxSize; }
+    }
+
+    public void ValidateDisguiseDimensions()
+    {
+        Vector3 size = new Vector3(0.8f, 1, 0.8f);
+        // Mathf.Max does not sanitize NaN saved in imported prefab dimensions.
+        if ((!float.IsFinite(disguiseRadius) || !float.IsFinite(disguiseHeight) || !Finite(disguiseBoxSize)) && visual != null)
+        {
+            Bounds bounds = default;
+            bool found = false;
+            foreach (var filter in visual.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null) continue;
+                Bounds meshBounds = filter.sharedMesh.bounds;
+                if (!Finite(meshBounds.center) || !Finite(meshBounds.extents)) continue;
+                Matrix4x4 matrix = transform.worldToLocalMatrix * filter.transform.localToWorldMatrix;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 offset = Vector3.Scale(meshBounds.extents, new Vector3((corner & 1) == 0 ? -1 : 1,
+                        (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1));
+                    Vector3 point = matrix.MultiplyPoint3x4(meshBounds.center + offset);
+                    if (!Finite(point)) continue;
+                    if (!found) { bounds = new Bounds(point, Vector3.zero); found = true; }
+                    else bounds.Encapsulate(point);
+                }
+            }
+            if (found && Finite(bounds.size) && bounds.size.sqrMagnitude > 0) size = bounds.size;
+        }
+        disguiseRadius = Dimension(disguiseRadius, Mathf.Max(size.x, size.z) * 0.5f, 0.1f);
+        disguiseHeight = Dimension(disguiseHeight, size.y, Mathf.Max(0.2f, disguiseRadius * 2));
+        disguiseBoxSize = new Vector3(Dimension(disguiseBoxSize.x, size.x, 0.1f),
+            Dimension(disguiseBoxSize.y, size.y, 0.1f), Dimension(disguiseBoxSize.z, size.z, 0.1f));
+    }
+
+    static bool Finite(Vector3 value) => float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
+    static float Dimension(float value, float fallback, float minimum) => Mathf.Max(minimum, float.IsFinite(value) ? value : fallback);
 
     public bool ConfigureDisguiseColliders(GameObject model)
     {
+        ValidateDisguiseDimensions();
         foreach (var collider in model.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
         if (collisionShape == CollisionShape.Capsule) return false;
         if (collisionShape == CollisionShape.Box)
@@ -101,6 +140,7 @@ public class Prop : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
+        ValidateDisguiseDimensions();
         if (collisionShape == CollisionShape.Box)
         {
             using (new Handles.DrawingScope(Color.cyan, transform.localToWorldMatrix *

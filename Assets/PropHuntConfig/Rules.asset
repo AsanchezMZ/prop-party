@@ -20,6 +20,8 @@ MonoBehaviour:
   capturedBecomeHunters: 1
   disguiseDistance: 3
   propHealth: 2
+  hunterMissLimit: 10
+  identifyHiders: 1
   proximityRadius: 8
   visibilityDistance: 20
   hunterFieldOfView: 75

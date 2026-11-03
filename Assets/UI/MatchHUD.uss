@@ -1,41 +1,130 @@
-.hud { width: 100%; height: 100%; flex-grow: 1; color: rgb(25, 43, 48); }
+.hud { width: 100%; height: 100%; flex-grow: 1; overflow: hidden; color: rgb(247, 239, 215); }
 .hud Label { margin: 0; padding: 0; }
-.top-bar { position: absolute; top: 12px; left: 14px; right: 14px; flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; }
-.hud .chip { height: 36px; min-height: 36px; padding: 7px 14px; margin: 0 4px 6px; border-radius: 18px; font-size: 15px; -unity-font-style: bold; -unity-text-align: middle-center; border-width: 2px; border-color: rgb(25, 43, 48); }
-.role-chip, .mint, .whistle-button { background-color: rgb(85, 213, 185); }
-.timer-chip, .score-chip, .yellow { background-color: rgb(255, 213, 78); }
-.health-chip, .coral { background-color: rgb(255, 151, 139); }
-.risk-chip { background-color: rgb(244, 240, 228); }
-.hud .whistle-button { min-width: 155px; color: rgb(25, 43, 48); }
-.crosshair { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin-left: -3px; margin-top: -3px; border-radius: 3px; background-color: white; border-width: 1px; border-color: rgba(0, 0, 0, 0.7); }
-.risk-halo { position: absolute; left: 0; top: 0; right: 0; bottom: 0; border-width: 10px; border-radius: 20px; border-color: rgb(255, 183, 52); opacity: 0; }
-.hit-flash { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(255, 74, 93); opacity: 0; }
-.toasts { position: absolute; top: 64px; right: 18px; width: 330px; align-items: flex-end; }
-.hud .toast { background-color: rgb(25, 64, 67); color: rgb(255, 249, 226); padding: 11px 16px; margin-bottom: 7px; border-radius: 12px; font-size: 14px; white-space: normal; border-left-width: 5px; border-left-color: rgb(255, 213, 78); }
-.hud .hint { position: absolute; bottom: 14px; left: 12px; right: 12px; font-size: 12px; color: white; -unity-text-align: middle-center; -unity-text-outline-width: 0.7px; -unity-text-outline-color: rgb(25, 43, 48); }
+.hud.is-blackout > * { visibility: hidden; }
+.hud.is-blackout > .blackout { visibility: visible; }
+.hud .micro-label { font-size: 10px; letter-spacing: 2px; -unity-font-style: bold; }
+.identity-card { position: absolute; left: 26px; top: 24px; width: 258px; padding: 15px 18px 13px; background-color: rgba(18, 34, 38, 0.94); border-left-width: 5px; border-left-color: rgb(86, 217, 184); border-radius: 2px 14px 14px 2px; }
+.hud .identity-brand { color: rgb(86, 217, 184); margin-bottom: 6px; }
+.hud .role-value { font-size: 22px; -unity-font-style: bold; letter-spacing: 1px; }
+.hud .objective { font-size: 12px; white-space: normal; color: rgb(196, 212, 199); margin-top: 6px; }
+.identity-rule { height: 3px; width: 42px; background-color: rgb(86, 217, 184); margin-top: 12px; }
+.identity-card.is-prop { background-color: rgba(20, 43, 73, 0.94); border-left-color: rgb(91, 178, 255); }
+.identity-card.is-hunter { background-color: rgba(73, 25, 33, 0.94); border-left-color: rgb(255, 92, 105); }
+.identity-card.is-spectator { background-color: rgba(69, 57, 23, 0.94); border-left-color: rgb(248, 219, 103); }
+.clock-card { position: absolute; left: 50%; top: 20px; width: 184px; margin-left: -92px; padding: 10px 16px 12px; background-color: rgb(248, 219, 103); color: rgb(23, 39, 42); border-radius: 3px 3px 18px 18px; border-bottom-width: 5px; border-bottom-color: rgb(135, 94, 38); align-items: center; }
+.hud .clock-value { font-size: 44px; -unity-font-style: bold; letter-spacing: -2px; height: 53px; }
+.clock-card > .micro-label { font-size: 9px; letter-spacing: 1px; -unity-text-align: middle-center; white-space: normal; }
+.clock-track { width: 100%; height: 4px; margin-top: 5px; background-color: rgba(23, 39, 42, 0.22); overflow: hidden; }
+.clock-fill { height: 100%; width: 100%; background-color: rgb(23, 39, 42); }
+.clock-card.is-urgent { background-color: rgb(255, 139, 111); border-bottom-color: rgb(139, 44, 47); }
+.score-card { position: absolute; top: 24px; right: 28px; width: 172px; padding: 11px 16px; background-color: rgb(243, 234, 207); color: rgb(23, 39, 42); border-width: 2px 2px 5px; border-color: rgb(23, 39, 42); rotate: 3deg; }
+.hud .score-value { font-size: 37px; -unity-font-style: bold; letter-spacing: -1px; }
+.hud .score-caption { font-size: 8px; letter-spacing: 1px; border-top-width: 1px; border-top-color: rgb(23, 39, 42); padding-top: 5px; }
+.vitals-card { position: absolute; bottom: 64px; left: 26px; width: 216px; min-height: 66px; padding: 6px 16px; border-radius: 12px 12px 3px 3px; background-color: rgba(18, 34, 38, 0.94); border-bottom-width: 4px; border-bottom-color: rgb(255, 139, 111); }
+.hud .health-value { font-size: 25px; -unity-font-style: bold; margin-top: 0; color: rgb(255, 174, 145); }
+.health-pips { flex-direction: row; height: 12px; margin-top: 8px; }
+.health-pip { flex-grow: 1; margin-right: 4px; max-width: 30px; background-color: rgb(255, 160, 131); border-radius: 2px; }
+.health-pip.is-empty { background-color: rgb(58, 70, 69); }
+.risk-card { position: absolute; bottom: 64px; left: 50%; width: 260px; margin-left: -130px; padding: 12px 16px; background-color: rgba(18, 34, 38, 0.94); border-radius: 12px; border-width: 1px; border-color: rgba(86, 217, 184, 0.4); }
+.hud .risk-value { font-size: 14px; -unity-font-style: bold; margin-top: 6px; color: rgb(86, 217, 184); }
+.risk-meter { flex-direction: row; margin-top: 9px; height: 6px; }
+.risk-segment { flex-grow: 1; margin-right: 4px; background-color: rgb(58, 70, 69); border-radius: 1px; }
+.risk-segment.is-lit { background-color: rgb(86, 217, 184); }
+.risk-card.is-near { border-color: rgb(248, 219, 103); }
+.risk-card.is-near .risk-value { color: rgb(248, 219, 103); }
+.risk-card.is-near .risk-segment.is-lit { background-color: rgb(248, 219, 103); }
+.risk-card.is-seen { border-color: rgb(255, 74, 93); }
+.risk-card.is-seen .risk-value { color: rgb(255, 74, 93); }
+.risk-card.is-seen .risk-segment.is-lit { background-color: rgb(255, 74, 93); }
+.ability-card { position: absolute; right: 26px; bottom: 64px; width: 226px; }
+.ability-card > .micro-label { margin: 0 0 8px 8px; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(18, 34, 38); }
+.hud Button { min-height: 44px; padding: 8px 12px; margin: 0 4px; border-width: 2px 2px 5px; border-color: rgb(18, 34, 38); border-radius: 6px; font-size: 12px; color: rgb(18, 34, 38); -unity-font-style: bold; letter-spacing: 1px; }
+.hud Button:hover { background-color: rgb(255, 232, 158); }
+.hud Button:focus { border-color: rgb(255, 249, 221); }
+.hud Button:disabled { opacity: 0.55; }
+.mint, .whistle-button { background-color: rgb(86, 217, 184); }
+.yellow { background-color: rgb(248, 219, 103); }
+.coral { background-color: rgb(255, 139, 111); }
+.hud .whistle-button { height: 55px; font-size: 15px; rotate: -2deg; overflow: hidden; }
+.hud .whistle-button:disabled { opacity: 1; background-color: rgba(86, 217, 184, 0.3); }
+.whistle-recharge { display: none; position: absolute; left: 0; top: 0; bottom: 0; background-color: rgb(86, 217, 184); }
+.whistle-button:disabled .whistle-recharge { display: flex; }
+.hud .whistle-label { flex-grow: 1; -unity-text-align: middle-center; }
+.whistle-track { position: absolute; left: 6px; right: 6px; bottom: 3px; height: 4px; background-color: rgba(18, 104, 90, 0.2); overflow: hidden; }
+.whistle-fill { height: 100%; width: 100%; background-color: rgb(18, 104, 90); }
+.hud .whistle-ready { border-bottom-color: rgb(22, 124, 97); }
+.crosshair { position: absolute; top: 50%; left: 50%; width: 32px; height: 32px; margin-left: -16px; margin-top: -16px; }
+.reticle-tick { position: absolute; background-color: rgb(255, 248, 222); border-width: 1px; border-color: rgba(18, 34, 38, 0.8); border-radius: 1px; }
+.tick-top, .tick-bottom { left: 14px; width: 4px; height: 7px; }
+.tick-top { top: 0; } .tick-bottom { bottom: 0; }
+.tick-left, .tick-right { top: 14px; height: 4px; width: 7px; }
+.tick-left { left: 0; } .tick-right { right: 0; }
+.reticle-dot { position: absolute; left: 14px; top: 14px; width: 4px; height: 4px; border-radius: 2px; background-color: rgb(255, 248, 222); }
+.crosshair.has-target .reticle-tick { background-color: rgb(86, 217, 184); }
+.hit-marker { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin-left: -22px; margin-top: -22px; opacity: 0; }
+.marker-slash { position: absolute; top: 20px; left: 0; width: 44px; height: 4px; background-color: rgb(248, 219, 103); border-width: 1px; border-color: rgb(18, 34, 38); }
+.slash-one { rotate: 45deg; } .slash-two { rotate: -45deg; }
+.hud .hit-marker-label { position: absolute; top: 46px; left: -50px; right: -50px; font-size: 11px; -unity-font-style: bold; letter-spacing: 2px; color: rgb(248, 219, 103); -unity-text-align: middle-center; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(18, 34, 38); }
+.screen-effect { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.toasts { position: absolute; right: 28px; top: 164px; width: 285px; align-items: flex-end; }
+.hud .toast { background-color: rgba(18, 34, 38, 0.95); color: rgb(247, 239, 215); padding: 12px 16px; margin-bottom: 9px; border-radius: 0; font-size: 13px; white-space: normal; }
+.hud .hint { position: absolute; bottom: 19px; left: 20px; right: 20px; font-size: 11px; letter-spacing: 0.5px; color: rgb(247, 239, 215); -unity-text-align: middle-center; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(18, 34, 38); white-space: normal; }
+.hud .target-prop, .hud .identified-name { position: absolute; left: 28%; right: 28%; top: 57%; padding: 9px 12px; background-color: rgba(18, 34, 38, 0.88); border-radius: 4px; -unity-text-align: middle-center; color: rgb(247, 239, 215); font-size: 16px; -unity-font-style: bold; white-space: normal; }
+.hud .identified-name { top: 65%; color: rgb(248, 219, 103); }
+.winner-splash { position: absolute; left: 0; right: 0; top: 0; bottom: 0; align-items: center; justify-content: center; background-color: rgba(5, 15, 20, 0.35); }
+.winner-ray { position: absolute; left: -10%; right: -10%; top: 41%; height: 150px; background-color: rgb(248, 219, 103); opacity: 0.15; }
+.winner-ray.ray-one { rotate: -12deg; }
+.winner-ray.ray-two { rotate: 9deg; height: 70px; }
+.winner-card { width: 84%; max-width: 1100px; padding: 28px 20px 32px; align-items: center; background-color: rgba(9, 23, 28, 0.96); border-top-width: 4px; border-bottom-width: 4px; border-color: rgb(248, 219, 103); rotate: -3deg; }
+.hud .winner-kicker { font-size: 13px; letter-spacing: 8px; color: rgb(247, 239, 215); -unity-text-align: middle-center; }
+.hud .winner-title { font-size: 104px; letter-spacing: 9px; -unity-font-style: bold; -unity-text-align: middle-center; white-space: normal; color: rgb(248, 219, 103); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(5, 15, 20); text-shadow: 3px 6px 0 rgba(0, 0, 0, 0.7); }
+.hud .winner-team { font-size: 16px; letter-spacing: 3px; color: rgb(247, 239, 215); -unity-text-align: middle-center; white-space: normal; }
+.is-win .winner-card { border-color: rgb(104, 255, 171); }
+.is-lose .winner-card { border-color: rgb(255, 94, 116); }
+.is-win .winner-ray { background-color: rgb(104, 255, 171); }
+.is-lose .winner-ray { background-color: rgb(255, 94, 116); }
+.hud .is-win .winner-title { color: rgb(104, 255, 171); }
+.hud .is-lose .winner-title { color: rgb(255, 94, 116); }
+.hud .phase-banner { position: absolute; top: 28%; left: 14%; right: 14%; padding: 12px 20px; background-color: rgba(18, 34, 38, 0.92); border-left-width: 6px; border-left-color: rgb(248, 219, 103); rotate: -2deg; font-size: 35px; -unity-font-style: bold; -unity-text-align: middle-center; color: rgb(248, 219, 103); white-space: normal; opacity: 0; }
+.name-layer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
+.hud .name-tag { position: absolute; width: 180px; height: 36px; font-size: 14px; -unity-font-style: bold; -unity-text-align: middle-center; -unity-text-outline-width: 1px; -unity-text-outline-color: rgb(18, 34, 38); }
 .blackout { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: rgb(25, 43, 48); align-items: center; justify-content: center; color: rgb(255, 238, 171); font-size: 18px; }
 .hud .blackout-title { font-size: 62px; -unity-font-style: bold; -unity-text-align: middle-center; white-space: normal; margin: 16px 0; color: rgb(255, 213, 78); }
 .hud .blackout-kicker { font-size: 13px; letter-spacing: 3px; -unity-text-align: middle-center; white-space: normal; }
 .hud .blackout-copy { font-size: 20px; margin: 12px 0 24px; -unity-text-align: middle-center; }
 .hud .release-timer { font-size: 90px; -unity-font-style: bold; width: 190px; height: 130px; border-width: 4px; border-color: rgb(85, 213, 185); border-radius: 24px; -unity-text-align: middle-center; background-color: rgb(18, 34, 39); color: white; }
-.hud .target-prop { position: absolute; left: 25%; right: 25%; top: 55%; -unity-text-align: middle-center; color: white; font-size: 20px; -unity-font-style: bold; -unity-text-outline-width: 1px; -unity-text-outline-color: black; }
-.name-layer { position: absolute; left: 0; right: 0; top: 0; bottom: 0; }
-.hud .name-tag { position: absolute; width: 180px; height: 36px; font-size: 16px; -unity-font-style: bold; -unity-text-align: middle-center; -unity-text-outline-width: 1px; -unity-text-outline-color: black; }
-.pause-overlay { position: absolute; top: 92px; bottom: 48px; left: 0; right: 0; align-items: center; justify-content: center; }
-.pause-panel { width: 540px; max-width: 94%; padding: 22px; border-radius: 20px; background-color: rgb(244, 240, 228); border-width: 3px 3px 7px; border-color: rgb(25, 43, 48); }
-.hud .panel-title { font-size: 24px; -unity-font-style: bold; white-space: normal; }
-.hud .result-title { font-size: 58px; -unity-text-align: middle-center; margin: 8px 0; }
-.hud .result-win { color: rgb(12, 133, 103); }
-.hud .result-lose { color: rgb(202, 51, 63); }
-.hud .result-team { font-size: 16px; letter-spacing: 2px; -unity-text-align: middle-center; white-space: normal; }
-.hud .leaderboard-title { font-size: 11px; letter-spacing: 2px; margin: 15px 0 6px; }
-.hud .leaderboard Label { font-size: 14px; padding: 6px 10px; margin-bottom: 4px; background-color: rgb(222, 231, 217); border-radius: 6px; }
-.action-row { flex-direction: row; margin-top: 8px; }
-.hud Button { flex-grow: 1; flex-basis: 0; min-height: 40px; margin: 0 4px; padding: 6px 10px; border-width: 2px 2px 4px; border-color: rgb(25, 43, 48); border-radius: 9px; font-size: 12px; color: rgb(25, 43, 48); -unity-font-style: bold; }
-.hud Button:hover { background-color: rgb(255, 231, 142); }
-.hud Button:focus { border-color: rgb(0, 130, 122); }
-.hud Button:disabled { opacity: 0.45; }
-.hud .phase-banner { position: absolute; top: 23%; left: 12%; right: 12%; font-size: 46px; -unity-font-style: bold; -unity-text-align: middle-center; color: rgb(255, 213, 78); -unity-text-outline-width: 2px; -unity-text-outline-color: rgb(25, 43, 48); white-space: normal; opacity: 0; }
-.whistle-fill { position: absolute; left: 5px; bottom: 2px; height: 3px; max-width: 92%; border-radius: 3px; background-color: rgb(25, 100, 86); }
-.hud .whistle-ready { border-color: rgb(12, 133, 103); background-color: rgb(143, 239, 202); }
-.hud .chip { transition-property: background-color, border-color; transition-duration: 0.2s; }
+.pause-overlay { position: absolute; top: 0; bottom: 0; left: 0; right: 0; background-color: rgba(10, 23, 27, 0.78); align-items: center; justify-content: center; }
+.pause-panel { width: 550px; max-width: 92%; max-height: 94%; padding: 24px; border-radius: 3px 18px 18px 3px; background-color: rgb(243, 234, 207); color: rgb(23, 39, 42); border-left-width: 6px; border-left-color: rgb(248, 191, 67); }
+.show-results .pause-panel { border-radius: 0; border-top-width: 1px; border-top-color: rgb(255, 249, 229); border-bottom-width: 6px; border-bottom-color: rgb(164, 151, 113); }
+.paper-fold { display: none; position: absolute; right: 0; top: 0; width: 0; height: 0; border-top-width: 28px; border-left-width: 28px; border-top-color: rgb(164, 151, 113); border-left-color: transparent; }
+.show-results .paper-fold { display: flex; }
+.hud .panel-title { font-size: 31px; -unity-font-style: bold; white-space: normal; margin-top: 8px; }
+.hud .result-title { font-size: 48px; letter-spacing: -2px; }
+.hud .result-win { color: rgb(12, 120, 93); } .hud .result-lose { color: rgb(190, 55, 55); }
+.hud .result-team { font-size: 12px; letter-spacing: 2px; margin-top: 5px; white-space: normal; }
+.hud .leaderboard-title { font-size: 10px; letter-spacing: 2px; margin: 20px 0 8px; }
+.hud .leaderboard Label { font-size: 14px; padding: 9px 12px; margin-bottom: 4px; background-color: rgb(221, 217, 193); border-radius: 3px; }
+.hud .leaderboard .ranking-leader { background-color: rgb(248, 219, 103); -unity-font-style: bold; }
+.hud .leaderboard .ranking-self { border-left-width: 4px; border-left-color: rgb(20, 126, 107); }
+.action-row { flex-direction: row; margin-top: 10px; }
+.action-row Button { flex-grow: 1; flex-basis: 0; }
+.hud.compact .identity-card { left: 12px; top: 12px; width: 180px; padding: 10px; }
+.hud.compact .role-value { font-size: 17px; }
+.hud.compact .objective, .hud.compact .identity-rule, .hud.compact .score-caption { display: none; }
+.hud.compact .clock-card { top: 12px; width: 144px; margin-left: -72px; }
+.hud.compact .clock-value { font-size: 34px; height: 42px; }
+.hud.compact .clock-card > .micro-label { font-size: 8px; letter-spacing: 0.5px; }
+.hud.compact .score-card { right: 12px; top: 12px; width: 120px; }
+.hud.compact .score-value { font-size: 27px; }
+.hud.compact .vitals-card { left: 12px; width: 150px; bottom: 60px; padding: 6px 10px; }
+.hud.compact .risk-card { width: 212px; margin-left: -106px; bottom: 60px; padding: 10px; }
+.hud.compact .risk-value { font-size: 12px; }
+.hud.compact .ability-card { right: 12px; width: 165px; bottom: 60px; }
+.hud.compact .ability-card > .micro-label { font-size: 8px; letter-spacing: 0; }
+.hud.compact .hint { font-size: 10px; bottom: 10px; }
+.hud.compact .toasts { top: 130px; right: 12px; width: 235px; }
+.hud.compact .phase-banner { font-size: 25px; }
+.hud.compact .winner-title { font-size: 64px; letter-spacing: 4px; }
+.hud.compact .winner-kicker { font-size: 10px; letter-spacing: 4px; }
+.hud.compact .pause-panel { padding: 16px; }
+.hud.compact .leaderboard Label { padding: 5px 10px; }

@@ -36,6 +36,7 @@ public class PlayerController : NetworkBehaviour
     PlayerRole lastRole = PlayerRole.Spectator;
     MatchPhase lastPhase = MatchPhase.Waiting;
     float nextAim;
+    float pendingPropRotation, nextPropRotation;
     public bool SpectatorMenu { get; private set; }
     public Prop AimedProp { get; private set; }
     public Camera ViewCamera => playerCamera;
@@ -114,9 +115,9 @@ public class PlayerController : NetworkBehaviour
             float mx = Input.GetAxis("Mouse X") * mouseSensitivity;
             float my = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-            transform.Rotate(0f, mx, 0f);
-            pitch = Mathf.Clamp(pitch - my, minPitch, maxPitch);
+            UpdateLook(mx, my, gameplay != null && gameplay.CanRotateDisguise && Input.GetMouseButton(1));
         }
+        else pendingPropRotation = 0;
         cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         cameraPivot.localPosition = cc.center + Vector3.up * cc.height * 0.4f;
 
@@ -161,7 +162,7 @@ public class PlayerController : NetworkBehaviour
         float animVal = 0;
         if(input == Vector3.zero)
         {
-            
+
         }
         else if (slow)
         {
@@ -177,6 +178,7 @@ public class PlayerController : NetworkBehaviour
             speed = runSpeed;
             animVal = 3;
         }
+        if (gameplay != null && gameplay.Role.Value == PlayerRole.Prop) speed *= 0.85f;
         Vector3 direction = transform.TransformDirection(input);
         Vector3 move = direction * speed;
 
@@ -199,6 +201,25 @@ public class PlayerController : NetworkBehaviour
     }
 
     public ApartmentDoor AimedDoor { get; private set; }
+
+    void UpdateLook(float horizontal, float vertical, bool rotateDisguise)
+    {
+        if (rotateDisguise)
+        {
+            pendingPropRotation += horizontal * 0.25f;
+            if (Time.unscaledTime >= nextPropRotation && pendingPropRotation != 0)
+            {
+                float delta = Mathf.Clamp(pendingPropRotation, -15, 15);
+                gameplay.FineRotateServerRpc(delta);
+                pendingPropRotation -= delta;
+                nextPropRotation = Time.unscaledTime + 0.05f;
+            }
+            return;
+        }
+        pendingPropRotation = 0;
+        transform.Rotate(0, horizontal, 0);
+        pitch = Mathf.Clamp(pitch - vertical, minPitch, maxPitch);
+    }
 
     void FindAimedTargets()
     {

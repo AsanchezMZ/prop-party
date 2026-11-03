@@ -24,8 +24,8 @@ public class LobbyUI : MonoBehaviour
     VisualElement content;
     VisualElement settingsPanel;
     Button settingsButton, settingsApply;
-    SliderInt settingHunters, settingHide, settingHunt, settingWhistle, settingHealth;
-    Toggle settingConvert;
+    SliderInt settingHunters, settingHide, settingHunt, settingWhistle, settingHealth, settingHunterMisses;
+    Toggle settingConvert, settingIdentifyHiders;
     MatchSettings shownSettings;
     Label settingsNote;
     bool settingsOpen;
@@ -98,13 +98,16 @@ public class LobbyUI : MonoBehaviour
         settingHunters = root.Q<SliderInt>("setting-hunters"); settingHide = root.Q<SliderInt>("setting-hide");
         settingHunt = root.Q<SliderInt>("setting-hunt"); settingWhistle = root.Q<SliderInt>("setting-whistle");
         settingHealth = root.Q<SliderInt>("setting-health"); settingConvert = root.Q<Toggle>("setting-convert");
+        settingHunterMisses = root.Q<SliderInt>("setting-hunter-misses");
+        settingIdentifyHiders = root.Q<Toggle>("setting-identify-hiders");
         settingsButton = Bind(root, "settings", () => ShowSettings(true));
         Bind(root, "settings-back", () => { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiBack); ShowSettings(false); });
         settingsApply = Bind(root, "settings-apply", () =>
         {
             var settings = new MatchSettings { Hunters = settingHunters.value, HidingSeconds = settingHide.value,
                 HuntingSeconds = settingHunt.value, WhistleSeconds = settingWhistle.value,
-                Health = settingHealth.value, ConvertCaptured = settingConvert.value };
+                Health = settingHealth.value, ConvertCaptured = settingConvert.value,
+                HunterMissLimit = settingHunterMisses.value, IdentifyHiders = settingIdentifyHiders.value };
             if (lobby.ApplySettings(settings))
             { PartyAudio.Instance?.Play(PartyAudio.Settings?.uiConfirm); ShowSettings(false); Notify("Reglas guardadas. ¡Preparaos otra vez!"); }
         });
@@ -189,8 +192,11 @@ public class LobbyUI : MonoBehaviour
         settingHunters.SetValueWithoutNotify(shownSettings.Hunters); settingHide.SetValueWithoutNotify(shownSettings.HidingSeconds);
         settingHunt.SetValueWithoutNotify(shownSettings.HuntingSeconds); settingWhistle.SetValueWithoutNotify(shownSettings.WhistleSeconds);
         settingHealth.SetValueWithoutNotify(shownSettings.Health); settingConvert.SetValueWithoutNotify(shownSettings.ConvertCaptured);
+        settingHunterMisses.SetValueWithoutNotify(shownSettings.HunterMissLimit);
+        settingIdentifyHiders.SetValueWithoutNotify(shownSettings.IdentifyHiders);
         settingHunters.SetEnabled(network.IsServer); settingHide.SetEnabled(network.IsServer); settingHunt.SetEnabled(network.IsServer);
         settingWhistle.SetEnabled(network.IsServer); settingHealth.SetEnabled(network.IsServer); settingConvert.SetEnabled(network.IsServer);
+        settingHunterMisses.SetEnabled(network.IsServer); settingIdentifyHiders.SetEnabled(network.IsServer);
         settingsApply.SetEnabled(network.IsServer);
         if (lobby.Rules != null)
             settingsNote.text = $"Cerca: +{lobby.Rules.proximityPoints} cada 3 s. A la vista: +{lobby.Rules.visiblePoints} por segundo.\nSilbar: +{lobby.Rules.manualWhistlePoints}, con 5 s de recarga. Los bonos de riesgo se suman.";
@@ -249,7 +255,7 @@ public class LobbyUI : MonoBehaviour
     {
         if (PartyAudio.Instance == null && audioSource != null && menuMusic != null && audioSource.clip == menuMusic)
         {
-            audioSource.volume = GamePreferences.MusicVolume;
+            audioSource.volume = 0.18f * GamePreferences.MusicVolume;
             if (!PartyLoadingScreen.Ready) audioSource.Stop();
             else if (!audioSource.isPlaying) audioSource.Play();
         }

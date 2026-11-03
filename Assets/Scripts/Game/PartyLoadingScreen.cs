@@ -79,8 +79,11 @@ public class PartyLoadingScreen : MonoBehaviour
         { Debug.LogError("Loading screen requires LoadingScreen.uxml and a scene UIDocument with PanelSettings."); yield break; }
         retry.clicked -= Prepare; retry.clicked += Prepare;
         var leave = root.Q<Button>("loading-leave");
-        leave.clicked -= ReturnToMenu; leave.clicked += ReturnToMenu;
-        leave.SetEnabled(true);
+        if (leave != null)
+        {
+            leave.clicked -= ReturnToMenu; leave.clicked += ReturnToMenu;
+            leave.SetEnabled(true);
+        }
         root.style.display = DisplayStyle.Flex;
         yield return null; // Paint before requesting resource data.
 

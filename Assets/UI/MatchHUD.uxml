@@ -1,41 +1,93 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements">
-    <Style src="MatchHUD.uss" />
-    <ui:VisualElement name="hud-root" class="hud" picking-mode="Ignore">
-        <ui:VisualElement name="blackout" class="blackout" picking-mode="Ignore" style="display: none;">
-            <ui:Label text="PREPARA LA PUNTERÍA" class="blackout-kicker"/>
-            <ui:Label text="LA CAZA&#10;ESTÁ A PUNTO" class="blackout-title"/>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/MatchHUD.uss?fileID=7433441132597879392&amp;guid=15090cfc99844ed29e0f1d366e946848&amp;type=3#MatchHUD"/>
+    <ui:VisualElement name="hud-root" picking-mode="Ignore" class="hud">
+        <ui:VisualElement name="blackout" picking-mode="Ignore" class="blackout" style="display: none;">
+            <ui:Label name="blackout-kicker" text="AFINA TU PUNTERÍA..." class="blackout-kicker"/>
+            <ui:Label name="blackout-title" text="ERES CAZADOR" class="blackout-title"/>
             <ui:Label name="release-timer" text="00" class="release-timer"/>
-            <ui:Label text="Los escondedores están buscando su sitio." class="blackout-copy"/>
-            <ui:Label text="MOVIMIENTO Y DISPARO BLOQUEADOS HASTA LA SALIDA" class="blackout-kicker"/>
+            <ui:Label name="blackout-copy" text="Los escondedores están buscando su sitio..." class="blackout-copy"/>
         </ui:VisualElement>
-        <ui:VisualElement name="risk-halo" class="risk-halo" picking-mode="Ignore"/>
-        <ui:VisualElement name="hit-flash" class="hit-flash" picking-mode="Ignore"/>
-        <ui:Label name="phase-banner" class="phase-banner" picking-mode="Ignore"/>
-        <ui:VisualElement class="top-bar" picking-mode="Ignore">
-            <ui:Label name="role" text="🎭 PROP PARTY" class="chip role-chip"/>
-            <ui:Label name="timer" text="⏱ 00:00" class="chip timer-chip"/>
-            <ui:Label name="health" text="❤ —" class="chip health-chip"/>
-            <ui:Label name="score" text="⭐ 0" class="chip score-chip"/>
-            <ui:Label name="risk" text="🌿 Tranquilo" class="chip risk-chip"/>
-            <ui:Button name="whistle" text="🎵 Silbar [G]" class="chip whistle-button"/>
+        <ui:VisualElement name="risk-halo" picking-mode="Ignore" class="screen-effect"/>
+        <ui:VisualElement name="hit-flash" picking-mode="Ignore" class="screen-effect"/>
+        <ui:VisualElement name="identity-card" picking-mode="Ignore" class="identity-card" style="top: 6px; left: 6px;">
+            <ui:Label name="role" text="EN LA FIESTA" class="role-value"/>
+            <ui:Label name="objective" text="Nadie es lo que parece." class="objective"/>
         </ui:VisualElement>
-        <ui:VisualElement name="crosshair" class="crosshair" picking-mode="Ignore"/>
-        <ui:Label name="target-prop" class="target-prop" picking-mode="Ignore" style="display: none;"/>
-        <ui:VisualElement name="toasts" class="toasts" picking-mode="Ignore"/>
-        <ui:Label name="hint" class="hint" picking-mode="Ignore"/>
-        <ui:VisualElement name="actions" class="pause-overlay" style="display: none;">
-            <ui:VisualElement class="pause-panel">
-                <ui:Label name="result" text="🎉 TIEMPO MUERTO" class="panel-title"/>
+        <ui:VisualElement name="clock-card" picking-mode="Ignore" class="clock-card" style="display: flex; top: 0;">
+            <ui:Label name="phase-label" text="PREPARANDO" class="micro-label"/>
+            <ui:Label name="timer" text="00:00" class="clock-value"/>
+            <ui:VisualElement picking-mode="Ignore" class="clock-track">
+                <ui:VisualElement name="clock-fill" picking-mode="Ignore" class="clock-fill"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement picking-mode="Ignore" name="VisualElement" class="score-card" style="display: flex; top: 11px; right: 11px;">
+            <ui:Label name="score-heading" text="PUNTUACIÓN" class="micro-label"/>
+            <ui:Label name="score" text="0000" class="score-value"/>
+            <ui:Label name="score-caption" text="" class="score-caption"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="vitals-card" picking-mode="Ignore" class="vitals-card" style="left: 6px; height: 66px; bottom: 64px; width: 218px;">
+            <ui:Label name="health" text="— ♥" class="health-value"/>
+            <ui:VisualElement name="health-pips" picking-mode="Ignore" class="health-pips"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="risk-card" picking-mode="Ignore" class="risk-card" style="display: flex;">
+            <ui:Label name="risk" text="PASAS DESAPERCIBIDO" class="risk-value" style="-unity-text-align: upper-center;"/>
+            <ui:VisualElement picking-mode="Ignore" class="risk-meter">
+                <ui:VisualElement picking-mode="Ignore" class="risk-segment"/>
+                <ui:VisualElement picking-mode="Ignore" class="risk-segment"/>
+                <ui:VisualElement picking-mode="Ignore" class="risk-segment"/>
+                <ui:VisualElement picking-mode="Ignore" class="risk-segment"/>
+                <ui:VisualElement picking-mode="Ignore" class="risk-segment"/>
+                <ui:VisualElement picking-mode="Ignore" class="risk-segment"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="ability-card" picking-mode="Ignore" class="ability-card" style="display: flex; right: 8px;">
+            <ui:Button name="whistle" tooltip="Silbido manual / G" class="whistle-button">
+                <ui:VisualElement name="whistle-recharge" picking-mode="Ignore" class="whistle-recharge"/>
+                <ui:Label name="whistle-label" text="SILBAR  /  G" picking-mode="Ignore" class="whistle-label"/>
+                <ui:VisualElement picking-mode="Ignore" tooltip="Tiempo hasta el siguiente silbido automático" class="whistle-track">
+                    <ui:VisualElement name="whistle-fill" picking-mode="Ignore" class="whistle-fill"/>
+                </ui:VisualElement>
+            </ui:Button>
+        </ui:VisualElement>
+        <ui:VisualElement name="crosshair" picking-mode="Ignore" class="crosshair">
+            <ui:VisualElement picking-mode="Ignore" class="reticle-tick tick-top"/>
+            <ui:VisualElement picking-mode="Ignore" class="reticle-tick tick-bottom"/>
+            <ui:VisualElement picking-mode="Ignore" class="reticle-tick tick-left"/>
+            <ui:VisualElement picking-mode="Ignore" class="reticle-tick tick-right"/>
+            <ui:VisualElement picking-mode="Ignore" class="reticle-dot"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="hit-marker" picking-mode="Ignore" class="hit-marker">
+            <ui:VisualElement picking-mode="Ignore" class="marker-slash slash-one"/>
+            <ui:VisualElement picking-mode="Ignore" class="marker-slash slash-two"/>
+            <ui:Label name="hit-marker-label" text="¡TOCADO!" picking-mode="Ignore" class="hit-marker-label"/>
+        </ui:VisualElement>
+        <ui:Label name="target-prop" picking-mode="Ignore" class="target-prop" style="display: none;"/>
+        <ui:Label name="phase-banner" picking-mode="Ignore" enable-rich-text="true" text="" class="phase-banner"/>
+        <ui:VisualElement name="winner-splash" picking-mode="Ignore" class="winner-splash" style="display: none;">
+            <ui:VisualElement picking-mode="Ignore" class="winner-ray ray-one"/>
+            <ui:VisualElement picking-mode="Ignore" class="winner-ray ray-two"/>
+            <ui:VisualElement picking-mode="Ignore" class="winner-card">
+                <ui:Label text="FIN DE PARTIDA" picking-mode="Ignore" class="winner-kicker"/>
+                <ui:Label name="winner-title" picking-mode="Ignore" class="winner-title"/>
+                <ui:Label name="winner-team" picking-mode="Ignore" class="winner-team"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="toasts" picking-mode="Ignore" class="toasts" style="display: flex;"/>
+        <ui:Label name="hint" picking-mode="Ignore" class="hint"/>
+        <ui:VisualElement name="actions" class="pause-overlay" style="display: flex;">
+            <ui:VisualElement name="result-paper" class="pause-panel">
+                <ui:VisualElement picking-mode="Ignore" class="paper-fold"/>
+                <ui:Label name="result" text="UN RESPIRO" class="panel-title"/>
                 <ui:Label name="result-team" class="result-team" style="display: none;"/>
-                <ui:Label text="⭐ PUNTOS DE ESTA RONDA" class="leaderboard-title"/>
+                <ui:Label name="ranking-heading" text="CLASIFICACIÓN" class="leaderboard-title"/>
                 <ui:VisualElement name="leaderboard" class="leaderboard"/>
                 <ui:VisualElement class="action-row">
-                    <ui:Button name="resume" text="▶ SEGUIR [Tab]" class="mint"/>
-                    <ui:Button name="replay" text="🔄 OTRA RONDA" class="yellow"/>
+                    <ui:Button name="resume" text="SEGUIR  /  TAB" class="mint"/>
+                    <ui:Button name="replay" text="OTRA RONDA" class="yellow"/>
                 </ui:VisualElement>
                 <ui:VisualElement class="action-row">
-                    <ui:Button name="lobby" text="🏠 VOLVER A LA SALA" class="mint"/>
-                    <ui:Button name="leave" text="👋 DESCONECTAR" class="coral"/>
+                    <ui:Button name="lobby" text="VOLVER A LA SALA" class="mint"/>
+                    <ui:Button name="leave" text="DESCONECTAR" class="coral"/>
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

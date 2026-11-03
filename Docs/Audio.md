@@ -23,7 +23,9 @@ Los clips que ya asignes directamente al jugador o a `ThrowableDefinition` tiene
 
 Si falta `finalStretchMusic`, sigue la música normal de caza. Los otros slots vacíos no reproducen música. Ambiente y música son independientes. Todas estas pistas se reproducen en 2D.
 
-La condición de último escondedor está replicada por el servidor. Usa el mismo canal de música que los últimos 30 s: coincidir ambos eventos no reinicia ni duplica la pista. El campo anterior `lastHider` se conserva, pero ya no dispara un efecto adicional.
+La condición de último escondedor está replicada por el servidor y solo se activa si la ronda empezó con más de un escondedor: no se activa en 1vs1. Su pista solo la oye el escondedor restante, no los hunters ni espectadores. Los últimos 30 s cambian la música de los jugadores activos; el espectador conserva su pista propia si está asignada. Ambos eventos usan el mismo canal y pista: coincidir no reinicia ni duplica el audio. El campo anterior `lastHider` se conserva, pero ya no dispara un efecto adicional.
+
+El BGM general y las pistas de resultados usan un volumen base de 0,18 (antes 0,35), multiplicado por el ajuste de música del usuario. Esconderse y tensión usan además un factor de 0,7, para dejar más espacio a los efectos. Los avisos de inicio de ronda siguen separados del BGM.
 
 ## Transiciones de ronda — conectadas, 2D
 
@@ -34,9 +36,9 @@ La condición de último escondedor está replicada por el servidor. Usa el mism
 | `lastSecondsWarning` | Últimos 10 s, una sola vez | Alerta breve, no una cuenta atrás larga que se solape |
 | `victory` | Ganó tu equipo | Pista completa de resultados de victoria, aproximadamente 30 s |
 | `defeat` | Perdió tu equipo | Pista completa de resultados de derrota, aproximadamente 30 s |
-| `spectatorEnter` | Pasas a espectador | Aire o plop suave, 0.2–0.6 s |
+| `spectatorEnter` | Estás como espectador durante la ronda | Música de espectador en el canal de música, con su volumen local; sustituye la pista de juego |
 
-No hay pista genérica de resultados ni efectos separados de fin, victoria o derrota: `victory` y `defeat` son las pistas de resultado, reproducidas una sola vez (no en bucle), en un canal propio que se detiene al salir de resultados, repetir ronda o cambiar de escena. Deja vacío el slot que no quieras usar. Un capturado convertido cuenta como buscador; el espectador no recibe una pista personalizada.
+No hay pista genérica de resultados ni efectos separados de fin, victoria o derrota: `victory` y `defeat` son las pistas de resultado, reproducidas **en bucle** en un canal propio que se detiene al salir de resultados, repetir ronda o cambiar de escena. Deja vacío el slot que no quieras usar. Un capturado convertido cuenta como buscador; si pasa a espectador, conserva su último equipo activo para elegir victoria o derrota. Al terminar la ronda, la música de espectador se corta antes del resultado, incluso si eliminación y fin llegan en el mismo frame (1vs1). Ya no se reproduce como efecto con `effectsVolume`, sino como música con `musicVolume` y el ajuste local de música.
 
 ## Peligro — conectado, solo lo oye el escondedor
 

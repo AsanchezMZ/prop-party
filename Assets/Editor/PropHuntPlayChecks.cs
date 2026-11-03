@@ -121,6 +121,8 @@ public static class PropHuntPlayChecks
                 bot.AssetsReady.Value = true; // The synthetic bot has no remote loading screen.
                 Require(match.BeginRound(), "Two players start a round");
                 Require(match.Phase.Value == MatchPhase.Hiding, "Hiding phase starts");
+                CheckBlackout(match);
+                CheckProjectileLaunch(network.LocalClient.PlayerObject.GetComponent<PropHuntPlayer>());
                 var waitingHunter = match.Players.First(p => p.Role.Value == PlayerRole.Hunter);
                 Require(!waitingHunter.CanHunt, "Hunter shooting is disabled during the waiting screen.");
                 int shotsBefore = UnityEngine.Object.FindObjectsByType<HunterProjectile>(FindObjectsSortMode.None).Length;
@@ -130,6 +132,8 @@ public static class PropHuntPlayChecks
                 var prop = match.Players.First(p => p.Role.Value == PlayerRole.Prop);
                 Require(prop.Health.Value == 3, "Lobby health settings reach the map");
                 CheckCameras(match);
+                CheckFineRotation(prop);
+                CheckVisualEffects();
                 var root = UnityEngine.Object.FindAnyObjectByType<MatchHUD>().GetComponent<UIDocument>().rootVisualElement;
                 Require(root.Q("crosshair") != null && root.Q<Button>("whistle") != null && root.Q("toasts") != null, "HUD UXML contains crosshair, whistle button and toasts");
                 prop.FreezeServerRpc(); Require(prop.Frozen.Value, "Prop can suspend");
@@ -139,10 +143,15 @@ public static class PropHuntPlayChecks
             if (stage == 3)
             {
                 if (match.Phase.Value != MatchPhase.Hunting) return;
+                CheckSpectatorMusic(match);
                 var prop = match.Players.First(p => p.Role.Value == PlayerRole.Prop);
                 CheckRiskAndSteps(match, prop);
                 int oldScore = prop.Score.Value;
+                double automaticDeadline = prop.NextAutomaticWhistle.Value;
+                double automaticStart = prop.AutomaticWhistleStartedAt.Value;
                 prop.ManualWhistleServerRpc();
+                Require(prop.NextAutomaticWhistle.Value == automaticDeadline && prop.AutomaticWhistleStartedAt.Value == automaticStart,
+                    "Manual whistle recharge never changes the automatic countdown.");
                 Require(prop.Score.Value == oldScore + match.Rules.manualWhistlePoints, "Manual whistle awards points");
                 prop.ManualWhistleServerRpc();
                 Require(prop.Score.Value == oldScore + match.Rules.manualWhistlePoints, "Whistle spam cannot award points during cooldown");
@@ -160,6 +169,7 @@ public static class PropHuntPlayChecks
             {
                 if (match.Phase.Value != MatchPhase.Finished) return;
                 Require(match.Winner.Value == PlayerRole.Hunter, "Hunters win when no props remain");
+                CheckResultPresentation();
                 Require(match.BeginRound(), "Round can restart");
                 Require(match.Players.Count(p => p.Role.Value == PlayerRole.Prop) == 1, "Restart restores roles");
                 Require(match.Players.All(p => p.Score.Value == 0), "Restart resets round scores");
@@ -213,6 +223,157 @@ public static class PropHuntPlayChecks
     }
 
     static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
+
+    static void CheckResultPresentation()
+    {
+        var hud = UnityEngine.Object.FindAnyObjectByType<MatchHUD>();
+        var root = hud.GetComponent<UIDocument>().rootVisualElement;
+        var update = typeof(MatchHUD).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance);
+        var started = typeof(MatchHUD).GetField("phaseStartedAt", BindingFlags.NonPublic | BindingFlags.Instance);
+        update.Invoke(hud, null);
+        foreach (float elapsed in new[] { 0, 2.9f, 3.1f, 5.9f, 6.1f, 7f })
+        {
+            started.SetValue(hud, Time.unscaledTime - elapsed);
+            update.Invoke(hud, null);
+            Require((root.Q("winner-splash").style.display.value == DisplayStyle.Flex) == (elapsed >= 3 && elapsed < 6),
+                "Only the three-to-six-second interval shows the winner title.");
+            Require((root.Q("actions").style.display.value == DisplayStyle.Flex) == (elapsed >= 6),
+                "Unlocked cursor and spectator menus cannot skip the delayed summary.");
+            if (elapsed == 6.1f)
+                Require(root.Q("actions").style.opacity.value > 0 && root.Q("actions").style.opacity.value < 1 &&
+                    root.Q("result-paper").style.translate.value.y.value > 0,
+                    "The paper summary fades in while sliding into position.");
+            if (elapsed == 7)
+                Require(root.Q("actions").style.opacity.value == 1 && root.Q("result-paper").style.translate.value.y.value == 0,
+                    "The paper settles fully opaque without perpetual motion.");
+        }
+        var local = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PropHuntPlayer>();
+        var role = local.Role.Value;
+        var outcome = typeof(MatchHUD).GetField("resultRole", BindingFlags.NonPublic | BindingFlags.Instance);
+        var original = outcome.GetValue(hud);
+        try
+        {
+            local.Role.Value = PlayerRole.Spectator;
+            outcome.SetValue(hud, PlayerRole.Hunter);
+            update.Invoke(hud, null);
+            Require(root.Q<Label>("winner-title").text == MatchHudStrings.VictoryResult && root.Q("winner-splash").ClassListContains("is-win"),
+                "A spectator retains victory for their last active winning team.");
+            outcome.SetValue(hud, PlayerRole.Prop);
+            update.Invoke(hud, null);
+            Require(root.Q<Label>("winner-title").text == MatchHudStrings.DefeatResult && root.Q("winner-splash").ClassListContains("is-lose"),
+                "A losing player receives the defeat title and red theme.");
+        }
+        finally { local.Role.Value = role; outcome.SetValue(hud, original); }
+    }
+
+    static void CheckFineRotation(PropHuntPlayer prop)
+    {
+        var movement = prop.GetComponent<PlayerController>();
+        var look = typeof(PlayerController).GetMethod("UpdateLook", BindingFlags.NonPublic | BindingFlags.Instance);
+        var throttle = typeof(PropHuntPlayer).GetField("nextFineRotation", BindingFlags.NonPublic | BindingFlags.Instance);
+        var pitch = typeof(PlayerController).GetField("pitch", BindingFlags.NonPublic | BindingFlags.Instance);
+        int disguise = prop.Disguise.Value;
+        float rotation = prop.Rotation.Value;
+        var bodyRotation = prop.transform.rotation;
+        float cameraPitch = (float)pitch.GetValue(movement);
+        try
+        {
+            prop.Disguise.Value = 0;
+            prop.FineRotateServerRpc(1);
+            Require(prop.Rotation.Value == rotation, "Fine rotation requires a disguise.");
+            var entries = new SerializedObject(prop.Match.Map.definition.catalog).FindProperty("props");
+            prop.Disguise.Value = ((Prop)entries.GetArrayElementAtIndex(0).objectReferenceValue).id;
+            prop.Rotation.Value = 359.75f;
+            prop.FineRotateServerRpc(float.NaN); prop.FineRotateServerRpc(float.PositiveInfinity); prop.FineRotateServerRpc(16);
+            Require(prop.Rotation.Value == 359.75f, "Fine rotation rejects nonfinite and oversized network input.");
+            look.Invoke(movement, new object[] { 2f, 10f, true });
+            Require(Mathf.Abs(Mathf.DeltaAngle(prop.Rotation.Value, 0.25f)) < 0.001f,
+                "Mouse rotation supports sub-degree changes across the zero-degree boundary.");
+            Require(prop.transform.rotation == bodyRotation && (float)pitch.GetValue(movement) == cameraPitch,
+                "Fine prop rotation changes neither body yaw nor camera pitch.");
+            prop.FineRotateServerRpc(1);
+            Require(Mathf.Abs(Mathf.DeltaAngle(prop.Rotation.Value, 0.25f)) < 0.001f, "Fine rotation requests are rate limited.");
+            throttle.SetValue(prop, 0d);
+            var phase = prop.Match.Phase.Value;
+            try
+            {
+                prop.Match.Phase.Value = MatchPhase.Waiting;
+                prop.FineRotateServerRpc(1);
+                Require(Mathf.Abs(Mathf.DeltaAngle(prop.Rotation.Value, 0.25f)) < 0.001f, "Fine rotation is blocked outside active round phases.");
+            }
+            finally { prop.Match.Phase.Value = phase; }
+        }
+        finally
+        {
+            prop.Rotation.Value = rotation; prop.Disguise.Value = disguise;
+            throttle.SetValue(prop, 0d);
+        }
+    }
+
+    static void CheckBlackout(PropHuntMatch match)
+    {
+        var hud = UnityEngine.Object.FindAnyObjectByType<MatchHUD>();
+        var root = hud.GetComponent<UIDocument>().rootVisualElement.Q("hud-root");
+        var local = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PropHuntPlayer>();
+        var role = local.Role.Value;
+        var update = typeof(MatchHUD).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance);
+        try
+        {
+            local.Role.Value = PlayerRole.Hunter;
+            update.Invoke(hud, null);
+            Require(root.Q("identity-card").ClassListContains("is-hunter"), "Hunter identity uses the red theme.");
+            Require(root.ClassListContains("is-blackout") && root.Q("blackout").style.display.value == DisplayStyle.Flex,
+                "Hiding hunters enable the exclusive blackout stylesheet state.");
+            local.Role.Value = PlayerRole.Prop;
+            update.Invoke(hud, null);
+            Require(root.Q("identity-card").ClassListContains("is-prop") && !root.Q("identity-card").ClassListContains("is-hunter"),
+                "Prop identity switches to blue without retaining the hunter theme.");
+            Require(!root.ClassListContains("is-blackout"), "Props keep their normal HUD during hiding.");
+            local.Role.Value = PlayerRole.Spectator;
+            update.Invoke(hud, null);
+            Require(root.Q("identity-card").ClassListContains("is-spectator"), "Spectator identity uses the yellow theme.");
+            local.Role.Value = PlayerRole.Hunter;
+            match.Phase.Value = MatchPhase.Hunting;
+            update.Invoke(hud, null);
+            Require(!root.ClassListContains("is-blackout") && root.Q("blackout").style.display.value == DisplayStyle.None,
+                "Releasing hunters restores the normal HUD.");
+        }
+        finally
+        {
+            local.Role.Value = role;
+            match.Phase.Value = MatchPhase.Hiding;
+            update.Invoke(hud, null);
+        }
+    }
+
+    static void CheckProjectileLaunch(PropHuntPlayer owner)
+    {
+        var settings = AssetDatabase.LoadAssetAtPath<ThrowableDefinition>("Assets/PropHuntConfig/Throwable.asset");
+        var shot = UnityEngine.Object.Instantiate(settings.projectilePrefab, Vector3.one * 1000, Quaternion.identity).GetComponent<HunterProjectile>();
+        int prematureWrites = 0;
+        Application.LogCallback capture = (message, stack, type) =>
+        {
+            if (message.Contains("NetworkVariable is written to")) prematureWrites++;
+        };
+        Application.logMessageReceived += capture;
+        try
+        {
+            var origin = (NetworkVariable<Vector3>)typeof(HunterProjectile).GetField("launchOrigin", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(shot);
+            var velocity = (NetworkVariable<Vector3>)typeof(HunterProjectile).GetField("launchVelocity", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(shot);
+            shot.Launch(owner, Vector3.forward, settings);
+            Require(origin.Value == Vector3.zero && velocity.Value == Vector3.zero && prematureWrites == 0,
+                "Launch before Spawn prepares only local state, without premature network writes.");
+            shot.NetworkObject.Spawn(true);
+            Require(origin.Value == shot.transform.position && velocity.Value == Vector3.forward * settings.speed && prematureWrites == 0,
+                "Spawn initializes replicated launch state after NGO binds the variables.");
+        }
+        finally
+        {
+            Application.logMessageReceived -= capture;
+            if (shot.IsSpawned) shot.NetworkObject.Despawn();
+            else UnityEngine.Object.Destroy(shot.gameObject);
+        }
+    }
 
     static void CheckMapSelection(LobbyManager lobby)
     {
@@ -270,6 +431,81 @@ public static class PropHuntPlayChecks
     }
 
 
+    static void CheckSpectatorMusic(PropHuntMatch match)
+    {
+        var audio = PartyAudio.Instance;
+        var listener = NetworkManager.Singleton.LocalClient.PlayerObject.GetComponent<PropHuntPlayer>();
+        var field = typeof(PartyAudio).GetField("config", BindingFlags.NonPublic | BindingFlags.Instance);
+        var update = typeof(PartyAudio).GetMethod("Update", BindingFlags.NonPublic | BindingFlags.Instance);
+        var reset = typeof(PartyAudio).GetMethod("FindMatch", BindingFlags.NonPublic | BindingFlags.Instance);
+        var original = audio.Config;
+        var role = listener.Role.Value; var phase = match.Phase.Value; var winner = match.Winner.Value;
+        var config = ScriptableObject.CreateInstance<GameAudioConfig>();
+        var spectator = AudioClip.Create("Spectator transition check", 8000, 1, 8000, false);
+        var defeat = AudioClip.Create("Defeat transition check", 8000, 1, 8000, false);
+        var music = audio.GetComponentsInChildren<AudioSource>().First(source => source.name == "Music");
+        var results = audio.GetComponentsInChildren<AudioSource>().First(source => source.name == "Results");
+        try
+        {
+            field.SetValue(audio, config);
+            config.spectatorEnter = spectator; config.defeat = defeat;
+            for (int sameFrame = 0; sameFrame < 2; sameFrame++)
+            {
+                results.clip = null;
+                listener.Role.Value = PlayerRole.Hunter; match.Phase.Value = MatchPhase.Hunting;
+                reset.Invoke(audio, null); update.Invoke(audio, null);
+                listener.Role.Value = PlayerRole.Spectator;
+                if (sameFrame == 0)
+                {
+                    music.volume = 0; update.Invoke(audio, null);
+                    Require(music.clip == spectator && music.volume <= config.MusicVolume,
+                        "Spectators use the quieter music channel, not effects volume.");
+                }
+                match.Winner.Value = PlayerRole.Prop; match.Phase.Value = MatchPhase.Finished;
+                update.Invoke(audio, null);
+                Require(results.clip == defeat && results.loop && music.clip == null && !music.isPlaying,
+                    "Defeat replaces spectator music even when elimination and round end arrive together.");
+            }
+        }
+        finally
+        {
+            music.Stop(); music.clip = null; results.Stop(); results.clip = null;
+            listener.Role.Value = role; match.Winner.Value = winner; match.Phase.Value = phase;
+            field.SetValue(audio, original); reset.Invoke(audio, null);
+            UnityEngine.Object.DestroyImmediate(config);
+            UnityEngine.Object.DestroyImmediate(spectator); UnityEngine.Object.DestroyImmediate(defeat);
+        }
+    }
+
+    public static void CheckVisualEffects()
+    {
+        Require(Application.isPlaying, "Visual effect checks require Play Mode.");
+        var existing = UnityEngine.Object.FindObjectsByType<PartyVfx>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var randomState = UnityEngine.Random.state;
+        try
+        {
+            PartyVfx.EggImpact(new Vector3(1000, 1000, 1000), Vector3.right, false);
+            var egg = UnityEngine.Object.FindObjectsByType<PartyVfx>(FindObjectsSortMode.None).First(effect => !existing.Contains(effect));
+            Require(Vector3.Dot(egg.transform.forward, Vector3.right) > 0.99f, "Egg splash follows the surface normal.");
+            Require(egg.GetComponentsInChildren<ParticleSystem>().Length == 5, "Eggs have separate shell, yolk, white, splash and ring layers.");
+            var shell = egg.GetComponentsInChildren<ParticleSystemRenderer>().First(renderer => renderer.renderMode == ParticleSystemRenderMode.Mesh);
+            Require(shell.mesh != null && shell.mesh.vertexCount > 3 && shell.sharedMaterial.shader.name == "PropParty/Layered Particles",
+                "Shells use curved fragments and a build-included particle material, not primitive cubes.");
+            for (int i = 0; i < PartyVfx.MaxActiveBursts + 2; i++) PartyVfx.Burst(Vector3.one * 1000, Color.cyan);
+            var active = UnityEngine.Object.FindObjectsByType<PartyVfx>(FindObjectsSortMode.None);
+            Require(active.Length <= PartyVfx.MaxActiveBursts, "Rapid-fire bursts retire the oldest effect before exceeding the budget.");
+            foreach (var effect in active)
+                Require(effect.GetComponentsInChildren<Collider>().Length == 0 && effect.GetComponentsInChildren<Light>().Length == 0,
+                    "Visual effects add no physics colliders or realtime lights.");
+            Require(randomState.Equals(UnityEngine.Random.state), "Cosmetic randomness must not change the gameplay random stream.");
+        }
+        finally
+        {
+            foreach (var effect in UnityEngine.Object.FindObjectsByType<PartyVfx>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (!existing.Contains(effect)) UnityEngine.Object.DestroyImmediate(effect.gameObject);
+        }
+    }
+
     static void CheckCameras(PropHuntMatch match)
     {
         var prop = match.Players.First(p => p.Role.Value == PlayerRole.Prop);
@@ -326,7 +562,7 @@ public static class PropHuntPlayChecks
             wall.SetActive(false); Physics.SyncTransforms();
             Invoke(prop, "UpdateRisk", now + 4.1);
             Require(!prop.InHunterSight.Value, "Targets behind the hunter are not visible");
-            typeof(PropHuntPlayer).GetField("nextWhistle", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(prop, now - 1);
+            prop.NextAutomaticWhistle.Value = now - 1;
             typeof(PropHuntPlayer).GetField("nextSense", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(prop, now + 100);
             int automaticScore = prop.Score.Value;
             Invoke(prop, "Update");

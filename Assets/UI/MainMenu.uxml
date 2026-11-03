@@ -1,29 +1,29 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/PartyMenu.uss?fileID=7433441132597879392&amp;guid=6b4ac884563daa44e9fe4a22b02380d1&amp;type=3#PartyMenu"/>
     <ui:VisualElement name="menu-root" class="party">
-        <ui:VisualElement name="ambient-background" class="ambient-background" picking-mode="Ignore">
-            <ui:VisualElement class="ambient-shape ambient-mint" picking-mode="Ignore"/>
-            <ui:VisualElement class="ambient-shape ambient-gold" picking-mode="Ignore"/>
-            <ui:VisualElement class="ambient-shape ambient-coral" picking-mode="Ignore"/>
-            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 12%; top: 68%;"/>
-            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 84%; top: 12%;"/>
-            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 55%; top: 82%;"/>
-            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 35%; top: 6%;"/>
-            <ui:VisualElement class="ambient-shape ambient-chip" picking-mode="Ignore" style="left: 92%; top: 65%;"/>
+        <ui:VisualElement name="ambient-background" picking-mode="Ignore" class="ambient-background">
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-mint"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-gold"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-coral"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-chip" style="left: 12%; top: 68%;"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-chip" style="left: 84%; top: 12%;"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-chip" style="left: 55%; top: 82%;"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-chip" style="left: 35%; top: 6%;"/>
+            <ui:VisualElement picking-mode="Ignore" class="ambient-shape ambient-chip" style="left: 92%; top: 65%;"/>
         </ui:VisualElement>
-        <PartyMenuStage class="menu-stage">
+        <PartyMenuStage class="menu-stage" style="display: flex;">
             <ui:VisualElement class="menu-header">
                 <ui:Label text="PropParty" class="wordmark"/>
                 <ui:Label text="&#10;" class="edition"/>
                 <ui:Button name="game-settings-button" text="AJUSTES" tooltip="Ajustes de vídeo y audio de este equipo" class="game-settings-button secondary"/>
-                <ui:Button name="face-button" text="TU CARA" tooltip="Captura tu cara para el personaje" class="face-button secondary"/>
+                <ui:Button name="face-button" text="WEBCAM" tooltip="Captura tu cara para el personaje" class="face-button secondary"/>
                 <ui:TextField name="player-name" label="TÚ" value="Player" max-length="24" class="profile"/>
             </ui:VisualElement>
             <ui:VisualElement name="home" enabled="true" class="home-screen" style="display: flex;">
                 <ui:VisualElement class="hero">
                     <ui:Label text="PROP" class="title-prop"/>
                     <ui:Label text="PARTY" class="title-party"/>
-                    <ui:Label text="Escóndete a plena vista.&#10;Mantente discreto.&#10;Desconfía hasta de las tazas." class="tagline"/>
+                    <ui:Label text="Escóndete a plena vista.&#10;Mantente discreto.&#10;Baitealos con sonidos ridículos.&#10;Ahora con un 50% más de memes roñas." class="tagline"/>
                     <ui:VisualElement class="home-actions">
                         <ui:Button name="host" text="CREAR PARTIDA     →" class="primary"/>
                         <ui:Button name="join" text="UNIRME A AMIGOS" class="secondary"/>
@@ -33,42 +33,42 @@
                     <ui:VisualElement class="art-orbit"/>
                     <ui:VisualElement class="suspect-box">
                         <ui:VisualElement class="box-tape"/>
-                        <ui:VisualElement class="eyes">
-                            <ui:VisualElement class="eye"/>
-                            <ui:VisualElement class="eye"/>
+                        <ui:VisualElement class="eyes" style="width: 83px; height: 19px; top: 93px; left: 57px;">
+                            <ui:VisualElement class="eye" style="width: 19px;"/>
+                            <ui:VisualElement class="eye" style="width: 20px;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement class="suspect-mug">
                         <ui:VisualElement class="mug-handle"/>
                         <ui:VisualElement class="mug-body">
                             <ui:VisualElement class="mug-rim"/>
-                            <ui:VisualElement class="eyes">
-                                <ui:VisualElement class="eye"/>
-                                <ui:VisualElement class="eye"/>
+                            <ui:VisualElement class="eyes" style="height: 29px; width: 144px; top: 78px; left: 53px;">
+                                <ui:VisualElement class="eye" style="width: 20px; height: 34px;"/>
+                                <ui:VisualElement class="eye" style="width: 20px; height: 34px;"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement class="suspect-egg">
-                        <ui:VisualElement class="eyes">
-                            <ui:VisualElement class="eye"/>
-                            <ui:VisualElement class="eye"/>
+                        <ui:VisualElement class="eyes" style="width: 42px; height: 19px; top: 38px; left: 6px;">
+                            <ui:VisualElement class="eye" style="width: 32px;"/>
+                            <ui:VisualElement class="eye" style="width: 34px;"/>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label text="SOY UNA TAZA QUE HABLA!!" class="alibi"/>
-                    <ui:Label text="CONFÍA EN NADIE.&#10;ESPECIALMENTE DE LOS MUEBLES." class="art-caption" style="height: 39px; width: 226px; font-size: 20px;"/>
+                    <ui:Label text="&quot;CLARO... &quot;D&quot; DE DRIVE!!!!!&quot; 🗣🗣🗣" class="alibi"/>
+                    <ui:Label text="NO CONFÍES EN NADIE.&#10;NI SI QUIERA DE LA MESITA DE NOCHE." class="art-caption" style="height: 39px; width: 226px; font-size: 20px;"/>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="room" class="room-screen" style="display: none;">
                 <ui:Label text="¡EMPIEZA LA FIESTA!" class="room-title"/>
                 <ui:VisualElement class="room-columns">
                     <ui:VisualElement class="team-panel">
-                        <ui:Label name="player-count" text="EL EQUIPO / 00" class="section-label"/>
+                        <ui:Label name="player-count" text="PARTICIPANTES / 00" class="section-label"/>
                         <ui:VisualElement name="roster" class="roster"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="map-panel">
-                        <ui:DropdownField name="maps" label="EL ESCENARIO"/>
+                        <ui:DropdownField name="maps" label="SELECCIONAR MAPA"/>
                         <ui:VisualElement name="map-preview" class="map-preview">
-                            <ui:Label text="EL PRÓXIMO ESCONDITE" class="map-tag"/>
+                            <ui:Label text="A CONTINUACION" class="map-tag"/>
                             <ui:Label name="map-title" text="EL PRÓXIMO MAPA" class="map-title"/>
                         </ui:VisualElement>
                         <ui:Label name="map-description" class="map-description"/>
@@ -95,11 +95,10 @@
             </ui:VisualElement>
             <ui:VisualElement name="settings-overlay" class="join-overlay" style="display: none;">
                 <ui:VisualElement class="settings-dialog">
-                    <ui:Label text="A TU MANERA" class="dialog-title"/>
-                    <ui:Label text="Configura la próxima ronda. Todos volverán a confirmar que están listos." class="dialog-description"/>
+                    <ui:Label text="AJUSTES DE LA FIESTA" class="dialog-title"/>
+                    <ui:Label text="Los cambios se hacen efectivos para la próxima ronda. Todos tendrán que volver a confirmar que están listos." class="dialog-description"/>
                     <ui:VisualElement class="settings-grid">
                         <ui:VisualElement class="settings-column settings-column-left">
-                            <ui:Label text="EL EQUIPO" class="settings-section"/>
                             <ui:VisualElement class="setting-row">
                                 <ui:Label text="Buscadores" class="setting-title"/>
                                 <ui:SliderInt name="setting-hunters" tooltip="Número inicial de buscadores; siempre quedará un escondedor." low-value="1" high-value="16" show-input-field="true" class="setting-slider"/>
@@ -109,12 +108,15 @@
                                 <ui:SliderInt name="setting-health" low-value="1" high-value="10" show-input-field="true" class="setting-slider"/>
                             </ui:VisualElement>
                             <ui:VisualElement class="setting-row setting-switch-row">
-                                <ui:Label text="Al ser capturado" class="setting-title"/>
+                                <ui:Label text="Al ser capturado..." class="setting-title"/>
                                 <ui:Toggle name="setting-convert" text="Pasar a buscador" class="setting-toggle"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:Label text="Vidas por hunter (0 = infinito)" class="setting-title"/>
+                                <ui:SliderInt name="setting-hunter-misses" tooltip="Vidas por disparos a objetos Prop: 1–50, o 0 para infinito. El suelo y las paredes no cuentan." low-value="0" high-value="50" value="10" show-input-field="true" class="setting-slider"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement class="settings-column">
-                            <ui:Label text="EL RELOJ · SEGUNDOS" class="settings-section"/>
                             <ui:VisualElement class="setting-row">
                                 <ui:Label text="Tiempo para esconderse" class="setting-title"/>
                                 <ui:SliderInt name="setting-hide" low-value="0" high-value="120" show-input-field="true" class="setting-slider"/>
@@ -126,6 +128,10 @@
                             <ui:VisualElement class="setting-row">
                                 <ui:Label text="Silbido automático cada…" class="setting-title"/>
                                 <ui:SliderInt name="setting-whistle" low-value="5" high-value="120" show-input-field="true" class="setting-slider"/>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="setting-row setting-switch-row">
+                                <ui:Label text="Reglas especiales" class="setting-title"/>
+                                <ui:Toggle name="setting-identify-hiders" text="Mostrar nombre tras apuntar 2 s" value="true" class="setting-toggle"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
@@ -141,12 +147,12 @@
                     <ui:VisualElement class="face-view">
                         <ui:Image name="face-preview" scale-mode="ScaleToFit" class="face-preview"/>
                         <ui:Image name="face-guide" scale-mode="ScaleToFit" picking-mode="Ignore" class="face-guide"/>
-                        <ui:Label name="face-placeholder" text="TU CARA&#10;DE PÓQUER." picking-mode="Ignore" class="face-placeholder"/>
+                        <ui:Label name="face-placeholder" text="TU CARA&#10;DE PÓQUER" picking-mode="Ignore" class="face-placeholder" style="top: 182px; right: 38px; left: 27px;"/>
                     </ui:VisualElement>
                     <ui:VisualElement class="face-controls">
-                        <ui:Label text="PONLE CARA&#10;AL SOSPECHOSO." class="dialog-title"/>
+                        <ui:Label text="PONLE CARA&#10;AL SOSPECHOSO..." class="dialog-title"/>
                         <ui:Label text="Centra tu cara y haz la foto. Se guardará para tu personaje y se compartirá una miniatura con la sala." class="dialog-description"/>
-                        <ui:DropdownField name="face-device" label="TU WEBCAM"/>
+                        <ui:DropdownField name="face-device" label="WEBCAM"/>
                         <ui:Label name="face-status" class="face-status"/>
                         <ui:Button name="face-enable" text="ACTIVAR CÁMARA" class="secondary"/>
                         <ui:Button name="face-snap" text="¡ESA ES MI CARA!    →" enabled="false" class="primary"/>
@@ -156,23 +162,26 @@
             </ui:VisualElement>
             <ui:VisualElement name="game-settings-overlay" class="join-overlay" style="display: none;">
                 <ui:VisualElement class="settings-dialog game-settings-dialog">
-                    <ui:Label text="PONTE A GUSTO" class="dialog-title"/>
-                    <ui:Label text="Vídeo y audio de tu equipo. Las reglas de la sala se ajustan por separado." class="dialog-description"/>
+                    <ui:Label text="AJUSTES DEL JUEGO" class="dialog-title"/>
+                    <ui:Label text="Configura PropParty a tu gusto... Con lo que hay, claro... Que no es mucho..." class="dialog-description"/>
                     <ui:VisualElement class="game-settings-tabs">
                         <ui:Button name="game-video-tab" text="VÍDEO" class="secondary game-settings-tab is-selected"/>
                         <ui:Button name="game-audio-tab" text="AUDIO" class="secondary game-settings-tab"/>
                     </ui:VisualElement>
-                    <ui:VisualElement name="game-video-page" class="settings-grid game-settings-page">
+                    <ui:VisualElement name="game-video-page" class="settings-grid game-settings-page" style="height: 180px;">
                         <ui:VisualElement class="settings-column settings-column-left">
-                            <ui:VisualElement class="setting-row"><ui:DropdownField name="game-resolution" label="RESOLUCIÓN"/></ui:VisualElement>
-                            <ui:VisualElement class="setting-row"><ui:DropdownField name="game-quality" label="CALIDAD GRÁFICA"/></ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:DropdownField name="game-resolution" label="RESOLUCIÓN"/>
+                            </ui:VisualElement>
                             <ui:VisualElement class="setting-row">
                                 <ui:Label text="Modo de pantalla" class="setting-title"/>
                                 <ui:Toggle name="game-fullscreen" text="Pantalla completa sin bordes" class="setting-toggle"/>
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement class="settings-column">
-                            <ui:VisualElement class="setting-row"><ui:DropdownField name="game-fps" label="LÍMITE DE FPS"/></ui:VisualElement>
+                            <ui:VisualElement class="setting-row">
+                                <ui:DropdownField name="game-fps" label="LÍMITE DE FPS"/>
+                            </ui:VisualElement>
                             <ui:VisualElement class="setting-row">
                                 <ui:Label text="Sincronización vertical" class="setting-title"/>
                                 <ui:Toggle name="game-vsync" text="Activar VSync" class="setting-toggle"/>

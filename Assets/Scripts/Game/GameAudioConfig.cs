@@ -39,9 +39,11 @@ public class GameAudioConfig : ScriptableObject
     public AudioClip shotMiss;
     [Header("Otros")]
     public AudioClip scoreTick;
-    public AudioClip spectatorEnter, ambienceLoop;
+    [Tooltip("Spectator music. Uses music volume and stops before round results.")]
+    public AudioClip spectatorEnter;
+    public AudioClip ambienceLoop;
     [Header("Volúmenes")]
-    [Range(0, 1)] public float musicVolume = 0.35f;
+    [Range(0, 1)] public float musicVolume = 0.18f;
     [Range(0, 1)] public float effectsVolume = 0.8f;
     [Range(0, 1)] public float dangerVolume = 0.35f;
     [Range(0, 1)] public float ambienceVolume = 0.2f;
@@ -51,13 +53,15 @@ public class GameAudioConfig : ScriptableObject
     public float DangerVolume => dangerVolume * GamePreferences.EffectsVolume;
     public float AmbienceVolume => ambienceVolume * GamePreferences.EffectsVolume;
 
-    public AudioClip SelectMusic(bool inMatch, bool connectedToRoom, MatchPhase phase, double secondsLeft, bool lastHider = false)
+    public AudioClip SelectMusic(bool inMatch, bool connectedToRoom, MatchPhase phase, double secondsLeft, bool lastHider = false, bool spectator = false)
     {
         if (!inMatch) return connectedToRoom ? lobbyMusic : menuMusic;
+        if (phase == MatchPhase.Finished) return null;
+        if (spectator && (phase == MatchPhase.Hiding || phase == MatchPhase.Hunting) && spectatorEnter != null) return spectatorEnter;
         if (phase == MatchPhase.Hiding) return hidingMusic;
         if (phase == MatchPhase.Hunting)
             return (secondsLeft <= 30 || lastHider) && finalStretchMusic != null ? finalStretchMusic : gameplayMusic;
-        return phase == MatchPhase.Finished ? null : lobbyMusic;
+        return lobbyMusic;
     }
 
     public int PickWhistleIndex()

@@ -127310,8 +127310,8 @@ Animator:
   m_CorrespondingSourceObject: {fileID: 6976062566496198567, guid: cb533d6f7329a744fb5c0396de1b8b4b, type: 3}
   m_PrefabInstance: {fileID: 2135681729}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &2135681732 stripped
-BoxCollider:
+--- !u!64 &2135681732 stripped
+MeshCollider:
   m_CorrespondingSourceObject: {fileID: 6976062566496198566, guid: cb533d6f7329a744fb5c0396de1b8b4b, type: 3}
   m_PrefabInstance: {fileID: 2135681729}
   m_PrefabAsset: {fileID: 0}

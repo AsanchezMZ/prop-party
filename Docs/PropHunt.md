@@ -1,12 +1,8 @@
-# Prop Hunt · guía de montaje
+# Prop Hunt · mapas, props y herramientas del Editor
 
-## Punto de entrada
+Guía de creación de contenido y mantenimiento desde Unity. Las generalidades del juego, controles, reglas, presentación, red y pruebas están en [Game.md](Game.md).
 
-Abre la escena de menú habilitada en Build Profiles y ejecuta con dos instancias (Multiplayer Play Mode ya está instalado). Crea una sala y conecta la otra instancia a la IP del host, puerto UDP 7777. Ambos jugadores deben pulsar **Estoy listo**; el host elige mapa y comienza. Cambiar mapa desmarca los preparados.
-
-El selector incluye **Aleatorio**: el host sortea entre los mapas configurados con escena habilitada al iniciar la partida y todos cargan el mismo resultado. Elegir este modo también desmarca los preparados.
-
-**Ajustes del juego:** el botón **AJUSTES** de la cabecera abre un diálogo local con pestañas **Vídeo** (resolución, calidad, pantalla completa sin bordes, VSync y límite de FPS) y **Audio** (general, música y efectos/interfaz/ambiente). Está disponible en inicio y sala, también para invitados; no modifica las reglas de la ronda ni desmarca preparados. Los controles usan `uiClick`. **Aplicar** guarda en `PlayerPrefs` y activa los cambios; **Volver** o Escape descartan lo pendiente. El nombre y **TU CARA** permanecen en la cabecera. No hay remapeo de teclas. La resolución y el modo de pantalla solo se cambian en el ejecutable, no en la Game view del editor.
+## Montaje inicial
 
 El montaje inicial se hace con **PropHunt → Configure enabled build scenes**. Configura las escenas habilitadas que tengan `SpawnPoint`, crea los datos en `Assets/PropHuntConfig`, conecta el prefab de jugador del `GameBootstrap` y añade el proyectil a la lista de prefabs de red existente. Guarda escenas y assets: úsalo después de guardar tu trabajo. No ejecutes esta migración para retocar mapas ya personalizados: edita sus referencias en el Inspector.
 
@@ -28,6 +24,7 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 - Asigna un `id` positivo único por tipo y `visual`. El catálogo contiene los prefabs permitidos de ese mapa. El ID 0 significa sin disfraz.
 - Selecciona `collisionShape` en `Prop`: `Capsule` (predeterminado, con `disguiseRadius` y `disguiseHeight`), `Box` (con `disguiseBoxSize`, apoyada en la base) o `Model` (las mallas de los `MeshFilter` activos de `Visual`, incluidos sus hijos). Al seleccionar el prop, el editor dibuja la forma en cian. La selección configura los impactos sobre el disfraz, no sustituye los colliders del objeto original del mapa.
 - El movimiento sigue usando la cápsula de `CharacterController`; sus dimensiones se ajustan con `disguiseRadius` y `disguiseHeight` en los tres modos. Caja y modelo giran con el disfraz. `Model` sin mallas vuelve a la cápsula con un aviso; los modelos animados con solo `SkinnedMeshRenderer` no están soportados.
+- Las dimensiones guardadas como `NaN` o infinito se recuperan desde los límites locales de las mallas antes de configurar el disfraz; sin malla se usan las dimensiones predeterminadas. Los valores finitos se conservan respetando los mínimos de la cápsula.
 - Coloca instancias del prefab en la escena. `canDisappear` decide si participan en el sorteo; `spawnProbability` es la probabilidad individual de aparecer. Con 0 nunca aparece, con 1 siempre aparece. Los permanentes ignoran esa probabilidad.
 - `slotId` es único **por instancia en el mapa**, distinto del ID del tipo. El recolector asigna estos IDs y guarda las referencias, incluidos objetos inactivos. Recolecta otra vez al añadir o quitar objetos.
 - El servidor publica una semilla por ronda. Cada cliente calcula presencia y orientación con la misma semilla y slots. Son sorteos independientes Bernoulli: no garantizan una cantidad fija de objetos ni de tipos presentes.
@@ -35,89 +32,26 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 **PropHunt → Repair project prop IDs and map catalogs** revisa todos los tipos e instancias, conserva los IDs positivos no repetidos y asigna IDs libres a duplicados, valores no positivos y variantes sin ID propio. Reconstruye los catálogos existentes ordenados por ID, conservando sus tipos permitidos y añadiendo los presentes en su mapa; no crea un catálogo global ni modifica los `slotId`. Guarda los cambios y deja una copia previa fuera de `Assets` (ruta en la consola). **Validate project prop IDs and map catalogs** comprueba unicidad global, coherencia de instancias y referencias de catálogos y escenas.
 
-## Arma, audio y presentación
+## Herramientas del menú PropHunt del Editor
 
-**Audio central:** asigna las pistas y efectos opcionales en `Assets/PropHuntConfig/Audio.asset`. Ya está conectado al NetworkManager mediante `PartyAudio`. Catálogo completo, eventos, recomendaciones de duración y propuestas adicionales: **`Docs/Audio.md`**. Los campos de audio existentes del jugador/arma conservan prioridad sobre los equivalentes centrales. Los slots vacíos se quedan en silencio.
+Estas son las ocho opciones del desplegable **PropHunt** de Unity. Los mensajes de resultado y los errores aparecen en la **Consola**. Las herramientas que recorren escenas solicitan guardar los cambios pendientes y restauran las escenas que tenías abiertas al terminar; esto **no deshace** los archivos que hayan guardado durante la operación.
 
-`ThrowableDefinition`: prefab de proyectil, velocidad, gravedad, radio de impacto, vida, daño, cadencia, máscara, sonido de lanzamiento/impacto y efecto de impacto.
+### Configuración y reparación: modifican archivos
 
-El prefab necesita `NetworkObject`, `NetworkTransform` **server authority**, `HunterProjectile` y un hijo visual. Asigna el mismo `ThrowableDefinition` al proyectil y al jugador. Registra el prefab en la lista del `NetworkManager`. El huevo ya usa `Assets/PropHuntConfig/Egg.obj` y `Egg.mat`: trayectoria recta (gravedad 0), velocidad 45 m/s y recarga de 0.25 s. No necesita Rigidbody ni collider; el servidor realiza barridos esféricos. Se desactiva el búfer de interpolación y el cliente sitúa el visual de los tiros rectos según su origen, velocidad y reloj de servidor; no elimina la latencia real del envío del disparo por red.
+| Opción del menú | Qué hace | Cuándo usarla y precauciones |
+|---|---|---|
+| **Configure enabled build scenes** | Monta Prop Hunt en las escenas habilitadas de Build Profiles. Busca el lobby y su prefab de jugador; configura jugador, arma, audio, paneles UI, mapas con `SpawnPoint`, partida, HUD y generador de props. Recoge props, reconstruye los catálogos de esos mapas, actualiza la lista de mapas del lobby y registra el proyectil en la lista de prefabs de red existente. Crea los assets que falten en `Assets/PropHuntConfig`, guarda los cambios y ejecuta `PropHuntChecks.Run`. | Para el montaje inicial. Necesita un lobby habilitado con `GameBootstrap`, `LobbyManager`, prefab de jugador y lista de prefabs de red. Omite mapas sin puntos de aparición. **Puede sobrescribir referencias, catálogos y configuración personalizada**; no usar como mantenimiento habitual de mapas ya editados. Si crea un proyectil nuevo, su hijo visual queda vacío: hay que asignar el modelo. |
+| **Configure apartment door interactions** | Abre `Map_Apartment.unity`, localiza las puertas, armarios y puerta de ducha con los scripts de demostración compatibles, y añade o actualiza `ApartmentDoor`. Enlaza animador, collider y estados de apertura/cierre; mantiene el animador siempre activo, desactiva la entrada local de los scripts de demostración, registra las puertas en `MapSetup.doors` y guarda la escena. | Al añadir puertas compatibles al apartamento o rehacer sus enlaces. Conserva animaciones y colliders originales; no configura puertas arbitrarias de otros mapas. Falla si faltan referencias necesarias o varias puertas comparten el mismo animador. |
+| **Rebuild Prop Catalog** | Reemplaza el contenido del **`PropCatalog` seleccionado en Project** por todos los prefabs de `Assets` que tengan `Prop` en la raíz, ordenados por ID. Asigna IDs libres a tipos sin ID válido, duplicados y variantes que necesiten un ID propio. Guarda el catálogo y los assets modificados. | Para reconstruir deliberadamente un catálogo con todos los tipos del proyecto. **No respeta la selección de tipos exclusiva de un mapa**. No sincroniza los IDs sobrescritos de instancias en escenas ni reconstruye otros catálogos; para una reparación global usa la opción siguiente. |
+| **Repair project prop IDs and map catalogs** | Recorre los prefabs, escenas y catálogos del proyecto. Conserva IDs positivos únicos, corrige los restantes y sincroniza los IDs de instancias con su prefab canónico, sin cambiar `slotId`. Reconstruye cada catálogo conservando sus tipos e incorporando los presentes en su mapa; corrige rutas de escena no válidas cuando el destino es inequívoco. Guarda y ejecuta la validación global. | Para reparar incoherencias de IDs, referencias o catálogos. Hace copias previas fuera de `Assets`, en una carpeta temporal cuya ruta muestra la Consola. No elimina referencias rotas silenciosamente: puede detenerse para que las repares manualmente. **No es una operación transaccional**: un error posterior no revierte los cambios ya guardados. |
 
-`PropHuntPlayer`: raíz del disfraz, modelo normal, arma, AudioSource 3D, transformación, captura, clips de pasos y salto. Los silbidos usan la colección central `Audio.asset.whistles` para ambos tipos, recogible por prefijo `whistle_{nombre}` desde el menú contextual del asset. El servidor elige el mismo clip para todos. Los pasos se disparan en servidor por desplazamiento; el salto mantiene su sonido local desde el controlador. Sin clips asignados no se reproduce sonido.
+### Validación y pruebas
 
-`LobbyUI`: USS, fondo opcional, AudioSource, música y clic. `MapDefinition.preview` es la miniatura. El menú presenta una composición de 1280×720 que se escala completa y centrada a la ventana, sin scroll. Inicio, diálogo para unirse y sala tienen distribuciones propias. La ilustración de props está hecha con formas de UI, sin assets externos; colores y presentación se editan en el USS.
+| Opción del menú | Qué comprueba | Alcance y efectos |
+|---|---|---|
+| **Validate project prop IDs and map catalogs** | IDs de tipo positivos y únicos en todo el proyecto; estabilidad del asignador; coincidencia entre IDs de instancias y prefabs canónicos; entradas válidas, únicas y resolubles en catálogos; correspondencia entre mapas, escenas y tipos presentes. | Recorre todos los prefabs, catálogos y escenas, no solo los habilitados para build. No reconstruye catálogos ni guarda reparaciones de escenas. La prueba de estabilidad **invoca el asignador de IDs sobre los assets cargados** y falla si este cambia alguno: no debe considerarse una inspección estrictamente libre de cambios en memoria. |
+| **Validate apartment props and map** | Los 56 tipos de prop esperados del apartamento, sus IDs y slots, visuales, colisión `Model`, probabilidad del 75 % y aparición determinista. También revisa instancias y registro del generador, catálogo canónico, puntos de aparición de ambos equipos, partida, HUD, cámaras de demostración desactivadas e inclusión del mapa en build y lobby. | Es específica del apartamento y de su configuración actual: cambiar intencionadamente el número de tipos o su probabilidad requiere actualizar la prueba. Crea y destruye clones temporales para probar colisiones y aparición; abre el apartamento y el menú, pero no guarda reparaciones ni entra en Play Mode. |
+| **Run deterministic prop checks** | Ejecuta la batería general `PropHuntChecks.Run`: aparición reproducible y distribución de props, colisiones y recuperación de dimensiones inválidas, límites de reglas, FOV, recorte de webcam, visibilidad de nombres, miniaturas, selección de audio, ajustes locales, HUD/VFX, silbidos, modelo del huevo y configuración de assets de colisión para build. | El nombre es histórico: **comprueba más que el sorteo de props**. Usa objetos temporales y revisa assets/configuración; no ejecuta una partida en red ni entra en Play Mode. Un resultado correcto no sustituye un build ni una prueba visual. |
+| **Run presentation checks** | Revisa que la pantalla de carga incluida en `Resources` tenga progreso, reintento y salida; que el material de la estela del huevo use el shader y la transparencia esperados; y que los sonidos de clic y disfraz estén asignados y sean distintos. | Ejecuta solo `CheckPresentationAssets`, un subconjunto de la batería anterior. No comprueba toda la HUD, no reproduce los sonidos y no valida el aspecto renderizado ni entra en Play Mode. |
 
-La estructura está guardada en `Assets/UI/MainMenu.uxml`, asignada al `UIDocument` de `MainMenu.unity`: se puede abrir con UI Builder sin pulsar Play. `PartyMenuStage` ajusta la composición tanto en editor como en ejecución. `LobbyUI` solo conecta controles y actualiza datos; la lista de jugadores se rellena al conectar. Los Canvas y controles del menú anterior se han eliminado de la escena.
-
-**Tu cara** abre el diálogo de webcam desde inicio o lobby. `FaceCapture`, en el mismo objeto que `LobbyUI`, conserva la referencia a `Assets/Face/FaceConfig.asset` y a la guía `MaskReference`. Permite elegir webcam, pedir permiso, previsualizar con recorte cuadrado y orientación corregida, hacer la foto y volver. Cerrar, desactivar el objeto o cambiar de escena detiene la cámara. No se activa al abrir el menú ni el diálogo. Un fallo o cancelar no sustituye la foto anterior.
-
-La foto JPG se guarda en `Application.persistentDataPath/face.jpg`. `PlayerFace.config` usa el mismo `FaceConfig` para componer la foto con la máscara y la textura base antes de asignarla al material del personaje. Máscara y base deben tener Read/Write activado y coincidir con `FaceConfig.size`. La captura se comparte en la siguiente aparición del jugador; cambiarla en el lobby no necesita volver a conectar. El diálogo indica si falla la escritura y solo puede conservarse en memoria durante esa sesión.
-
-En el lobby se comparte solo una miniatura PNG de 64×64 de la foto guardada (máximo 20 KB, dimensiones comprobadas antes de decodificar). Sustituye los números de jugador y se estira para rellenar el bloque. Los recién llegados reciben las miniaturas existentes; las texturas se liberan al salir del lobby. Nunca se transmite vídeo en directo; sin foto, el bloque conserva su fondo de color.
-
-## Reglas y red
-
-`MatchRules` configura mínimo de jugadores, hunters iniciales, tiempo de escondite/caza, intervalo de silbidos, distancia para camuflarse, vida y conversión de capturados. Como mínimo siempre hay un hunter y un prop.
-
-- Espera → escondite (hunters inmóviles y pantalla cubierta) → caza → resultado.
-- Captura: convertir a hunter o pasar a espectador, según reglas.
-- Si no quedan props ganan los hunters; si termina el tiempo o no quedan hunters ganan los props. Las desconexiones cuentan.
-- El host puede repetir la ronda o volver al lobby. No se admiten incorporaciones durante la partida.
-- Roles, vida, disfraz, rotación, suspensión, fases, plazos y semillas son `NetworkVariable` escritas por el servidor. Las peticiones de acciones requieren ownership; el servidor comprueba rol, fase, distancia, catálogo y cadencia.
-- El movimiento conserva el `NetworkTransform` con autoridad del propietario del proyecto. Es una base para partidas entre amigos, no un controlador antitrampas para competición. Para servidores públicos competitivos habría que migrar el movimiento a simulación autoritativa con predicción.
-- Conexión directa por IP; para Internet hace falta un puerto accesible. No incorpora Relay, matchmaking ni migración de host.
-
-## Controles
-
-En **Apartamento**, buscadores y escondedores pueden abrir/cerrar puertas con **E** al apuntarlas a menos de 3 m. El estado se replica desde la partida; el servidor comprueba equipo, fase, distancia, línea de visión y cadencia. Los buscadores no interactúan durante el tiempo bloqueado de escondite. Las animaciones originales y sus colliders se conservan; el clic local del jugador de demostración está desactivado en esas puertas. **PropHunt → Configure apartment door interactions** vuelve a enlazar las puertas si se añaden nuevas instancias al mapa.
-
-| Acción | Tecla |
-|---|---|
-| Mover / correr / andar despacio | WASD / Shift / Ctrl |
-| Saltar | Espacio |
-| Copiar prop apuntado / abrir o cerrar puerta del apartamento | E |
-| Girar disfraz | Q / R, pasos de 15° |
-| Suspender o soltar, también en el aire | F |
-| Alternar primera / tercera persona (solo escondedores) | V |
-| Silbido manual (solo caza, 5 s de recarga) | G o botón 🎵 del HUD con cursor libre |
-| Lanzar (buscador, siempre primera persona) | Clic izquierdo |
-| Mostrar menú / recuperar control | Esc / Tab |
-| Siguiente jugador como espectador | Flecha derecha |
-
-## HUD, ajustes y puntuación
-
-`Assets/UI/MatchHUD.uxml` y `MatchHUD.uss` definen la barra horizontal superior, la retícula de punto, toasts, indicadores de riesgo y panel de pausa/resultados. Los `UIDocument` de ambos mapas de prueba ya tienen este UXML asignado. El montaje de mapas también lo asigna. El HUD no cambia la activación de cámaras ni fuerza el cursor cada frame.
-
-El prop válido bajo la retícula muestra `[E] nombre` dentro de distancia de camuflaje. Los nametags de escondedores son blancos y solo los ven sus compañeros; los de buscadores son rojos. Los compañeros se ven a través de paredes con flecha y tienen indicador en el borde si quedan fuera de pantalla. Los escondedores solo ven el nombre de un buscador si no está tapado por geometría. La espera del hunter muestra una cuenta atrás grande y el disparo está bloqueado tanto en la entrada local como en el RPC del servidor. Los resultados destacan `¡VICTORIA!`/`¡DERROTA!` y muestran aparte el equipo ganador.
-
-En la sala, **⚙ Ajustes** abre el panel con buscadores, segundos de escondite/caza, silbido automático, vidas y conversión de capturados. Los invitados pueden consultarlo, pero solo el host puede aplicar cambios. Son valores de sesión replicados, validados y copiados al mapa, no cambios al ScriptableObject. Se conservan al volver al lobby mientras continúe el host y se reinician al crear una sesión nueva. El número efectivo de buscadores siempre deja al menos un escondedor.
-
-Puntuación de ronda, siempre calculada en servidor y reiniciada con cada nueva ronda:
-
-- Dentro de `proximityRadius` de cualquier buscador: `proximityPoints` (10 por defecto) cada **3 segundos continuos**.
-- Dentro de `visibilityDistance`, del cono de visión y sin un obstáculo delante: `visiblePoints` (20 por defecto) cada **1 segundo continuo**. El servidor comprueba desde los ojos del buscador al centro de la cápsula del escondedor. No equivale a que el jugador humano lo haya identificado.
-- Los bonos anteriores se suman, pero varios buscadores no multiplican un mismo bono. Perder proximidad/visibilidad reinicia su reloj correspondiente.
-- Silbido manual: `manualWhistlePoints` (100 por defecto), una vez cada **5 segundos**, solo durante caza. El RPC valida ownership, rol, fase y recarga. El silbido automático jamás suma puntos.
-- Captura: `capturePoints` (150 por defecto) para el buscador que impactó el último proyectil. Un impacto posterior a la captura no vuelve a puntuar.
-
-Los puntos/radios/FOV se editan en `MatchRules`; los sliders de sesión no modifican esos valores. La clasificación aparece en pausa/resultados. Una captura conserva los puntos previos del escondedor convertido.
-
-VFX geométricos sin texturas: confeti de captura, destellos de impacto/camuflaje y halo local pulsante cuando hay riesgo. `PropHuntPlayer.effectMaterial` permite sustituir el material de las piezas sin tocar código. El halo solo lo ve el escondedor, no revela su posición a buscadores. Los silbidos/burlas no emiten VFX.
-
-Los pasos solo se reproducen para buscadores activos, según distancia realmente recorrida y suelo detectado en servidor; saltar o teletransportarse no acumula pasos. Asigna `footstepClips` al jugador para variar muestras, o el campo anterior `footstepSound` como fallback. Sin clips no habrá audio. Un `AudioSource` 3D permite que los demás jugadores los oigan. Los escondedores no generan pasos.
-
-La cámara del propietario se habilita una vez al aparecer y se deshabilita al desaparecer; V solo cambia su posición/modo, no alterna GameObjects o AudioListeners. En FPV se ocultan únicamente los renderers del propio jugador a nivel local; los demás siguen viéndolos. Las colisiones de TPV ignoran al propio jugador y al objetivo observado. `obstacles` debe incluir la geometría del mapa.
-
-### Comprobaciones automatizadas
-
-`PropHuntChecks` comprueba límites de ajustes, FOV y recorte de webcam; también añade reglas de visibilidad de nametags, validación de miniaturas y configuración/modelo del huevo. `PropHuntPlayChecks` cubre ajustes lobby→mapa→lobby, cámaras, HUD, puntuación, silbidos, pasos, captura y reset. Se añadieron checks de disparo bloqueado durante escondite, solicitud/cadencia del sonido de puertas y parada del audio de resultados. La versión anterior pasó en Unity 6000.6.4f1; estas ampliaciones todavía no se han ejecutado.
-
-Las comprobaciones de proximidad y pasos usan un escenario de física aislado en el host; no sustituyen probar los colliders y capas de cada mapa final. Revisar manualmente el aspecto del HUD/VFX, la webcam y el audio con clips asignados. Los emojis dependen de los glifos/fallback de fuentes instalados en Unity: si faltan, asigna una fuente de símbolos compatible en Panel Text Settings.
-
-**PropHunt → Run deterministic prop checks** comprueba extremos 0/1, repetibilidad, distribución y props permanentes. Se puede ejecutar en batch con `-executeMethod PropHuntChecks.Run`.
-
-`-batchmode -nographics -executeMethod PropHuntPlayChecks.Run` (sin `-quit`) ejecuta una comprobación de integración en Play Mode: crea un host, prepara el lobby, carga un mapa por Netcode, añade un segundo jugador local de prueba y comprueba roles, suspensión, captura, victoria, repetición y vuelta al lobby. Termina el editor con código 0/1. Esta prueba no sustituye una sesión con un cliente remoto.
-
-También comprueba la selección aleatoria (excluyendo mapas no disponibles y desmarcando preparados), el cierre repetido y la creación de una nueva sala después de cerrar la anterior, tratando los errores de consola como fallos.
-
-Validación manual con dos instancias: preparado/cambio de mapa; misma presencia de props en ambos clientes; espera del hunter; camuflaje cercano frente a lejano; rotación y suspensión visibles remotamente; proyectil bloqueado por paredes; daño, conversión y espectador; silbido espacial con un clip asignado; victoria por tiempo y por captura; desconexión; repetir ronda y volver a sala. Comprueba también el menú a 1280×720 y una ventana estrecha.
+Las [pruebas de integración `PropHuntPlayChecks`](Game.md#comprobaciones-automatizadas) **no tienen una entrada en este desplegable**: se ejecutan mediante sus métodos de editor/batch. Ninguna herramienta de validación sustituye probar el juego con un cliente remoto.

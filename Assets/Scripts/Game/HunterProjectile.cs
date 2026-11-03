@@ -22,14 +22,19 @@ public class HunterProjectile : NetworkBehaviour
         definition = settings;
         velocity = direction * settings.speed;
         remaining = settings.lifetime;
-        launchOrigin.Value = transform.position; launchVelocity.Value = velocity;
-        firedAt.Value = owner.NetworkManager.ServerTime.Time;
     }
 
     public static Vector3 StraightPosition(Vector3 origin, Vector3 velocity, float elapsed) => origin + velocity * elapsed;
 
     public override void OnNetworkSpawn()
     {
+        if (IsServer)
+        {
+            // Launch prepares local state; NGO initializes these variables before this callback.
+            launchOrigin.Value = transform.position;
+            launchVelocity.Value = velocity;
+            firedAt.Value = NetworkManager.ServerTime.Time;
+        }
         if (!IsClient || Application.isBatchMode) return;
         var go = new GameObject("Egg trajectory");
         go.transform.position = visual != null ? visual.position : transform.position;
@@ -70,7 +75,7 @@ public class HunterProjectile : NetworkBehaviour
         if (shooter == null || !shooter.CanHunt) { NetworkObject.Despawn(); return; }
         if (remaining <= 0)
         {
-            ImpactClientRpc(transform.position, true, false);
+            ImpactClientRpc(transform.position, Vector3.up, true, false);
             NetworkObject.Despawn(); return;
         }
         velocity += Vector3.down * definition.gravity * Time.fixedDeltaTime;
@@ -86,7 +91,8 @@ public class HunterProjectile : NetworkBehaviour
             if (target != null && target.IgnoreMovementHitbox(hit.collider)) continue;
             bool hitProp = target != null && target.Role.Value == PlayerRole.Prop;
             if (hitProp) target.Hit(definition.damage, shooter);
-            ImpactClientRpc(hit.point, !hitProp, true);
+            else if (target == null && hit.collider.GetComponentInParent<Prop>() != null) shooter.HitWrongProp();
+            ImpactClientRpc(hit.point, hit.normal, !hitProp, true);
             NetworkObject.Despawn();
             return;
         }
@@ -95,10 +101,10 @@ public class HunterProjectile : NetworkBehaviour
     }
 
     [ClientRpc]
-    void ImpactClientRpc(Vector3 position, bool missed, bool collided)
+    void ImpactClientRpc(Vector3 position, Vector3 normal, bool missed, bool collided)
     {
         if (definition == null) return;
-        if (collided) PartyVfx.Burst(position, new Color(1, 0.8f, 0.2f));
+        if (collided) PartyVfx.EggImpact(position, normal, !missed);
         var miss = definition.missSound != null ? definition.missSound : PartyAudio.Settings?.shotMiss;
         var impact = definition.impactSound != null ? definition.impactSound : PartyAudio.Settings?.impactSound;
         var clip = missed && miss != null ? miss : collided ? impact : null;

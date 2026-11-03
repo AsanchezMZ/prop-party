@@ -4,12 +4,10 @@
         <ui:VisualElement class="loading-card">
             <ui:Label text="PropParty" class="wordmark"/>
             <ui:Label name="loading-mascot" text="( •‿• )" class="loading-mascot"/>
-            <ui:Label text="PREPARANDO&#10;LA FIESTA" class="loading-title"/>
+            <ui:Label text="PREPARANDO&#10;LA FIESTA..." class="loading-title"/>
             <ui:Label name="loading-status" text="Cargando el escenario…" class="loading-status"/>
             <ui:ProgressBar name="loading-progress" title="RECURSOS" low-value="0" high-value="100"/>
-            <ui:Label text="Un buen escondite está a la vista de todos." class="loading-tip"/>
             <ui:Button name="loading-retry" text="REINTENTAR" class="primary" style="display: none;"/>
-            <ui:Button name="loading-leave" text="VOLVER AL MENÚ" class="quiet"/>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

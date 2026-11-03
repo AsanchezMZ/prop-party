@@ -22,6 +22,8 @@ public class PropHuntPlayer : NetworkBehaviour
     public readonly NetworkVariable<bool> HunterNearby = new();
     public readonly NetworkVariable<bool> InHunterSight = new();
     public readonly NetworkVariable<double> NextManualWhistle = new();
+    public readonly NetworkVariable<double> NextAutomaticWhistle = new();
+    public readonly NetworkVariable<double> AutomaticWhistleStartedAt = new();
     public readonly NetworkVariable<Vector3> AimDirection = new(Vector3.forward);
     public event System.Action<int> Cue;
     public readonly NetworkVariable<PlayerRole> Role = new(PlayerRole.Spectator);
@@ -29,6 +31,7 @@ public class PropHuntPlayer : NetworkBehaviour
     public readonly NetworkVariable<bool> Frozen = new();
     public readonly NetworkVariable<float> Rotation = new();
     public readonly NetworkVariable<int> Health = new();
+    public readonly NetworkVariable<int> HunterMissesRemaining = new();
     public readonly NetworkVariable<bool> AssetsReady = new();
     public PropHuntMatch Match { get; private set; }
     public bool CanHunt => Match != null && Match.Phase.Value == MatchPhase.Hunting && Role.Value == PlayerRole.Hunter;
@@ -37,11 +40,14 @@ public class PropHuntPlayer : NetworkBehaviour
          (Match.Phase.Value == MatchPhase.Hiding && Role.Value == PlayerRole.Prop));
     public bool CanMove => Match != null && (Match.Phase.Value == MatchPhase.Hunting ||
         (Match.Phase.Value == MatchPhase.Hiding && Role.Value == PlayerRole.Prop)) && !Frozen.Value;
+    public bool CanRotateDisguise => Match != null && Role.Value == PlayerRole.Prop && Disguise.Value != 0 &&
+        (Match.Phase.Value == MatchPhase.Hiding || Match.Phase.Value == MatchPhase.Hunting);
     GameObject disguiseVisual;
     bool hasDisguiseColliders;
     public bool IgnoreMovementHitbox(Collider collider) => hasDisguiseColliders && collider is CharacterController;
-    double nextThrow, nextWhistle, nextAction;
+    double nextThrow, nextAction;
     double nextDoorSound;
+    double nextFineRotation;
     double nearSince, seenSince, nextSense, nextAim;
     Vector3 lastStepPosition;
     float travelled;
@@ -107,7 +113,7 @@ public class PropHuntPlayer : NetworkBehaviour
         if (disguiseVisual != null) { disguiseVisual.SetActive(false); Destroy(disguiseVisual); }
         hasDisguiseColliders = false;
         var controller = GetComponent<CharacterController>();
-        controller.height = originalHeight; controller.radius = originalRadius; controller.center = originalCenter;
+        controller.radius = originalRadius; controller.height = originalHeight; controller.center = originalCenter;
         bool disguised = Role.Value == PlayerRole.Prop && Disguise.Value != 0;
         if (normalVisual != null)
             foreach (var renderer in normalVisual.GetComponentsInChildren<Renderer>(true))
@@ -120,8 +126,9 @@ public class PropHuntPlayer : NetworkBehaviour
         if (catalog != null && catalog.TryGet(Disguise.Value, out var prop) && prop.visual != null)
         {
             // shortcut: locomotion stays capsule-shaped; replace CharacterController for shape-accurate movement.
-            controller.radius = Mathf.Max(0.1f, prop.disguiseRadius);
-            controller.height = Mathf.Max(controller.radius * 2, prop.disguiseHeight);
+            prop.ValidateDisguiseDimensions();
+            controller.radius = prop.disguiseRadius;
+            controller.height = prop.disguiseHeight;
             controller.center = Vector3.up * controller.height * 0.5f;
             disguiseVisual = Instantiate(prop.visual.gameObject, disguiseRoot);
             disguiseVisual.transform.localPosition = Vector3.zero;
@@ -138,17 +145,18 @@ public class PropHuntPlayer : NetworkBehaviour
         if (disguiseRoot != null) disguiseRoot.rotation = Quaternion.Euler(0, Rotation.Value, 0);
         if (!IsServer) return;
         double now = NetworkManager.ServerTime.Time;
-        if (Role.Value == PlayerRole.Prop && Match.Phase.Value == MatchPhase.Hunting && now >= nextWhistle)
+        if (Role.Value == PlayerRole.Prop && Match.Phase.Value == MatchPhase.Hunting && now >= NextAutomaticWhistle.Value)
         {
             var settings = PartyAudio.Settings;
             int index = settings != null ? settings.PickWhistleIndex() : -1;
             var clip = settings != null ? settings.WhistleAt(index) : null;
             if (Match.ReserveAutomaticWhistle(clip != null ? clip.length : 0))
             {
-                nextWhistle = now + Mathf.Max(35, Match.Settings.Value.WhistleSeconds) + Random.Range(0, 12);
+                AutomaticWhistleStartedAt.Value = now;
+                NextAutomaticWhistle.Value = now + Mathf.Max(35, Match.Settings.Value.WhistleSeconds) + Random.Range(0, 12);
                 CueClientRpc(0, index);
             }
-            else nextWhistle = now + 2;
+            else NextAutomaticWhistle.Value = now + 2;
         }
         if (now >= nextSense)
         {
@@ -248,6 +256,7 @@ public class PropHuntPlayer : NetworkBehaviour
         if (!IsServer) return;
         Role.Value = role;
         Health.Value = Match.Settings.Value.Health;
+        HunterMissesRemaining.Value = Match.Settings.Value.HunterMissLimit;
         Score.Value = 0; HunterNearby.Value = InHunterSight.Value = false;
         NextManualWhistle.Value = 0;
         nearSince = seenSince = NetworkManager.ServerTime.Time;
@@ -256,7 +265,9 @@ public class PropHuntPlayer : NetworkBehaviour
         Frozen.Value = false;
         Rotation.Value = spawn.eulerAngles.y;
         nextThrow = nextAction = 0;
-        nextWhistle = NetworkManager.ServerTime.Time + Match.Settings.Value.HidingSeconds + Mathf.Max(40, Match.Settings.Value.WhistleSeconds) + Random.Range(0, 12);
+        nextFineRotation = 0;
+        AutomaticWhistleStartedAt.Value = NetworkManager.ServerTime.Time + Match.Settings.Value.HidingSeconds;
+        NextAutomaticWhistle.Value = AutomaticWhistleStartedAt.Value + Mathf.Max(40, Match.Settings.Value.WhistleSeconds) + Random.Range(0, 12);
         travelled = 0; lastStepPosition = spawn.position;
         GetComponent<PlayerController>().Teleport(spawn.position, spawn.rotation);
         TeleportClientRpc(spawn.position, spawn.rotation);
@@ -304,6 +315,14 @@ public class PropHuntPlayer : NetworkBehaviour
     }
 
     [ServerRpc]
+    public void FineRotateServerRpc(float delta)
+    {
+        if (!CanRotateDisguise || !float.IsFinite(delta) || Mathf.Abs(delta) > 15 || NetworkManager.ServerTime.Time < nextFineRotation) return;
+        nextFineRotation = NetworkManager.ServerTime.Time + 0.04;
+        Rotation.Value = Mathf.Repeat(Rotation.Value + delta, 360);
+    }
+
+    [ServerRpc]
     public void ThrowServerRpc(Vector3 direction)
     {
         if (!CanHunt || weapon == null || weapon.projectilePrefab == null || NetworkManager.ServerTime.Time < nextThrow || !ValidDirection(direction)) return;
@@ -337,6 +356,16 @@ public class PropHuntPlayer : NetworkBehaviour
     [ClientRpc]
     void DoorKnockClientRpc(Vector3 point) => DoorAudio.PlayAt(point);
 
+    public void HitWrongProp()
+    {
+        if (!IsServer || !CanHunt || Match.Settings.Value.HunterMissLimit == 0 || HunterMissesRemaining.Value <= 0) return;
+        HunterMissesRemaining.Value--;
+        CueClientRpc(HunterMissesRemaining.Value == 0 ? 11 : 10);
+        if (HunterMissesRemaining.Value > 0) return;
+        Role.Value = PlayerRole.Spectator;
+        Frozen.Value = false;
+    }
+
     public void Hit(int damage, PropHuntPlayer hunter = null)
     {
         if (!IsServer || Role.Value != PlayerRole.Prop || Match.Phase.Value != MatchPhase.Hunting) return;
@@ -346,6 +375,7 @@ public class PropHuntPlayer : NetworkBehaviour
         if (Health.Value != 0) return;
         if (hunter != null && hunter != this && hunter.CanHunt) hunter.AddScore(Match.Rules.capturePoints);
         Role.Value = Match.Settings.Value.ConvertCaptured ? PlayerRole.Hunter : PlayerRole.Spectator;
+        HunterMissesRemaining.Value = Match.Settings.Value.HunterMissLimit;
         HunterNearby.Value = InHunterSight.Value = false;
         Disguise.Value = 0;
         Frozen.Value = false;
@@ -374,7 +404,7 @@ public class PropHuntPlayer : NetworkBehaviour
     [ClientRpc]
     void ConfirmHitClientRpc()
     {
-        if (IsOwner) PartyAudio.Instance?.Play(PartyAudio.Settings?.hitConfirmation);
+        if (IsOwner) { PartyAudio.Instance?.Play(PartyAudio.Settings?.hitConfirmation); Cue?.Invoke(12); }
     }
 
     [ClientRpc]
@@ -399,9 +429,10 @@ public class PropHuntPlayer : NetworkBehaviour
             whistleSource.Play();
         }
         else if (audioSource != null && clip != null) audioSource.PlayOneShot(clip, settings != null ? settings.EffectsVolume : GamePreferences.EffectsVolume);
-        if (cue == 1 || cue == 2 || cue == 6)
-            PartyVfx.Burst(transform.position + Vector3.up * 0.5f,
-                cue == 1 ? new Color(0.2f, 0.9f, 0.75f) : new Color(1, 0.35f, 0.3f), false, effectMaterial);
+        Vector3 effectPosition = transform.position + Vector3.up * 0.5f;
+        if (cue == 1) PartyVfx.Burst(effectPosition, new Color(0.2f, 0.9f, 0.75f), false, effectMaterial);
+        else if (cue == 2) PartyVfx.Capture(effectPosition, effectMaterial);
+        else if (cue == 6) PartyVfx.Hurt(effectPosition, effectMaterial);
         if (IsOwner) Cue?.Invoke(cue);
     }
 }
