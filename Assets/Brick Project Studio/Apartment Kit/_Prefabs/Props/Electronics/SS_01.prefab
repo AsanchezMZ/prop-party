@@ -227,7 +227,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Prop
   id: 26
   slotId: 18
-  propName: SS 01
+  propName: Equipo de música
   visual: {fileID: 8999999999999999999}
   collisionShape: 2
   disguiseBoxSize: {x: NaN, y: NaN, z: NaN}

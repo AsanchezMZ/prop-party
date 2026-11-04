@@ -58,7 +58,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
       propertyPath: propName
-      value: Vase
+      value: "Jarr\xF3n"
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
+      propertyPath: disguiseHeight
+      value: 0.60965073
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
+      propertyPath: disguiseRadius
+      value: 0.24923325
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
+      propertyPath: disguiseBoxSize.x
+      value: 0.47406864
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
+      propertyPath: disguiseBoxSize.y
+      value: 0.60965073
+      objectReference: {fileID: 0}
+    - target: {fileID: 9114294037720330048, guid: 7331c514237a9084482702cf600e33f0, type: 3}
+      propertyPath: disguiseBoxSize.z
+      value: 0.4984665
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

@@ -58,7 +58,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
       propertyPath: propName
-      value: Table
+      value: "Mueble de televisi\xF3n"
       objectReference: {fileID: 0}
     - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
       propertyPath: colliderMode
@@ -67,6 +67,26 @@ PrefabInstance:
     - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
       propertyPath: canBeDisguise
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseHeight
+      value: 2.4386077
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseRadius
+      value: 1.2193038
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseBoxSize.x
+      value: 2.4386077
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseBoxSize.y
+      value: 0.55422807
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseBoxSize.z
+      value: 0.66508293
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

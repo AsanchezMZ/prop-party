@@ -227,7 +227,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Prop
   id: 45
   slotId: 7
-  propName: ToothbrushCup Filled
+  propName: Vaso con cepillos
   visual: {fileID: 8999999999999999999}
   collisionShape: 2
   disguiseBoxSize: {x: NaN, y: NaN, z: NaN}

@@ -58,7 +58,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
       propertyPath: propName
-      value: Small table
+      value: "Mesa peque\xF1a"
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
+      propertyPath: disguiseHeight
+      value: 1.3301524
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
+      propertyPath: disguiseRadius
+      value: 0.6650762
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
+      propertyPath: disguiseBoxSize.x
+      value: 1.3301524
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
+      propertyPath: disguiseBoxSize.y
+      value: 0.5542282
+      objectReference: {fileID: 0}
+    - target: {fileID: 8918218201766509793, guid: 9f5ed7e05d9f26742ba71e73c290549d, type: 3}
+      propertyPath: disguiseBoxSize.z
+      value: 0.88677406
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

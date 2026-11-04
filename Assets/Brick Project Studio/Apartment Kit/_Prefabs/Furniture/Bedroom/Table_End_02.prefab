@@ -230,7 +230,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Prop
   id: 44
   slotId: 3
-  propName: Table End 02
+  propName: Mesita de noche
   visual: {fileID: 8999999999999999999}
   collisionShape: 2
   disguiseBoxSize: {x: NaN, y: NaN, z: NaN}

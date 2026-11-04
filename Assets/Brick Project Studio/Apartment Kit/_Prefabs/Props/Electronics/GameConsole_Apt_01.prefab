@@ -282,7 +282,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Prop
   id: 50
   slotId: 12
-  propName: GameConsole Apt 01
+  propName: Consola de videojuegos
   visual: {fileID: 8999999999999999999}
   collisionShape: 2
   disguiseBoxSize: {x: NaN, y: NaN, z: NaN}

@@ -58,7 +58,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
       propertyPath: propName
-      value: Bookshelf
+      value: "Estanter\xEDa"
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseHeight
+      value: 3.650362
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseRadius
+      value: 1.825181
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseBoxSize.x
+      value: 0.76469994
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseBoxSize.y
+      value: 2.1428177
+      objectReference: {fileID: 0}
+    - target: {fileID: 8713411206489380343, guid: 85fe8a6c68c8a894aa4b4c63c55cb98a, type: 3}
+      propertyPath: disguiseBoxSize.z
+      value: 3.650362
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:

@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Prop
   id: 17
   slotId: 9
-  propName: Toothbrush 02
+  propName: Cepillo de dientes
   visual: {fileID: 8999999999999999999}
   collisionShape: 2
   disguiseBoxSize: {x: NaN, y: NaN, z: NaN}

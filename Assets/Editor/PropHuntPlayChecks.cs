@@ -396,6 +396,9 @@ public static class PropHuntPlayChecks
             var root = UnityEngine.Object.FindAnyObjectByType<LobbyUI>().GetComponent<UIDocument>().rootVisualElement;
             Require(root.Q<DropdownField>("maps").value == "Aleatorio" && root.Q<Label>("map-title").text == "MAPA ALEATORIO",
                 "Random mode has a distinct selection and preview");
+            var randomPreview = Resources.Load<Texture2D>("RandomMapPreview");
+            Require(randomPreview != null && root.Q("map-preview").style.backgroundImage.value.texture == randomPreview &&
+                root.Q("map-preview").ClassListContains("is-random"), "Random mode displays the question mark image without cropping");
             bool first = false, last = false;
             UnityEngine.Random.InitState(42);
             for (int i = 0; i < 100; i++)

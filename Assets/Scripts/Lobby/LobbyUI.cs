@@ -11,6 +11,7 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] LobbyManager lobby;
     [SerializeField] ushort port = 7777;
     [SerializeField] Texture2D background;
+    Texture2D randomMapPreview;
     [SerializeField] AudioSource audioSource;
     [SerializeField] AudioClip clickSound;
     [SerializeField] AudioClip menuMusic;
@@ -58,6 +59,7 @@ public class LobbyUI : MonoBehaviour
         if (background != null) content.style.backgroundImage = new StyleBackground(background);
         home = root.Q("home"); room = root.Q("room"); roster = root.Q("roster");
         preview = root.Q("map-preview"); joinPanel = root.Q("join-overlay");
+        randomMapPreview = Resources.Load<Texture2D>("RandomMapPreview");
         playerName = root.Q<TextField>("player-name");
         playerName.value = PlayerPrefs.GetString("PlayerName", "Player");
         address = root.Q<TextField>("address");
@@ -348,13 +350,14 @@ public class LobbyUI : MonoBehaviour
         choices.Add("Aleatorio");
         maps.choices = choices;
         int selected = lobby.SelectedMap.Value;
+        preview.EnableInClassList("is-random", selected == LobbyManager.RandomMap);
         if (selected != shownMap) { if (shownMap >= 0) mapChangedAt = Time.unscaledTime; shownMap = selected; }
         if (selected == LobbyManager.RandomMap)
         {
             maps.SetValueWithoutNotify(choices[choices.Count - 1]);
             previewTitle.text = "MAPA ALEATORIO";
             mapDescription.text = "El anfitrión sorteará un mapa disponible al empezar la partida.";
-            preview.style.backgroundImage = StyleKeyword.None;
+            preview.style.backgroundImage = new StyleBackground(randomMapPreview);
         }
         else if (selected >= 0 && selected < lobby.Maps.Length)
         {

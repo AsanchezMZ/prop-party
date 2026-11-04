@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">PropParty — caja del menú</title>
+  <desc id="description">Caja coral con cinta amarilla y dos ojos oscuros, inclinada dieciséis grados sobre un círculo verde. Paleta y proporciones de PartyMenu.uss.</desc>
+  <circle cx="512" cy="512" r="448" fill="#dbe6d3"/>
+  <g transform="translate(512 512) rotate(16) scale(3.5) translate(-77 -77)">
+    <rect x="3" y="3" width="148" height="148" rx="12" fill="#f57e5e" stroke="#192b30" stroke-width="6"/>
+    <path d="M62 6H94V52H62Z" fill="#ffcf3b"/>
+    <path d="M62 6V52M94 6V52" fill="none" stroke="#192b30" stroke-width="4"/>
+    <rect x="39" y="82" width="12" height="20" rx="6" fill="#192b30"/>
+    <rect x="73" y="82" width="12" height="20" rx="6" fill="#192b30"/>
+  </g>
+</svg>

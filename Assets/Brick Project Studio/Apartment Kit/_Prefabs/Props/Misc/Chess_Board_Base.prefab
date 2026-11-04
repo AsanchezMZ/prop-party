@@ -2751,7 +2751,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Prop
   id: 42
   slotId: 34
-  propName: Chess Board Base
+  propName: Tablero de ajedrez
   visual: {fileID: 8999999999999999999}
   collisionShape: 2
   disguiseBoxSize: {x: NaN, y: NaN, z: NaN}

@@ -32,6 +32,14 @@ La arquitectura no busca nombres de mapas ni carga recursos 3D desde rutas. Las 
 
 **PropHunt → Repair project prop IDs and map catalogs** revisa todos los tipos e instancias, conserva los IDs positivos no repetidos y asigna IDs libres a duplicados, valores no positivos y variantes sin ID propio. Reconstruye los catálogos existentes ordenados por ID, conservando sus tipos permitidos y añadiendo los presentes en su mapa; no crea un catálogo global ni modifica los `slotId`. Guarda los cambios y deja una copia previa fuera de `Assets` (ruta en la consola). **Validate project prop IDs and map catalogs** comprueba unicidad global, coherencia de instancias y referencias de catálogos y escenas.
 
+### Prefabs de HauntedHouse, Town y Apartamento
+
+Los 44 prefabs de `Assets/Prefabs/Props/HauntedHouse` y los 6 de `Assets/Prefabs/Props/Town` tienen `Prop`, nombres naturales en español, IDs de tipo únicos, un hijo visual independiente, colisión `Model` y dimensiones de cápsula calculadas desde sus mallas. Sus catálogos incluyen los tipos de la carpeta correspondiente. La probabilidad se mantiene en **1** y no se introduce rotación aleatoria. Se incluyen también puertas, alfombras, escaleras y plataformas; al ser objetos grandes, su cápsula de movimiento puede necesitar mucho espacio.
+
+Los 56 tipos de Apartamento usan nombres naturales en español; sus demás ajustes no se modificaron, incluida su probabilidad **0,75**. Cambiar `propName` no renombra el archivo ni cambia el ID del tipo. Variantes visuales del mismo objeto pueden compartir nombre.
+
+La conversión no sustituye modelos sueltos del mapa por instancias de estos prefabs ni distribuye objetos nuevos. Después de colocar nuevas instancias, ejecuta **Collect and assign props IDs** en `MapPropSpawner` para registrar sus slots. `ConfigureMapProps.Validate` permite comprobar el lote de HauntedHouse/Town desde el Editor/batch sin entrar en Play Mode; no añade otra opción al menú PropHunt.
+
 ## Herramientas del menú PropHunt del Editor
 
 Estas son las ocho opciones del desplegable **PropHunt** de Unity. Los mensajes de resultado y los errores aparecen en la **Consola**. Las herramientas que recorren escenas solicitan guardar los cambios pendientes y restauran las escenas que tenías abiertas al terminar; esto **no deshace** los archivos que hayan guardado durante la operación.

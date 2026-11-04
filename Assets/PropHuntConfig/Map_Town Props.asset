@@ -12,4 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63adb39f13601b34291f77c0e15624d8, type: 3}
   m_Name: Map_Town Props
   m_EditorClassIdentifier: Assembly-CSharp::PropCatalog
-  props: []
+  props:
+  - {fileID: 81901332183533347, guid: f3935b1dcf9e8af4cb44437b73e00a8b, type: 3}
+  - {fileID: 2527923462304954081, guid: cb9743f3f77db244fb3000c82668c11f, type: 3}
+  - {fileID: 1847274530416107473, guid: 9f8f822dc8deb864da6d36cf1941c27a, type: 3}
+  - {fileID: 6102556241612164536, guid: c1a28c8be18fb2646b1222357c343f63, type: 3}
+  - {fileID: 2416416289989637238, guid: a4ff3b808c10dd24fbfc35913b9098fd, type: 3}
+  - {fileID: 8310668418307631564, guid: 6a621373e802aea49bfe6989984e5f74, type: 3}

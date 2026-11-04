@@ -47,10 +47,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   id: 1
   slotId: 0
-  propName: Big vase
+  propName: "Jarr\xF3n grande"
   visual: {fileID: 926575894667565289}
-  disguiseRadius: 0.4
-  disguiseHeight: 1
+  collisionShape: 2
+  disguiseBoxSize: {x: 0.71110296, y: 1.5241269, z: 0.74769807}
+  disguiseRadius: 0.37384903
+  disguiseHeight: 1.5241269
   spawnProbability: 1
   canDisappear: 1
   randomRotationThreshold: {x: 0, y: 0, z: 0}

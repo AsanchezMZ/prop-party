@@ -285,7 +285,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7562913361863219565, guid: ba11bcdb94e8ac2498db51b197091c7a, type: 3}
       propertyPath: propName
-      value: MirrorPlate Filled Variant
+      value: Bandeja con adornos
       objectReference: {fileID: 0}
     - target: {fileID: 7562913361863219565, guid: ba11bcdb94e8ac2498db51b197091c7a, type: 3}
       propertyPath: disguiseHeight
