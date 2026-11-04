@@ -54,7 +54,7 @@ public class PropHuntPlayer : NetworkBehaviour
     bool firstPersonVisual;
     PlayerController movement;
     AudioSource whistleSource;
-    float originalHeight, originalRadius;
+    float originalHeight, originalRadius, originalSkinWidth;
     Vector3 originalCenter;
 
     void Awake()
@@ -70,6 +70,7 @@ public class PropHuntPlayer : NetworkBehaviour
             whistleSource.rolloffMode = audioSource.rolloffMode;
         }
         originalHeight = controller.height; originalRadius = controller.radius; originalCenter = controller.center;
+        originalSkinWidth = controller.skinWidth;
     }
 
     public override void OnNetworkSpawn()
@@ -114,6 +115,7 @@ public class PropHuntPlayer : NetworkBehaviour
         hasDisguiseColliders = false;
         var controller = GetComponent<CharacterController>();
         controller.radius = originalRadius; controller.height = originalHeight; controller.center = originalCenter;
+        controller.skinWidth = originalSkinWidth;
         bool disguised = Role.Value == PlayerRole.Prop && Disguise.Value != 0;
         if (normalVisual != null)
             foreach (var renderer in normalVisual.GetComponentsInChildren<Renderer>(true))
@@ -129,6 +131,8 @@ public class PropHuntPlayer : NetworkBehaviour
             prop.ValidateDisguiseDimensions();
             controller.radius = prop.disguiseRadius;
             controller.height = prop.disguiseHeight;
+            // Keep the human's safety margin from dwarfing small props.
+            controller.skinWidth = Mathf.Min(originalSkinWidth, Mathf.Max(0.01f, controller.radius * 0.1f));
             controller.center = Vector3.up * controller.height * 0.5f;
             disguiseVisual = Instantiate(prop.visual.gameObject, disguiseRoot);
             disguiseVisual.transform.localPosition = Vector3.zero;

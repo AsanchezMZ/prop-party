@@ -279,10 +279,14 @@ public static class PropHuntPlayChecks
         try
         {
             prop.Disguise.Value = 0;
+            var controller = prop.GetComponent<CharacterController>();
+            float originalSkinWidth = controller.skinWidth;
             prop.FineRotateServerRpc(1);
             Require(prop.Rotation.Value == rotation, "Fine rotation requires a disguise.");
             var entries = new SerializedObject(prop.Match.Map.definition.catalog).FindProperty("props");
             prop.Disguise.Value = ((Prop)entries.GetArrayElementAtIndex(0).objectReferenceValue).id;
+            Require(Mathf.Approximately(controller.skinWidth, Mathf.Min(originalSkinWidth, Mathf.Max(0.01f, controller.radius * 0.1f))),
+                "Disguise movement uses a size-appropriate positive skin width, never larger than the human's.");
             prop.Rotation.Value = 359.75f;
             prop.FineRotateServerRpc(float.NaN); prop.FineRotateServerRpc(float.PositiveInfinity); prop.FineRotateServerRpc(16);
             Require(prop.Rotation.Value == 359.75f, "Fine rotation rejects nonfinite and oversized network input.");
@@ -302,6 +306,8 @@ public static class PropHuntPlayChecks
                 Require(Mathf.Abs(Mathf.DeltaAngle(prop.Rotation.Value, 0.25f)) < 0.001f, "Fine rotation is blocked outside active round phases.");
             }
             finally { prop.Match.Phase.Value = phase; }
+            prop.Disguise.Value = 0;
+            Require(Mathf.Approximately(controller.skinWidth, originalSkinWidth), "Removing a disguise restores the human's skin width.");
         }
         finally
         {
