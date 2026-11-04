@@ -330,7 +330,7 @@ public class LobbyUI : MonoBehaviour
         if (inRoom) joinPanel.style.display = DisplayStyle.None;
         if (!inRoom || !lobby.IsSpawned) return;
         roster.Clear();
-        count.text = $"EL EQUIPO  /  {lobby.Players.Count:00}";
+        count.text = $"PARTICIPANTES  /  {lobby.Players.Count:00}";
         foreach (var player in lobby.Players)
         {
             var row = Element(roster, "player-row");
