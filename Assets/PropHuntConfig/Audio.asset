@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -15,26 +15,14 @@ MonoBehaviour:
   menuMusic: {fileID: 8300000, guid: 68c72458ee85833537b6507ef1d50c25, type: 3}
   lobbyMusic: {fileID: 8300000, guid: 1ed2e96fb9aae5ccd6bd1f8f905cba12, type: 3}
   hidingMusic: {fileID: 8300000, guid: 6aad2a1652d71c405cb54071b2c57c9c, type: 3}
+  gameplayMusic: {fileID: 0}
   finalStretchMusic: {fileID: 8300000, guid: 483cf8a36591821484267c784f363efa, type: 3}
   roundStart: {fileID: 8300000, guid: 0bf27f3bc9bdc4cfc9be8157ad72d558, type: 3}
   huntStart: {fileID: 8300000, guid: b498df7a2f3d47043baa1812033d9fbd, type: 3}
-  lastSecondsWarning: {fileID: 8300000, guid: f9828d1401bfe508b9c143cbaa85c2fa, type: 3}
   victory: {fileID: 8300000, guid: 08cd78768a9c25d495cd06a6c6355528, type: 3}
   defeat: {fileID: 8300000, guid: 1f03d14335f5e044903cbdb43841ac1e, type: 3}
-  spectatorEnter: {fileID: 8300000, guid: b5ae828c3f6ade0707376b728c148ab6, type: 3}
-  nearbyEnter: {fileID: 0}
-  nearbyExit: {fileID: 0}
-  nearbyLoop: {fileID: 8300000, guid: d3285f1a7ef24c73a973b611c3e58abe, type: 3}
-  disguise: {fileID: 8300000, guid: 4cba360272ff4c91a656ea9ffe910a47, type: 3}
-  rotate: {fileID: 8300000, guid: d2448dc314dbf267765d9f37337d6ccc, type: 3}
-  freeze: {fileID: 8300000, guid: f2895d433f5aac6648b8f5cf259533ca, type: 3}
-  jump: {fileID: 8300000, guid: 483d7b8d1be9697ae5e6922509c92489, type: 3}
-  throwSound: {fileID: 8300000, guid: 6d71fca028803bc301205ac7fd68cae2, type: 3}
-  impactSound: {fileID: 8300000, guid: 8ad9db5d101f3971551375b75ee7e2f5, type: 3}
-  hurt: {fileID: 8300000, guid: 4599c169ee70c4cdf26512851ea45894, type: 3}
-  captured: {fileID: 8300000, guid: 82e9980e1f03abdf9121ffb6d58bd0bc, type: 3}
-  hitConfirmation: {fileID: 8300000, guid: b3b409944edfed715ea5ef63b88b2363, type: 3}
-  scoreTick: {fileID: 0}
+  lastSecondsWarning: {fileID: 8300000, guid: f9828d1401bfe508b9c143cbaa85c2fa, type: 3}
+  lastHider: {fileID: 8300000, guid: 483cf8a36591821484267c784f363efa, type: 3}
   uiClick: {fileID: 8300000, guid: 797dd251acea701f4700583fff9dee43, type: 3}
   uiBack: {fileID: 8300000, guid: 120f5eff9b80a4862c9634aac5eecd16, type: 3}
   uiConfirm: {fileID: 8300000, guid: d20381d90d6e4f7d0a4222bbe9fe58b7, type: 3}
@@ -45,8 +33,23 @@ MonoBehaviour:
   unready: {fileID: 8300000, guid: 91ddc33416802a394c6575f4376a2645, type: 3}
   photoCaptured: {fileID: 8300000, guid: 7bc07c67bb90f347aa784297bbd1b3a7, type: 3}
   doorKnock: {fileID: 8300000, guid: 9f689e4fe47005e48ec9e2ded753725e, type: 3}
-  lastHider: {fileID: 8300000, guid: 483cf8a36591821484267c784f363efa, type: 3}
-  shotMiss: {fileID: 8300000, guid: 807775b87a95a2f78df98290fb32583c, type: 3}
+  nearbyEnter: {fileID: 0}
+  nearbyExit: {fileID: 0}
+  nearbyLoop: {fileID: 8300000, guid: d3285f1a7ef24c73a973b611c3e58abe, type: 3}
+  spottedEnter: {fileID: 0}
+  spottedLoop: {fileID: 0}
+  disguise: {fileID: 8300000, guid: 4cba360272ff4c91a656ea9ffe910a47, type: 3}
+  rotate: {fileID: 8300000, guid: d2448dc314dbf267765d9f37337d6ccc, type: 3}
+  freeze: {fileID: 8300000, guid: f2895d433f5aac6648b8f5cf259533ca, type: 3}
+  jump: {fileID: 8300000, guid: 483d7b8d1be9697ae5e6922509c92489, type: 3}
+  hurt: {fileID: 8300000, guid: 4599c169ee70c4cdf26512851ea45894, type: 3}
+  captured: {fileID: 8300000, guid: 82e9980e1f03abdf9121ffb6d58bd0bc, type: 3}
+  footsteps:
+  - {fileID: 8300000, guid: 269e748fd6c94565ccde67692b490df3, type: 3}
+  - {fileID: 8300000, guid: 35b57f21f1f5d686aa15fa6b38e9942e, type: 3}
+  - {fileID: 8300000, guid: 69d34d926fac5cdcc9edebe2617de479, type: 3}
+  - {fileID: 8300000, guid: 20ab4cfe10e1a9bf6eb6e6f5ff3253b6, type: 3}
+  - {fileID: 8300000, guid: d7e3075f11f254e339404e3e2606b3d4, type: 3}
   whistles:
   - {fileID: 8300000, guid: f6c381a4b477eeb3dfd0c31c8bd779ba, type: 3}
   - {fileID: 8300000, guid: 2beb10f4f3f2320e35ace4da43da4ef0, type: 3}
@@ -63,12 +66,13 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 3aeae06999c8c6047268d6f3582a4156, type: 3}
   - {fileID: 8300000, guid: b5482c41328cf78f46a2445f1174255f, type: 3}
   - {fileID: 8300000, guid: caadb57da123e2db157f998fd708e1c8, type: 3}
-  footsteps:
-  - {fileID: 8300000, guid: 269e748fd6c94565ccde67692b490df3, type: 3}
-  - {fileID: 8300000, guid: 35b57f21f1f5d686aa15fa6b38e9942e, type: 3}
-  - {fileID: 8300000, guid: 69d34d926fac5cdcc9edebe2617de479, type: 3}
-  - {fileID: 8300000, guid: 20ab4cfe10e1a9bf6eb6e6f5ff3253b6, type: 3}
-  - {fileID: 8300000, guid: d7e3075f11f254e339404e3e2606b3d4, type: 3}
+  throwSound: {fileID: 8300000, guid: 6d71fca028803bc301205ac7fd68cae2, type: 3}
+  impactSound: {fileID: 8300000, guid: 8ad9db5d101f3971551375b75ee7e2f5, type: 3}
+  hitConfirmation: {fileID: 8300000, guid: b3b409944edfed715ea5ef63b88b2363, type: 3}
+  shotMiss: {fileID: 8300000, guid: 807775b87a95a2f78df98290fb32583c, type: 3}
+  scoreTick: {fileID: 0}
+  spectatorEnter: {fileID: 8300000, guid: b5ae828c3f6ade0707376b728c148ab6, type: 3}
+  ambienceLoop: {fileID: 0}
   musicVolume: 0.18
   effectsVolume: 0.8
   dangerVolume: 0.35

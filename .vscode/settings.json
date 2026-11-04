@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Incredible.slnx"
+    "dotnet.defaultSolution": "PropParty.slnx"
 }
