@@ -1,6 +1,6 @@
 # 🎭 PropParty
 
-**¡Escóndete a plena vista o descubre qué objeto está fuera de lugar!**
+**¡Escóndete a plena vista o descubre qué objeto es un jugador camuflado!**
 
 PropParty es un juego multijugador de escondite tipo **Prop Hunt**, creado con Unity para jugar entre amigos. Un equipo se transforma en objetos del escenario y el otro intenta encontrarlo… ¡lanzando huevos! 🥚
 
